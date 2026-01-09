@@ -356,7 +356,7 @@ _fzfs_ui_search() {
 
 	local result
 	# shellcheck disable=SC2086
-	result=$(eval "$src_cmd" | "$FZFS_BIN" --ansi --header "fzfs: Enter(Select) $BIND_CD(cd) $BIND_EDIT(Edit) $BIND_YANK(Copy)" $FZFS_OPTS_UI $fzf_mode_opts --preview "$preview_cmd" --preview-window "$FZFS_OPTS_PREVIEW" --bind "$binds" --expect=$BIND_CD) || return 1
+	result=$(eval "$src_cmd" | "$FZFS_BIN" --ansi --no-sort --header "fzfs: Enter(Select) $BIND_CD(cd) $BIND_EDIT(Edit) $BIND_YANK(Copy)" $FZFS_OPTS_UI $fzf_mode_opts --preview "$preview_cmd" --preview-window "$FZFS_OPTS_PREVIEW" --bind "$binds" --expect=$BIND_CD) || return 1
 
 	local key
 	key="$(printf '%s\n' "$result" | head -n1)"
