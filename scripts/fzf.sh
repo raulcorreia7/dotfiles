@@ -7,11 +7,6 @@
 # Features: live content search, project jumping, and git-integrated tools.
 # ==============================================================================
 
-# Prevent double-sourcing loop.
-if [ "${FZFS_LOADED:-0}" -eq 1 ]; then
-	return 0 2>/dev/null || exit 0
-fi
-
 # ==============================================================================
 # SECTION 1: UI CONSTANTS & STYLE
 # ==============================================================================
@@ -691,4 +686,4 @@ fzfs() {
 }
 
 # Execution Guard: Run fzfs if not being sourced.
-(return 0 2>/dev/null) && FZFS_LOADED=1 || fzfs "$@"
+(return 0 2>/dev/null) || fzfs "$@"

@@ -48,7 +48,6 @@ __dot_source "$DOTFILES_SCRIPTS_DIR/fzf.sh"
 dot_reload() {
 	# Reload config and functions without restarting shell.
 	__dot_debug "dotfiles: reload"
-	unset FZFS_LOADED
 	. "$DOTFILES_DIR/init.sh"
 }
 
