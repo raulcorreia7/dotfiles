@@ -32,6 +32,7 @@ BIND_EDIT='ctrl-e'
 BIND_YANK='ctrl-y'
 BIND_REFRESH='ctrl-r'
 BIND_CD='ctrl-o'
+BIND_HIDDEN='ctrl-h'
 
 # ==============================================================================
 # SECTION 2: CONFIGURATION DEFAULTS
@@ -136,9 +137,11 @@ export FZFS_SCRIPT_PATH
 _fzfs_gen_files() {
 	local type="$1" base
 	base="$(_fzfs_expand_path "$2")"
+	local show_hidden="${3:-1}"
 
 	if [ "$HAS_FD" -eq 1 ]; then
-		local opts="--hidden --follow --color=never"
+		local opts="--follow --color=never"
+		[ "$show_hidden" -eq 1 ] && opts="$opts --hidden"
 		for ex in $FZFS_EXCLUDES; do opts="$opts --exclude $ex"; done
 
 		case "$type" in
@@ -156,9 +159,10 @@ _fzfs_gen_files() {
 		fi
 	else
 		local fopts=""
-		[ "$type" = "f" ] && fopts="-type f"
-		[ "$type" = "d" ] && fopts="-type d"
-		[ "$type" = "recent" ] && fopts="-type f -mtime -1"
+		[ "$show_hidden" -eq 1 ] && fopts="-name .*"
+		[ "$type" = "f" ] && fopts="$fopts -type f"
+		[ "$type" = "d" ] && fopts="$fopts -type d"
+		[ "$type" = "recent" ] && fopts="$fopts -type f -mtime -1"
 		# shellcheck disable=SC2086
 		find "$base" $fopts 2>/dev/null
 	fi
@@ -309,8 +313,12 @@ _fzfs_callback_branch_preview() {
 		printf "%bDiff vs %s:%b Ahead %s, Behind %s\n" "${CLR_BOLD}" "$base" "${CLR_RESET}" "${ab#*\t}" "${ab%%\t*}"
 	fi
 
+	printf "\n%bBranch Graph (tree visualization):%b\n" "${CLR_BOLD_YELLOW}" "${CLR_RESET}"
+	git log --oneline --abbrev-commit --graph --decorate --color $base $ref -20 2>/dev/null | cut -c1-120
+
 	printf "\n%bLatest Commit:%b\n" "${CLR_BOLD_YELLOW}" "${CLR_RESET}"
 	git log -1 --color=always --date=short --format="%C(yellow)%h%Creset %C(magenta)%ad%Creset %C(cyan)%an%Creset %s" "$ref" 2>/dev/null
+
 	printf "\n%bChanges Overview:%b\n" "${CLR_BOLD_YELLOW}" "${CLR_RESET}"
 	git diff --stat --color=always "$base...$ref" 2>/dev/null | head -n 10
 }
@@ -326,6 +334,7 @@ _fzfs_ui_search() {
 	self_q="$(_fzfs_quote "$FZFS_SCRIPT_PATH")"
 	local src_cmd="" preview_cmd="sh $self_q --internal-preview {}"
 	local fzf_mode_opts="--multi"
+	local show_hidden="${FZFS_SHOW_HIDDEN:-1}"
 
 	case "$mode" in
 	git_*) src_cmd="sh $self_q --internal-gen-git ${mode#git_}" ;;
@@ -334,16 +343,22 @@ _fzfs_ui_search() {
 		src_cmd="sh $self_q --internal-gen-commits"
 		preview_cmd="sh $self_q --internal-git-preview {}"
 		;;
-	recent) src_cmd="sh $self_q --internal-gen-files recent $(_fzfs_quote "$base")" ;;
+	recent) src_cmd="sh $self_q --internal-gen-files recent $(_fzfs_quote "$base") $show_hidden" ;;
 	search)
 		fzf_mode_opts="$fzf_mode_opts --disabled"
 		src_cmd="sh $self_q --internal-gen-search $(_fzfs_quote "$base") ''"
 		;;
-	*) src_cmd="sh $self_q --internal-gen-files $mode $(_fzfs_quote "$base")" ;;
+	*) src_cmd="sh $self_q --internal-gen-files $mode $(_fzfs_quote "$base") $show_hidden" ;;
 	esac
 
 	local binds="${BIND_PREVIEW}:toggle-preview,${BIND_YANK}:execute-silent(sh $self_q --internal-copy {}),alt-up:preview-up,alt-down:preview-down"
 	local b_edit="${BIND_EDIT}:become(${EDITOR:-vi} {+})"
+
+	case "$mode" in
+	f | d | a | recent)
+		binds="$binds,${BIND_HIDDEN}:rebind(echo)+reload(sh $self_q --internal-gen-files $mode $(_fzfs_quote "$base") \$( [ $show_hidden -eq 1 ] && echo 0 || echo 1 ))+reload-bind(change-prompt($([ $show_hidden -eq 1 ] && echo 'Vis> ' || echo 'All> ')))+execute-silent( [ $show_hidden -eq 1 ] && export FZFS_SHOW_HIDDEN=0 || export FZFS_SHOW_HIDDEN=1 )"
+		;;
+	esac
 
 	if [ "$mode" = "search" ]; then
 		# For search mode, we use {1} for file and {2} for line. become() replaces process.
@@ -434,10 +449,11 @@ EOF
 	cat <<EOF
 Usage: fzfs [MODE] [OPTIONS] [PATH]
 
-A unified, high-performance fuzzy finder.
+A fuzzy finder, with extra snacks.
 
 MODES:
-  (default)       Search all (files + dirs)
+  (default)       Same as -a
+  -a, --all       Search all (files + dirs)
   -f, --files     Search files only
   -d, --dirs      Search directories only (Ctrl-O to cd)
   -s, --search    Live file content search (ripgrep)
@@ -462,36 +478,116 @@ EOF
 _fzfs_doctor() {
 	printf "%bFZFS Doctor - Diagnostics%b\n" "${CLR_BOLD_CYAN}" "${CLR_RESET}"
 	printf "  Script: %s\n\n" "$FZFS_SCRIPT_PATH"
-	_doc_line() {
-		printf "    %-14s : " "$1"
-		if _fzfs_has "$2"; then
-			printf "%b%-8s (active)%b\n" "${CLR_GREEN}" "$2" "${CLR_RESET}"
-		else printf "%b%-8s (missing)%b -> fallback: %s\n" "${CLR_YELLOW}" "$2" "${CLR_RESET}" "$3"; fi
-	}
-	printf "  %bCore:%b\n" "${CLR_BOLD}" "${CLR_RESET}"
+
+	printf "  %bCore Dependencies:%b\n" "${CLR_BOLD}" "${CLR_RESET}"
 	if _fzfs_has "$FZFS_BIN"; then
 		local v
 		v=$("$FZFS_BIN" --version | awk '{print $1}')
-		printf "    %-14s : %b%s (v%s)%b\n" "FZF Binary" "${CLR_GREEN}" "$FZFS_BIN" "$v" "${CLR_RESET}"
+		printf "    %-18s : %b%s (v%s)%b\n" "FZF Binary" "${CLR_GREEN}" "$FZFS_BIN" "$v" "${CLR_RESET}"
 	else
-		printf "    %-14s : %b%s (missing)%b\n" "FZF Binary" "${CLR_RED}" "$FZFS_BIN" "${CLR_RESET}"
+		printf "    %-18s : %b%s (missing)%b\n" "FZF Binary" "${CLR_RED}" "$FZFS_BIN" "${CLR_RESET}"
 	fi
-	printf "\n  %bTooling:%b\n" "${CLR_BOLD}" "${CLR_RESET}"
-	_doc_line "File Finder" "fd" "find"
-	_doc_line "Content Search" "rg" "grep"
-	_doc_line "Directory LS" "$TOOL_LS" "ls"
-	_doc_line "File Preview" "bat" "cat"
-	_doc_line "Git Diff" "delta" "bat/cat"
-	printf "\n  %bUtilities:%b\n" "${CLR_BOLD}" "${CLR_RESET}"
-	_fzfs_has file && printf "    %-14s : %bfile (ok)%b\n" "Binary Det" "${CLR_GREEN}" "${CLR_RESET}" || printf "    %-14s : %bmissing%b\n" "Binary Det" "${CLR_RED}" "${CLR_RESET}"
 
-	_fzfs_status() { _fzfs_has "$1" && printf "%b%s (ok)%b " "${CLR_GREEN}" "$1" "${CLR_RESET}" || printf "%b%s (missing)%b " "${CLR_RED}" "$1" "${CLR_RESET}"; }
-	printf "    %-14s : " "Archives"
+	printf "\n  %bActive Tooling (with fallbacks):%b\n" "${CLR_BOLD}" "${CLR_RESET}"
+
+	printf "    %-18s : " "File Finder"
+	if [ "$HAS_FD" -eq 1 ]; then
+		local v
+		v=$(fd --version 2>/dev/null | awk '{print $2}')
+		printf "%bfd (v%s)%b\n" "${CLR_GREEN}" "$v" "${CLR_RESET}"
+	else
+		printf "%bfind (native fallback)%b\n" "${CLR_YELLOW}" "${CLR_RESET}"
+	fi
+
+	printf "    %-18s : " "Content Search"
+	if [ "$TOOL_GREP" = "rg" ]; then
+		local v
+		v=$(rg --version 2>/dev/null | head -n1 | awk '{print $2}')
+		printf "%brg (v%s)%b\n" "${CLR_GREEN}" "$v" "${CLR_RESET}"
+	else
+		printf "%bgrep (native fallback)%b\n" "${CLR_YELLOW}" "${CLR_RESET}"
+	fi
+
+	printf "    %-18s : " "Directory Listing"
+	if [ "$TOOL_LS" = "eza" ]; then
+		local v
+		v=$(eza --version 2>/dev/null | awk '{print $2}')
+		printf "%beza (v%s)%b\n" "${CLR_GREEN}" "$v" "${CLR_RESET}"
+	elif [ "$TOOL_LS" = "exa" ]; then
+		printf "%bexa (installed)%b\n" "${CLR_GREEN}" "${CLR_RESET}"
+	else
+		printf "%bls (native fallback)%b\n" "${CLR_YELLOW}" "${CLR_RESET}"
+	fi
+
+	printf "    %-18s : " "File Preview"
+	if [ "$TOOL_CAT" = "bat" ]; then
+		local v
+		v=$(bat --version 2>/dev/null | awk '{print $2}')
+		printf "%bbat (v%s)%b\n" "${CLR_GREEN}" "$v" "${CLR_RESET}"
+	else
+		printf "%bcat (native fallback)%b\n" "${CLR_YELLOW}" "${CLR_RESET}"
+	fi
+
+	printf "    %-18s : " "Git Diff Viewer"
+	if [ "$HAS_DELTA" -eq 1 ]; then
+		local v
+		v=$(delta --version 2>/dev/null | awk '{print $2}')
+		printf "%bdelta (v%s)%b\n" "${CLR_GREEN}" "$v" "${CLR_RESET}"
+	else
+		if [ "$TOOL_CAT" = "bat" ]; then
+			printf "%bbat (as diff viewer)%b\n" "${CLR_GREEN}" "${CLR_RESET}"
+		else
+			printf "%bcat (native fallback)%b\n" "${CLR_YELLOW}" "${CLR_RESET}"
+		fi
+	fi
+
+	printf "\n  %bUtilities:%b\n" "${CLR_BOLD}" "${CLR_RESET}"
+
+	_fzfs_status() {
+		if _fzfs_has "$1"; then
+			printf "%b%s%b " "${CLR_GREEN}" "$1" "${CLR_RESET}"
+		else
+			printf "%b%s (missing)%b " "${CLR_RED}" "$1" "${CLR_RESET}"
+		fi
+	}
+
+	_fzfs_binary_status() {
+		if _fzfs_has file; then
+			printf "%bfile (ok)%b\n" "${CLR_GREEN}" "${CLR_RESET}"
+		else
+			printf "%bfile (missing)%b\n" "${CLR_RED}" "${CLR_RESET}"
+		fi
+	}
+
+	_fzfs_clipboard_status() {
+		if _fzfs_has pbcopy; then
+			printf "%bpbcopy (macOS)%b\n" "${CLR_GREEN}" "${CLR_RESET}"
+		elif _fzfs_has xclip; then
+			printf "%bxclip (Linux)%b\n" "${CLR_GREEN}" "${CLR_RESET}"
+		elif _fzfs_has xsel; then
+			printf "%bxsel (Linux)%b\n" "${CLR_GREEN}" "${CLR_RESET}"
+		else
+			printf "%bclipboard: none (missing)%b\n" "${CLR_RED}" "${CLR_RESET}"
+		fi
+	}
+
+	printf "    %-18s : " "Binary Detection"
+	_fzfs_binary_status
+
+	printf "    %-18s : " "Clipboard"
+	_fzfs_clipboard_status
+
+	printf "    %-18s : " "Archive Support"
 	_fzfs_status tar
 	_fzfs_status unzip
 	_fzfs_status 7z
 	_fzfs_status unrar
 	printf "\n"
+
+	printf "  %bConfiguration:%b\n" "${CLR_BOLD}" "${CLR_RESET}"
+	printf "    %-18s : %s\n" "Project Roots" "$FZFS_PROJECT_ROOTS"
+	printf "    %-18s : %s\n" "Cache Directory" "$FZFS_CACHE_DIR"
+	printf "    %-18s : %d items\n" "Excluded Patterns" $(printf '%s' "$FZFS_EXCLUDES" | wc -w | tr -d ' ')
 }
 
 # ==============================================================================
