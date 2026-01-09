@@ -1,0 +1,24 @@
+#!/bin/sh
+# Aliases map simple commands to dot_* functions.
+
+# -----------------------------------------------------------------------------
+# Core
+# -----------------------------------------------------------------------------
+
+alias dotreload='dot_reload'
+alias dotdoctor='dot_doctor'
+
+# -----------------------------------------------------------------------------
+# fzf snacks
+# -----------------------------------------------------------------------------
+
+#alias fzfs='fzf_snacks'
+
+# -----------------------------------------------------------------------------
+# Utilities
+# -----------------------------------------------------------------------------
+
+alias gitclean='dot_gitclean'
+alias nvimcfg='dot_nvimcfg'
+alias zreload='dot_zreload'
+# alias fzfs='...' # Sourced from scripts/fzf.sh automatically
