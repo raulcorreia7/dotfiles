@@ -38,9 +38,6 @@ __dot_source "$DOTFILES_SCRIPTS_DIR/tools.sh"
 __dot_source "$DOTFILES_SCRIPTS_DIR/git.sh"
 __dot_source "$DOTFILES_SCRIPTS_DIR/fzf.sh"
 
-# Shell-specific helpers.
-[ -n "${ZSH_VERSION:-}" ] && __dot_source "$DOTFILES_SCRIPTS_DIR/zsh.sh"
-
 # -----------------------------------------------------------------------------
 # Public commands
 # -----------------------------------------------------------------------------
