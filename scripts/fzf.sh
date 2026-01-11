@@ -1,5 +1,5 @@
 #!/bin/sh
-# shellcheck disable=SC3043
+# shellcheck disable=SC3043,SC2034
 # ==============================================================================
 # FZF Snacks (fzfs)
 # ==============================================================================
@@ -18,15 +18,14 @@ CLR_RED='\033[31m'
 CLR_GREEN='\033[32m'
 CLR_YELLOW='\033[33m'
 CLR_CYAN='\033[36m'
+CLR_MAGENTA='\033[35m'
 CLR_BOLD_CYAN='\033[1;36m'
 CLR_BOLD_YELLOW='\033[1;33m'
 
-# FZF Interaction Bindings
-BIND_PREVIEW='ctrl-p'
 BIND_EDIT='ctrl-e'
-BIND_YANK='ctrl-y'
-BIND_REFRESH='ctrl-r'
 BIND_CD='ctrl-o'
+BIND_PREVIEW='ctrl-p'
+BIND_YANK='ctrl-y'
 BIND_HIDDEN='ctrl-h'
 
 # ==============================================================================
@@ -37,9 +36,9 @@ FZFS_BIN="${FZF_BIN:-${FZF_CMD:-fzf}}"
 # Default options for the FZF UI. We ensure it has margin and padding of 1.
 # If the existing FZFS_OPTS_UI looks broken (e.g. from a previous version), we reset it.
 case "${FZFS_OPTS_UI:-}" in
-*margin=0* | *padding=0* | ---* | "") FZFS_OPTS_UI="--height=50% --layout=reverse --info=inline --border --margin=1 --padding=1 --pointer=▶ --marker=✓" ;;
+*margin=0* | *padding=0* | ---* | "") FZFS_OPTS_UI="--height=80% --layout=reverse --info=inline-right --border=rounded --margin=1 --padding=1 --pointer=▶ --marker=✓" ;;
 esac
-: "${FZFS_OPTS_PREVIEW:=right:50%:wrap}"
+: "${FZFS_OPTS_PREVIEW:=right:60%:wrap:nohidden}"
 : "${FZFS_PROJECT_ROOTS:=$HOME/personal}"
 : "${FZFS_CACHE_DIR:=${XDG_CACHE_HOME:-$HOME/.cache}/fzfs}"
 
@@ -105,6 +104,7 @@ _fzfs_resolve_self() {
 		printf '%s' "$FZFS_SCRIPT_PATH"
 		return
 	}
+	# shellcheck disable=SC3043
 	local src=""
 	if [ -n "${BASH_SOURCE:-}" ]; then
 		src="${BASH_SOURCE}"
@@ -170,8 +170,8 @@ _fzfs_gen_search() {
 	local query="$2"
 
 	if [ "$TOOL_GREP" = "rg" ]; then
-		rg --column --line-number --no-heading --color=always --smart-case \
-			--hidden --follow --glob "!.git/*" -- "$query" "$base" 2>/dev/null
+		# Faster: use -uu for unrestricted, -S for smart case, -N for no filename prefix
+		rg -uu -n --no-heading --color=always -S --glob '!.git' -- "$query" "$base" 2>/dev/null
 	else
 		grep -rIn "$query" "$base" 2>/dev/null
 	fi
@@ -184,8 +184,6 @@ _fzfs_gen_git() {
 	tracked) git ls-files ;;
 	status) git ls-files -m -o --exclude-standard ;;
 	staged) git diff --name-only --cached ;;
-	untracked) git ls-files -o --exclude-standard ;;
-	modified) git ls-files -m ;;
 	dirs) git ls-files -co --exclude-standard | awk -F/ 'BEGIN {OFS="/"} NF>1 {NF--; dir=$0; if (!seen[dir]++) { print dir "/"; fflush() }}' ;;
 	*) git ls-files -co --exclude-standard ;;
 	esac
@@ -214,13 +212,19 @@ _fzfs_gen_projects() {
 
 	for r in $roots; do
 		r="$(_fzfs_expand_path "$r")"
-		[ -d "$r" ] && dirs="$dirs $r"
+		if [ -d "$r" ]; then
+			if [ -z "$dirs" ]; then
+				dirs="$r"
+			else
+				dirs="$dirs $r"
+			fi
+		fi
 	done
 
 	[ -z "$dirs" ] && return
 
 	if [ "$HAS_FD" -eq 1 ]; then
-		fd --hidden --no-ignore --type d --glob .git $dirs -x dirname
+		fd --hidden --no-ignore --type d --glob .git "$dirs" -x dirname
 	else
 		for d in $dirs; do
 			find "$d" -type d -name .git -exec dirname {} \;
@@ -309,7 +313,7 @@ _fzfs_callback_branch_preview() {
 	fi
 
 	printf "\n%bBranch Graph (tree visualization):%b\n" "${CLR_BOLD_YELLOW}" "${CLR_RESET}"
-	git log --oneline --abbrev-commit --graph --decorate --color $base $ref -20 2>/dev/null | cut -c1-120
+	git log --oneline --abbrev-commit --graph --decorate --color "$base" "$ref" -20 2>/dev/null | cut -c1-120
 
 	printf "\n%bLatest Commit:%b\n" "${CLR_BOLD_YELLOW}" "${CLR_RESET}"
 	git log -1 --color=always --date=short --format="%C(yellow)%h%Creset %C(magenta)%ad%Creset %C(cyan)%an%Creset %s" "$ref" 2>/dev/null
@@ -346,12 +350,13 @@ _fzfs_ui_search() {
 	*) src_cmd="sh $self_q --internal-gen-files $mode $(_fzfs_quote "$base") $show_hidden" ;;
 	esac
 
-	local binds="${BIND_PREVIEW}:toggle-preview,${BIND_YANK}:execute-silent(sh $self_q --internal-copy {}),alt-up:preview-up,alt-down:preview-down"
+	local binds="${BIND_YANK}:execute-silent(sh $self_q --internal-copy {}),${BIND_PREVIEW}:toggle-preview,alt-up:preview-up,alt-down:preview-down"
 	local b_edit="${BIND_EDIT}:become(${EDITOR:-vi} {+})"
 
 	case "$mode" in
 	f | d | a | recent)
-		binds="$binds,${BIND_HIDDEN}:rebind(echo)+reload(sh $self_q --internal-gen-files $mode $(_fzfs_quote "$base") \$( [ $show_hidden -eq 1 ] && echo 0 || echo 1 ))+reload-bind(change-prompt($([ $show_hidden -eq 1 ] && echo 'Vis> ' || echo 'All> ')))+execute-silent( [ $show_hidden -eq 1 ] && export FZFS_SHOW_HIDDEN=0 || export FZFS_SHOW_HIDDEN=1 )"
+		# shellcheck disable=SC2086,SC2193
+		binds="$binds,${BIND_HIDDEN}:reload(sh $self_q --internal-gen-files $mode $(_fzfs_quote "$base") \$( [ \"$show_hidden\" = 1 ] && echo 0 || echo 1 ))+change-prompt($([ \"$show_hidden\" = 1 ] && echo 'Vis> ' || echo 'All> '))+execute-silent( [ \"$show_hidden\" = 1 ] && export FZFS_SHOW_HIDDEN=0 || export FZFS_SHOW_HIDDEN=1 )"
 		;;
 	esac
 
@@ -366,7 +371,7 @@ _fzfs_ui_search() {
 
 	local result
 	# shellcheck disable=SC2086
-	result=$(eval "$src_cmd" | "$FZFS_BIN" --ansi --no-sort --header "fzfs: Enter(Select) $BIND_CD(cd) $BIND_EDIT(Edit) $BIND_YANK(Copy)" $FZFS_OPTS_UI $fzf_mode_opts --preview "$preview_cmd" --preview-window "$FZFS_OPTS_PREVIEW" --bind "$binds" --expect=$BIND_CD) || return 1
+	result=$(eval "$src_cmd" | "$FZFS_BIN" --ansi --no-sort --header "fzfs: Enter(Select) C-e(Edit) C-o(Cd) C-p(Preview) C-y(Copy) C-h(Hidden)" $FZFS_OPTS_UI $fzf_mode_opts --preview "$preview_cmd" --preview-window "$FZFS_OPTS_PREVIEW" --bind "$binds" --expect=$BIND_CD) || return 1
 
 	local key
 	key="$(printf '%s\n' "$result" | head -n1)"
@@ -419,7 +424,7 @@ _fzfs_ui_branch() {
 
 	local result
 	# shellcheck disable=SC2086
-	result="$(eval "$c_loc" | "$FZFS_BIN" --ansi --header "Branches: Ctrl-L(ocal) Ctrl-R(emote) Ctrl-F(etch)" $FZFS_OPTS_UI --prompt "Local> " --preview "sh $self_q --internal-branch-preview {}" --preview-window "$FZFS_OPTS_PREVIEW" --bind "$binds")" || return 1
+	result="$(eval "$c_loc" | "$FZFS_BIN" --ansi --header "Branches: C-l(Local) C-r(Remote) C-f(Fetch)" $FZFS_OPTS_UI --prompt "Local> " --preview "sh $self_q --internal-branch-preview {}" --preview-window "$FZFS_OPTS_PREVIEW" --bind "$binds")" || return 1
 	local sel
 	sel="$(printf '%s\n' "$result" | head -n1 | awk '{print $1}')"
 	[ -n "$sel" ] && git checkout "$sel"
@@ -430,43 +435,36 @@ _fzfs_ui_branch() {
 # ==============================================================================
 
 _fzfs_help() {
-	printf "%b" "${CLR_BOLD_CYAN}"
-	cat <<'EOF'
-    _______  _______  _______  _______ 
-   |  ____||___  / ||  ____|/  ____/ 
-   | |__      / /  || |__   | (___   
-   |  __|    / /   ||  __|   \___ \  
-   | |      / /__  || |      ____) | 
-   |_|     /_____| ||_|     |_____/  
-                                     
-EOF
-	printf "%b" "${CLR_RESET}"
+	printf "\n"
+	printf "%b███████ ███████ ███████ ███████%b\n" "${CLR_BOLD_CYAN}" "${CLR_RESET}"
+	printf "%b██         ███  ██      ██     %b\n" "${CLR_CYAN}" "${CLR_RESET}"
+	printf "%b█████     ███   █████   ███████%b\n" "${CLR_BOLD_CYAN}" "${CLR_RESET}"
+	printf "%b██       ███    ██           ██%b\n" "${CLR_CYAN}" "${CLR_RESET}"
+	printf "%b██      ███████ ██      ███████%b\n" "${CLR_BOLD_CYAN}" "${CLR_RESET}"
+	printf "\n%b        fuzzy finder snacks%b\n\n" "${CLR_BOLD}" "${CLR_RESET}"
 	cat <<EOF
-Usage: fzfs [MODE] [OPTIONS] [PATH]
-
-A fuzzy finder, with extra snacks.
+Usage: fzfs [MODE] [PATH]
 
 MODES:
-  (default)       Same as -a
-  -a, --all       Search all (files + dirs)
-  -f, --files     Search files only
-  -d, --dirs      Search directories only (Ctrl-O to cd)
-  -s, --search    Live file content search (ripgrep)
-  -g, --git       Git tracked files
-  -gs, --status   Git status (modified/untracked)
-  -gst, --staged  Git staged files
-  -gu, --untracked Git untracked files
-  -gm, --modified Git modified files
-  -gd, --git-dirs Git directories (Ctrl-O to cd)
-  -gb, --branch   Git branches (interactive)
-  -gc, --commits  Git commits browser
-  -gp, --projects Git project jumping (Cached, Ctrl-O to cd)
+  -a,  --all        Files and directories (default)
+  -f,  --files      Files only
+  -d,  --dirs       Directories
+  -s,  --search      Live file content search
+  -g,  --git        Git tracked files
+  -gs, --status    Git status
+  -gst, --staged   Git staged files
+  -gd, --git-dirs  Git directories
+  -gb, --branch    Git branches
+  -gc, --commits   Git commits
+  -gp, --projects  Git projects
 
 KEYS:
-  Enter           Select / Open / Checkout
-  $BIND_CD          cd into selection (Directories)
-  $BIND_EDIT          Open in \$EDITOR
-  $BIND_YANK          Copy selection to clipboard
+  Enter             Select
+  ctrl-e            Edit file(s)
+  ctrl-o            cd to directory
+  ctrl-p            Toggle preview
+  ctrl-y            Copy path
+  ctrl-h            Toggle hidden files
 EOF
 }
 
@@ -582,7 +580,7 @@ _fzfs_doctor() {
 	printf "  %bConfiguration:%b\n" "${CLR_BOLD}" "${CLR_RESET}"
 	printf "    %-18s : %s\n" "Project Roots" "$FZFS_PROJECT_ROOTS"
 	printf "    %-18s : %s\n" "Cache Directory" "$FZFS_CACHE_DIR"
-	printf "    %-18s : %d items\n" "Excluded Patterns" $(printf '%s' "$FZFS_EXCLUDES" | wc -w | tr -d ' ')
+	printf "    %-18s : %d items\n" "Excluded Patterns" "$(printf '%s' "$FZFS_EXCLUDES" | wc -w | tr -d ' ')"
 }
 
 # ==============================================================================
@@ -606,8 +604,6 @@ fzfs() {
 		-gf | --git-all) mode="git_all" ;;
 		-gs | --status) mode="git_status" ;;
 		-gst | --staged) mode="git_staged" ;;
-		-gu | --untracked) mode="git_untracked" ;;
-		-gm | --modified) mode="git_modified" ;;
 		-mr | --recent) mode="recent" ;;
 		-gb | --branch) mode="branch" ;;
 		-gc | --commits) mode="commits" ;;

@@ -14,3 +14,5 @@
 # FZF_SNACKS_UI_OPTS="--height=50% --layout=reverse --info=inline --border --margin=1 --padding=1"
 # FZF_SNACKS_PREVIEW_WINDOW="right:45%:wrap"
 # FZF_SNACKS_DIFFSTAT_OPTS="--stat=80,40,4"
+
+export EDITOR=nvim
