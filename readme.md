@@ -12,8 +12,7 @@ dotfiles/
 ├── scripts/         # Helper functions
 │   ├── fzf.sh       # FZF integration
 │   ├── git.sh       # Git helpers
-│   ├── tools.sh     # Utilities
-│   └── zsh.sh       # Zsh-specific helpers
+│   └── tools.sh     # Utilities
 ├── bin/             # Optional executables
 ├── init.sh          # Entrypoint (sourced by shell)
 └── install.sh       # Symlink helper
@@ -21,18 +20,59 @@ dotfiles/
 
 ## Installation
 
-1. Clone the repository:
+1. Clone repository:
 ```sh
 git clone https://github.com/YOUR_USER/dotfiles.git ~/personal/dotfiles
 ```
 
-2. Run the install script:
+2. Install dependencies:
+
+**For minimal setup (dotfiles only):**
+```sh
+brew bundle --file=packages/brew/Brewfile.base
+```
+
+**For complete development system:**
+```sh
+brew bundle --file=packages/brew/Brewfile
+```
+
+See `packages/brew/README.md` for modular installation options.
+
+3. Run the install script:
 ```sh
 cd ~/personal/dotfiles
 ./install.sh
 ```
 
-3. Source init.sh from your shell config:
+4. Source init.sh from your shell config:
+
+**For zsh:** Add to `~/.zshrc`
+**For bash:** Add to `~/.bashrc`
+
+```sh
+[ -r "$HOME/personal/dotfiles/init.sh" ] && . "$HOME/personal/dotfiles/init.sh"
+```
+
+2. Install dependencies:
+
+**For minimal setup (dotfiles only):**
+```sh
+brew bundle --file=Brewfile.minimal
+```
+
+**For full development system:**
+```sh
+brew bundle --file=Brewfile.full
+```
+
+3. Run the install script:
+```sh
+cd ~/personal/dotfiles
+./install.sh
+```
+
+4. Source init.sh from your shell config:
 
 **For zsh:** Add to `~/.zshrc`
 **For bash:** Add to `~/.bashrc`
@@ -104,9 +144,4 @@ dotreload
 Check tool availability:
 ```sh
 dotdoctor
-```
-
-Reload zsh config:
-```sh
-zreload
 ```
