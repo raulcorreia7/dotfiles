@@ -1,0 +1,101 @@
+# Brewfile.development
+# Development tools, languages, and infrastructure
+# Run: brew bundle --file=packages/brew/Brewfile.development
+
+# Include base packages
+eval "$(<$(dirname "${BASH_SOURCE[0]:-$0}")/Brewfile.base)"
+
+# =============================================================================
+# VERSION CONTROL
+# =============================================================================
+brew "git-delta"
+brew "difftastic"
+brew "git-lfs"
+# brew "git-standup"
+brew "gh"
+brew "lazygit"
+
+# =============================================================================
+# EDITORS
+# =============================================================================
+brew "neovim"
+
+# =============================================================================
+# LANGUAGES
+# =============================================================================
+# Rust
+# brew "rust"
+# brew "rustup"
+
+# Go
+# brew "go"
+
+# JavaScript
+# brew "deno"
+brew "node"
+
+# Python (keeping latest 2)
+# brew "python@3.13"
+# brew "python@3.14"
+
+# Lua
+# brew "lua"
+# brew "luajit"
+
+# =============================================================================
+# BUILD TOOLS
+# =============================================================================
+# brew "cmake"
+# brew "make"
+# brew "ninja"
+# brew "ccache"
+# brew "pkgconf"
+
+# =============================================================================
+# DATA & QUERY TOOLS
+# =============================================================================
+# JSON
+# brew "fx"
+# brew "gron"
+
+# Calculators
+# brew "numbat"
+# brew "insect"
+
+# =============================================================================
+# CLOUD & INFRASTRUCTURE
+# =============================================================================
+brew "awscli"
+brew "aws-vault"
+# brew "doctl"
+# brew "terraform"
+# brew "tflint"
+# brew "helm"
+
+# =============================================================================
+# DATABASE TOOLS
+# =============================================================================
+# Uncomment if you need these:
+# brew "pgcli"      # Postgres CLI with autocomplete
+# brew "mycli"      # MySQL CLI with autocomplete
+# brew "redis-cli"  # Redis CLI
+
+# =============================================================================
+# QUALITY & TESTING
+# =============================================================================
+brew "shellcheck"
+brew "shfmt"
+brew "watchexec"
+# Uncomment if you need these:
+# brew "golangci-lint"  # Go linters
+# brew "ruff"           # Python linter
+# brew "act"            # Run GitHub Actions locally
+# brew "pre-commit"     # Pre-commit hooks framework
+
+# =============================================================================
+# DEV TOOLS
+# =============================================================================
+brew "just"          # Command runner (like make but simpler)
+# Uncomment if you need:
+# brew "dive"          # Explore Docker image layers
+brew "lazydocker"    # Docker TUI
