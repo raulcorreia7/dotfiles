@@ -43,7 +43,7 @@ brew bundle --file=packages/brew/Brewfile.gui
 ### For New Machines
 Quick minimal setup (base + cli):
 ```sh
-cd ~/personal/dotfiles
+cd ~/.dotfiles
 brew bundle --file=packages/brew/Brewfile.base
 brew bundle --file=packages/brew/Brewfile.cli
 ```

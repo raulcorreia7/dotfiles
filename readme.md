@@ -22,7 +22,7 @@ dotfiles/
 
 1. Clone repository:
 ```sh
-git clone https://github.com/YOUR_USER/dotfiles.git ~/personal/dotfiles
+git clone https://github.com/YOUR_USER/dotfiles.git ~/.dotfiles
 ```
 
 2. Install dependencies:
@@ -41,7 +41,7 @@ See `packages/brew/README.md` for modular installation options.
 
 3. Run the install script:
 ```sh
-cd ~/personal/dotfiles
+cd ~/.dotfiles
 ./install.sh
 ```
 
@@ -51,38 +51,10 @@ cd ~/personal/dotfiles
 **For bash:** Add to `~/.bashrc`
 
 ```sh
-[ -r "$HOME/personal/dotfiles/init.sh" ] && . "$HOME/personal/dotfiles/init.sh"
-```
-
-2. Install dependencies:
-
-**For minimal setup (dotfiles only):**
-```sh
-brew bundle --file=Brewfile.minimal
-```
-
-**For full development system:**
-```sh
-brew bundle --file=Brewfile.full
-```
-
-3. Run the install script:
-```sh
-cd ~/personal/dotfiles
-./install.sh
-```
-
-4. Source init.sh from your shell config:
-
-**For zsh:** Add to `~/.zshrc`
-**For bash:** Add to `~/.bashrc`
-
-```sh
-[ -r "$HOME/personal/dotfiles/init.sh" ] && . "$HOME/personal/dotfiles/init.sh"
+[ -r "$HOME/.dotfiles/init.sh" ] && . "$HOME/.dotfiles/init.sh"
 ```
 
 ## What it Links
-
 The install script creates:
 - `config/` → `~/.config/dotfiles/`
 - `bin/*` → `~/.local/bin`
