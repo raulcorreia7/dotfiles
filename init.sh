@@ -5,7 +5,7 @@
 # Paths
 # -----------------------------------------------------------------------------
 
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/personal/dotfiles}"
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 DOTFILES_CONFIG_DIR="$DOTFILES_DIR/config"
 DOTFILES_SCRIPTS_DIR="$DOTFILES_DIR/scripts"
 
@@ -14,17 +14,17 @@ DOTFILES_SCRIPTS_DIR="$DOTFILES_DIR/scripts"
 # -----------------------------------------------------------------------------
 
 __dot_log() {
-	printf '%s\n' "$*" >&2
+  printf '%s\n' "$*" >&2
 }
 
 __dot_debug() {
-	[ "${DOTFILES_DEBUG:-0}" = "1" ] && __dot_log "$@"
+  [ "${DOTFILES_DEBUG:-0}" = "1" ] && __dot_log "$@"
 }
 
 __dot_source() {
-	[ -r "$1" ] || return 0
-	__dot_debug "dotfiles: source $1"
-	. "$1"
+  [ -r "$1" ] || return 0
+  __dot_debug "dotfiles: source $1"
+  . "$1"
 }
 
 # -----------------------------------------------------------------------------
@@ -43,9 +43,9 @@ __dot_source "$DOTFILES_SCRIPTS_DIR/fzf.sh"
 # -----------------------------------------------------------------------------
 
 dot_reload() {
-	# Reload config and functions without restarting shell.
-	__dot_debug "dotfiles: reload"
-	. "$DOTFILES_DIR/init.sh"
+  # Reload config and functions without restarting shell.
+  __dot_debug "dotfiles: reload"
+  . "$DOTFILES_DIR/init.sh"
 }
 
 # -----------------------------------------------------------------------------
