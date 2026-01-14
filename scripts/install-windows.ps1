@@ -3,6 +3,14 @@ param(
     [string]$Category = 'all'
 )
 
+# -----------------------------------------------------------------------------
+# Configuration
+# -----------------------------------------------------------------------------
+
+$BREW_INSTALL_URL = "https://brew.sh"
+$CHOCO_INSTALL_URL = "https://community.chocolatey.org/install.ps1"
+$SCOOP_INSTALL_URL = "https://get.scoop.sh"
+
 $PackageMap = @{
     'googlechrome'       = @{ choco = 'google-chrome'; scoop = 'googlechrome'; winget = 'Google.Chrome' }
     'firefox'            = @{ choco = 'firefox'; scoop = 'firefox'; winget = 'Mozilla.Firefox' }
@@ -69,7 +77,7 @@ function Install-ChocolateyPackage {
 
     if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
         Write-Host "Chocolatey not found. Install with:" -ForegroundColor Yellow
-        Write-Host "Set-ExecutionPolicy Bypass -Scope Process; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
+        Write-Host "Set-ExecutionPolicy Bypass -Scope Process; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('${CHOCO_INSTALL_URL}'))"
         return $false
     }
 
@@ -83,7 +91,7 @@ function Install-ScoopPackage {
 
     if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
         Write-Host "  [Scoop] not installed. Install with:" -ForegroundColor Yellow
-        Write-Host "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser; irm get.scoop.sh | iex"
+        Write-Host "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser; irm ${SCOOP_INSTALL_URL} | iex"
         return $false
     }
 

@@ -1,8 +1,11 @@
 #!/bin/sh
 set -eu
 
-REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PKG_DIR="${REPO_DIR}/packages/arch"
+# -----------------------------------------------------------------------------
+# Load shared configuration
+# -----------------------------------------------------------------------------
+
+. "$(dirname "$0")/config.sh"
 
 error() {
 	printf 'Error: %s\n' "$1" >&2
@@ -27,7 +30,7 @@ read_packages() {
 
 install_pacman_packages() {
 	local category="$1"
-	local pkg_file="${PKG_DIR}/${category}"
+	local pkg_file="${PKGS_ARCH}/${category}"
 
 	if [ ! -f "$pkg_file" ]; then
 		return
@@ -65,9 +68,9 @@ install_paru() {
 		fi
 	done
 
-	local build_dir="/tmp/paru"
+	local build_dir="${BUILD_DIR}/paru"
 	rm -rf "$build_dir"
-	git clone https://aur.archlinux.org/paru.git "$build_dir"
+	git clone "${AUR_BASE_URL}/paru.git" "$build_dir"
 	cd "$build_dir"
 	makepkg -si
 	cd - >/dev/null
@@ -77,7 +80,7 @@ install_paru() {
 }
 
 install_aur_packages() {
-	local aur_file="${PKG_DIR}/aur"
+	local aur_file="${PKGS_ARCH}/aur"
 
 	if [ ! -f "$aur_file" ]; then
 		info "No AUR packages file found"

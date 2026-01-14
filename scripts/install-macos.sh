@@ -2,10 +2,11 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PACKAGES_DIR="$SCRIPT_DIR/../packages/macos"
+# -----------------------------------------------------------------------------
+# Load shared configuration
+# -----------------------------------------------------------------------------
 
-CATEGORIES="base cli development gui"
+. "$(dirname "$0")/config.sh"
 
 installed_count=0
 failed_count=0
@@ -14,7 +15,7 @@ failed_categories=""
 check_brew() {
 	if ! command -v brew >/dev/null 2>&1; then
 		echo "Error: Homebrew is not installed"
-		echo "Please install Homebrew from https://brew.sh"
+		echo "Please install Homebrew from ${BREW_INSTALL_URL}"
 		echo "  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
 		exit 1
 	fi
@@ -23,7 +24,7 @@ check_brew() {
 
 install_category() {
 	category="$1"
-	file="$PACKAGES_DIR/$category"
+	file="$PKGS_MACOS/$category"
 
 	if [ ! -f "$file" ]; then
 		echo "Skipping $category: file not found"
