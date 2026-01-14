@@ -10,12 +10,17 @@ dotfiles/
 │   ├── aliases      # Command aliases
 │   └── env          # Environment variables
 ├── scripts/         # Helper functions
+│   ├── bootstrap.sh # Bootstraps package managers (Homebrew, paru)
 │   ├── fzf.sh       # FZF integration
 │   ├── git.sh       # Git helpers
 │   └── tools.sh     # Utilities
+├── packages/        # OS-specific package lists
+│   ├── macos/       # Homebrew packages (base/cli/development/gui)
+│   ├── arch/        # pacman/AUR packages (base/cli/development/gui)
+│   └── windows/     # choco/scoop/winget packages (base/cli/development/gui)
 ├── bin/             # Optional executables
 ├── init.sh          # Entrypoint (sourced by shell)
-└── install.sh       # Symlink helper
+└── install.sh       # OS-aware installer dispatcher
 ```
 
 ## Installation
@@ -25,27 +30,35 @@ dotfiles/
 git clone https://github.com/YOUR_USER/dotfiles.git ~/.dotfiles
 ```
 
-2. Install dependencies:
+2. Run the OS-aware installer:
 
-**For minimal setup (dotfiles only):**
-```sh
-brew bundle --file=packages/brew/Brewfile.base
-```
-
-**For complete development system:**
-```sh
-brew bundle --file=packages/brew/Brewfile
-```
-
-See `packages/brew/README.md` for modular installation options.
-
-3. Run the install script:
+**macOS:**
 ```sh
 cd ~/.dotfiles
 ./install.sh
 ```
+- Auto-detects macOS
+- Bootstraps Homebrew (if missing)
+- Installs packages from packages/macos/ (base → cli → development → gui)
 
-4. Source init.sh from your shell config:
+**Arch/CachyOS:**
+```sh
+cd ~/.dotfiles
+./install.sh
+```
+- Auto-detects Arch/CachyOS
+- Installs pacman packages from packages/arch/
+- Bootstraps paru AUR helper
+- Installs AUR packages
+
+**Windows:**
+```pwsh
+pwsh -ExecutionPolicy Bypass -File scripts/install-windows.ps1
+```
+- Supports choco, scoop, or winget package managers
+- Installs packages from packages/windows/
+
+3. Source init.sh from your shell config:
 
 **For zsh:** Add to `~/.zshrc`
 **For bash:** Add to `~/.bashrc`
@@ -56,7 +69,7 @@ cd ~/.dotfiles
 
 ## What it Links
 The install script creates:
-- `config/` → `~/.config/dotfiles/`
+- `config/` → `~/.config/.dotfiles/`
 - `bin/*` → `~/.local/bin`
 
 ## Scripts
@@ -89,15 +102,14 @@ export FZFS_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/fzfs"
 
 ## Recommended Tools
 
-For optimal performance, install modern replacements:
+Modern tools are installed automatically via the OS-specific installers. Package lists are organized by category:
 
-```sh
-# macOS
-brew install fzf fd ripgrep bat eza delta
+- **base:** Core system tools
+- **cli:** Command-line utilities
+- **development:** Development environments
+- **gui:** Desktop applications
 
-# Linux
-# Check package manager for these tools
-```
+See packages/{macos,arch,windows}/ for package details.
 
 **Why modern tools?**
 - **fd** - Faster than `find`

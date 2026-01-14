@@ -2,8 +2,8 @@
 # Complete development system (combines all categories)
 # Run: brew bundle --file=packages/brew/Brewfile
 
-# Include all package categories
-eval "$(<$(dirname "${BASH_SOURCE[0]:-$0}")/Brewfile.base)"
-eval "$(<$(dirname "${BASH_SOURCE[0]:-$0}")/Brewfile.cli)"
-eval "$(<$(dirname "${BASH_SOURCE[0]:-$0}")/Brewfile.development)"
-eval "$(<$(dirname "${BASH_SOURCE[0]:-$0}")/Brewfile.gui)"
+# Note: For modular installation, use individual Brewfiles:
+#   brew bundle --file=packages/brew/Brewfile.base
+#   brew bundle --file=packages/brew/Brewfile.cli
+#   brew bundle --file=packages/brew/Brewfile.development
+#   brew bundle --file=packages/brew/Brewfile.gui

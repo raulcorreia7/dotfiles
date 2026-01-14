@@ -18,5 +18,5 @@ alias dotdoctor='dot_doctor'
 # Utilities
 # -----------------------------------------------------------------------------
 
-alias gitclean='dot_gitclean'
+alias gitclean='gits clean'
 alias nvimcfg='dot_nvimcfg'

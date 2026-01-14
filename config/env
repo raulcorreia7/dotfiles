@@ -5,14 +5,9 @@
 # Examples
 # -----------------------------------------------------------------------------
 
-# FZF_SNACKS_* variables override defaults (legacy DOT_FZF_* still works).
-# FZF_SNACKS_EXCLUDES=".git node_modules .venv venv .cache .npm .yarn .pnpm-store dist build target .ssh .gnupg"
-# FZF_SNACKS_PROJECT_EXCLUDES="node_modules .venv venv .cache .npm .yarn .pnpm-store dist build target .ssh .gnupg"
-# FZF_SNACKS_PROJECT_MAX_DEPTH="0" # Set to 0 for no depth limit.
-# FZF_SNACKS_PROJECT_ROOTS="$HOME"
-# FZF_SNACKS_PROJECT_CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles/gp.list"
-# FZF_SNACKS_UI_OPTS="--height=50% --layout=reverse --info=inline --border --margin=1 --padding=1"
-# FZF_SNACKS_PREVIEW_WINDOW="right:45%:wrap"
-# FZF_SNACKS_DIFFSTAT_OPTS="--stat=80,40,4"
+# FZFS_* variables override defaults (legacy DOT_FZF_* still works).
+# FZFS_EXCLUDES=".git node_modules .venv venv .cache .npm .yarn .pnpm-store dist build target .ssh .gnupg"
+# FZFS_PROJECT_ROOTS="$HOME"
+# FZFS_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/fzfs"
 
 export EDITOR=nvim
