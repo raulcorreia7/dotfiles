@@ -1,0 +1,7 @@
+brew "fzf"
+brew "git"
+brew "fd"
+brew "ripgrep"
+brew "bat"
+brew "eza"
+brew "jq"
