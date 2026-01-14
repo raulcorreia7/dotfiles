@@ -1,73 +1,79 @@
 #!/bin/sh
 set -e
-# Link config and bin entries into standard locations.
-
-# -----------------------------------------------------------------------------
-# Paths
-# -----------------------------------------------------------------------------
+# Main install dispatcher - bootstrap config and install packages for detected OS.
 
 DOTFILES_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
-CONFIG_TARGET="$XDG_CONFIG_HOME/.dotfiles"
-BIN_TARGET="$HOME/.local/bin"
-
-# -----------------------------------------------------------------------------
-# Helpers
-# -----------------------------------------------------------------------------
 
 log() {
-  printf '%s\n' "$*" >&2
+	printf '%s\n' "$*" >&2
 }
 
-debug() {
-  [ "${DOTFILES_DEBUG:-0}" = "1" ] && log "$@"
+detect_os() {
+	case "$(uname -s)" in
+	Darwin)
+		echo "macos"
+		;;
+	Linux)
+		if [ -f /etc/arch-release ] || [ -f /etc/cachyos-release ]; then
+			echo "arch"
+		else
+			echo "linux"
+		fi
+		;;
+	MINGW* | MSYS* | CYGWIN*)
+		echo "windows"
+		;;
+	*)
+		log "Unknown OS: $(uname -s)"
+		exit 1
+		;;
+	esac
 }
 
-ensure_dir() {
-  [ -d "$1" ] || mkdir -p "$1"
+main() {
+	os=$(detect_os)
+	log "detected OS: $os"
+
+	log "running bootstrap..."
+	. "$DOTFILES_DIR/scripts/bootstrap.sh"
+
+	case "$os" in
+	macos)
+		if [ -x "$DOTFILES_DIR/scripts/install-macos.sh" ]; then
+			log "installing macOS packages..."
+			. "$DOTFILES_DIR/scripts/install-macos.sh"
+		else
+			log "error: scripts/install-macos.sh not found or not executable"
+			exit 1
+		fi
+		;;
+	arch)
+		if [ -x "$DOTFILES_DIR/scripts/install-arch.sh" ]; then
+			log "installing Arch packages..."
+			. "$DOTFILES_DIR/scripts/install-arch.sh"
+		else
+			log "error: scripts/install-arch.sh not found or not executable"
+			exit 1
+		fi
+		;;
+	windows)
+		log "Windows detected: please run 'pwsh -ExecutionPolicy Bypass -File scripts/install-windows.ps1'"
+		log "or: 'powershell.exe -ExecutionPolicy Bypass -File scripts/install-windows.ps1'"
+		exit 0
+		;;
+	linux)
+		log "Linux detected but not Arch/CachyOS - package management not yet configured"
+		log "please add your distro support or install packages manually"
+		exit 1
+		;;
+	*)
+		log "error: unsupported OS: $os"
+		exit 1
+		;;
+	esac
+
+	log "installation complete!"
+	log "reload your shell: source ~/.zshrc or source ~/.bashrc"
 }
 
-link_path() {
-  src=$1
-  dest=$2
-  if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-    log "install: $dest exists (not symlink); skipping"
-    return 0
-  fi
-  debug "install: link $src -> $dest"
-  ln -sfn "$src" "$dest"
-}
-
-# -----------------------------------------------------------------------------
-# Link config and bin
-# -----------------------------------------------------------------------------
-
-ensure_dir "$XDG_CONFIG_HOME"
-ensure_dir "$BIN_TARGET"
-
-link_path "$DOTFILES_DIR/config" "$CONFIG_TARGET"
-
-if [ -d "$DOTFILES_DIR/bin" ]; then
-  for f in "$DOTFILES_DIR"/bin/*; do
-    [ -f "$f" ] || continue
-    target="$BIN_TARGET/$(basename "$f")"
-    link_path "$f" "$target"
-  done
-fi
-
-# -----------------------------------------------------------------------------
-# Shell setup notes
-# -----------------------------------------------------------------------------
-
-install_note() {
-  shell_rc=$1
-  if [ -r "$shell_rc" ]; then
-    if ! grep -Fq "$DOTFILES_DIR/init.sh" "$shell_rc"; then
-      log "install: add this to $shell_rc:"
-      log "[ -r \"$DOTFILES_DIR/init.sh\" ] && . \"$DOTFILES_DIR/init.sh\""
-    fi
-  fi
-}
-
-install_note "$HOME/.zshrc"
-install_note "$HOME/.bashrc"
+main "$@"
