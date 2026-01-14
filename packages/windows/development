@@ -3,17 +3,43 @@
 # =============================================================================
 # Development tools, languages, and infrastructure
 
-neovim
+# VERSION CONTROL
 git-delta
 difftastic
 git-lfs
 gh
 lazygit
+
+# EDITORS
+neovim
+
+# LANGUAGES (mise handles runtimes, skip)
+# python
+# nodejs
+# golang
+# rust
+
+# BUILD TOOLS (optional)
+# cmake
+# meson
+# ninja
+
+# DATA & QUERY TOOLS (optional)
+jq
+
+# CLOUD & INFRASTRUCTURE
 awscli
 aws-vault
+lazydocker
+
+# DATABASE TOOLS (optional)
+# postgresql-client
+# redis-tools
+
+# QUALITY & TESTING
 shellcheck
 shfmt
 watchexec
+
+# DEV TOOLS
 just
-lazydocker
-jq

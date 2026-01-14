@@ -1,9 +1,0 @@
-# Brewfile
-# Complete development system (combines all categories)
-# Run: brew bundle --file=packages/brew/Brewfile
-
-# Note: For modular installation, use individual Brewfiles:
-#   brew bundle --file=packages/brew/Brewfile.base
-#   brew bundle --file=packages/brew/Brewfile.cli
-#   brew bundle --file=packages/brew/Brewfile.development
-#   brew bundle --file=packages/brew/Brewfile.gui

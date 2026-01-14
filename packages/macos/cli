@@ -1,14 +1,85 @@
-brew "btop"
-brew "fastfetch"
-brew "tree"
-brew "rsync"
-brew "p7zip"
-brew "wget"
-brew "curlie"
-brew "tldr"
-brew "glow"
-brew "powerlevel10k"
-brew "zellij"
-brew "watch"
-brew "coreutils"
-brew "gnu-sed"
+# =============================================================================
+# CLI
+# =============================================================================
+# Command line utilities and tools
+
+# -----------------------------------------------------------------------------
+# SYSTEM MONITORING
+# -----------------------------------------------------------------------------
+btop
+fastfetch
+
+# -----------------------------------------------------------------------------
+# FILE OPERATIONS
+# -----------------------------------------------------------------------------
+tree
+rsync
+p7zip
+
+# -----------------------------------------------------------------------------
+# NETWORK & DOWNLOAD
+# -----------------------------------------------------------------------------
+wget
+curlie
+
+# -----------------------------------------------------------------------------
+# DOCUMENTATION
+# -----------------------------------------------------------------------------
+tldr
+glow
+
+# -----------------------------------------------------------------------------
+# SHELL ENHANCEMENT
+# -----------------------------------------------------------------------------
+powerlevel10k
+
+# Uncomment if you want shell history tools:
+# atuin          # Sync shell history across machines
+# mcfly          # Better shell history suggestions
+
+# -----------------------------------------------------------------------------
+# TERMINAL MULTIPLEXER
+# -----------------------------------------------------------------------------
+zellij
+
+# Uncomment if you want tmux:
+# tmux
+# tmuxp          # tmux session manager
+
+# -----------------------------------------------------------------------------
+# SSH & REMOTE
+# -----------------------------------------------------------------------------
+# Uncomment if you need these:
+# mosh            # Mobile shell that survives disconnects
+# sshfs           # Mount remote filesystems via SSH
+
+# -----------------------------------------------------------------------------
+# BACKUP & SYNC
+# -----------------------------------------------------------------------------
+# Uncomment if you need these:
+# restic          # Deduplicated backup tool
+# borgbackup      # Deduplicating backup program
+# rclone          # Sync to many cloud providers
+
+# -----------------------------------------------------------------------------
+# PASSWORD MANAGEMENT
+# -----------------------------------------------------------------------------
+# Uncomment if you need these:
+# pass            # Password manager (GPG-based)
+# age             # Modern encryption tool
+# sops            # Secrets management for files
+# bitwarden-cli   # CLI for Bitwarden
+
+# -----------------------------------------------------------------------------
+# TASK MANAGEMENT
+# -----------------------------------------------------------------------------
+# Uncomment if you need these:
+# taskwarrior     # Powerful CLI task manager
+# timewarrior     # Time tracking for tasks
+
+# -----------------------------------------------------------------------------
+# OTHER UTILITIES
+# -----------------------------------------------------------------------------
+watch
+coreutils
+gnu-sed

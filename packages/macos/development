@@ -1,15 +1,101 @@
-brew "mise"
-brew "neovim"
-brew "git-delta"
-brew "difftastic"
-brew "git-lfs"
-brew "gh"
-brew "lazygit"
-brew "awscli"
-brew "aws-vault"
-brew "shellcheck"
-brew "shfmt"
-brew "watchexec"
-brew "just"
-brew "lazydocker"
-brew "jq"
+# =============================================================================
+# DEVELOPMENT
+# =============================================================================
+# Development tools, languages, and infrastructure
+
+# -----------------------------------------------------------------------------
+# VERSION CONTROL
+# -----------------------------------------------------------------------------
+git-delta
+difftastic
+git-lfs
+git-standup
+gh
+lazygit
+
+# -----------------------------------------------------------------------------
+# EDITORS
+# -----------------------------------------------------------------------------
+neovim
+
+# -----------------------------------------------------------------------------
+# LANGUAGES
+# -----------------------------------------------------------------------------
+# Rust (optional - mise handles runtimes)
+# rust
+# rustup
+
+# Go (optional - mise handles runtimes)
+# go
+
+# JavaScript (optional - mise handles runtimes)
+# deno
+node
+
+# Python (optional - mise handles runtimes, keeping latest 2)
+# python@3.13
+# python@3.14
+
+# Lua (optional)
+# lua
+# luajit
+
+# -----------------------------------------------------------------------------
+# BUILD TOOLS
+# -----------------------------------------------------------------------------
+# Uncomment if you need these:
+# cmake
+# make
+# ninja
+# ccache
+# pkgconf
+
+# -----------------------------------------------------------------------------
+# DATA & QUERY TOOLS
+# -----------------------------------------------------------------------------
+# Uncomment if you need these:
+# fx
+# gron
+
+# Uncomment calculators:
+# numbat
+# insect
+
+# -----------------------------------------------------------------------------
+# CLOUD & INFRASTRUCTURE
+# -----------------------------------------------------------------------------
+awscli
+aws-vault
+# Uncomment if you need these:
+# doctl
+# terraform
+# tflint
+# helm
+
+# -----------------------------------------------------------------------------
+# DATABASE TOOLS
+# -----------------------------------------------------------------------------
+# Uncomment if you need these:
+# pgcli           # Postgres CLI with autocomplete
+# mycli            # MySQL CLI with autocomplete
+# redis-cli        # Redis CLI
+
+# -----------------------------------------------------------------------------
+# QUALITY & TESTING
+# -----------------------------------------------------------------------------
+shellcheck
+shfmt
+watchexec
+# Uncomment if you need these:
+# golangci-lint    # Go linters
+# ruff             # Python linter
+# act              # Run GitHub Actions locally
+# pre-commit       # Pre-commit hooks framework
+
+# -----------------------------------------------------------------------------
+# DEV TOOLS
+# -----------------------------------------------------------------------------
+just
+# Uncomment if you need:
+# dive             # Explore Docker image layers
+# lazydocker      # Docker TUI

@@ -1,5 +1,5 @@
 # =============================================================================
-# BASE
+# CORE DEPENDENCIES
 # =============================================================================
 # Core dependencies for dotfiles to function
 # Minimal set required by scripts
@@ -12,3 +12,22 @@ bat
 eza
 jq
 wl-clipboard
+
+# =============================================================================
+# SYSTEM MONITORING
+# =============================================================================
+# Uncomment if you want alternatives:
+# htop           # Classic process monitor
+# glances        # Cross-platform monitoring
+
+# =============================================================================
+# EDITORS
+# =============================================================================
+# Uncomment if you want alternatives:
+# neovim         # Already in development
+
+# =============================================================================
+# NETWORKING
+# =============================================================================
+# Uncomment if you want alternatives:
+# curl            # Already in cli

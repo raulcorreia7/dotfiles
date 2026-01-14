@@ -1,7 +1,32 @@
-brew "fzf"
-brew "git"
-brew "fd"
-brew "ripgrep"
-brew "bat"
-brew "eza"
-brew "jq"
+# =============================================================================
+# BASE
+# =============================================================================
+# Core dependencies for dotfiles to function
+# Minimal set required by scripts
+
+fzf
+git
+fd
+ripgrep
+bat
+eza
+jq
+
+# =============================================================================
+# SYSTEM MONITORING
+# =============================================================================
+# Uncomment if you want alternatives:
+# btop           # System monitor
+# fastfetch       # System info fetcher
+
+# =============================================================================
+# EDITORS
+# =============================================================================
+# Uncomment if you want alternatives:
+# neovim         # Already in development
+
+# =============================================================================
+# NETWORKING
+# =============================================================================
+# Uncomment if you want alternatives:
+# curl           # Already in cli

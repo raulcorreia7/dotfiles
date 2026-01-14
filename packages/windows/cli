@@ -3,17 +3,46 @@
 # =============================================================================
 # Command line utilities and tools
 
+# SYSTEM MONITORING
 btop
 fastfetch
+
+# FILE OPERATIONS
 tree
 rsync
 7zip
+
+# NETWORK & DOWNLOAD
 wget
 curlie
+
+# DOCUMENTATION
 tldr
 glow
+
+# SHELL ENHANCEMENT
 oh-my-posh
-zellij
-watch
 coreutils
 sed
+
+# TERMINAL MULTIPLEXER
+zellij
+
+# SSH & REMOTE (optional)
+# openssh
+# autossh
+
+# BACKUP & SYNC (optional)
+# rclone
+# restic
+
+# PASSWORD MANAGEMENT (optional)
+# pass
+# bitwarden-cli
+
+# TASK MANAGEMENT (optional)
+# taskwarrior
+# timewarrior
+
+# OTHER UTILITIES
+watch

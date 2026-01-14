@@ -3,6 +3,7 @@
 # =============================================================================
 # Core dependencies for dotfiles to function
 
+# CORE DEPENDENCIES
 fzf
 git
 fd
