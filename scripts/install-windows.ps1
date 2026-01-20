@@ -7,7 +7,6 @@ param(
 # Configuration
 # -----------------------------------------------------------------------------
 
-$BREW_INSTALL_URL = "https://brew.sh"
 $CHOCO_INSTALL_URL = "https://community.chocolatey.org/install.ps1"
 $SCOOP_INSTALL_URL = "https://get.scoop.sh"
 
