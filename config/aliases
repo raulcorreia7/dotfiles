@@ -19,4 +19,12 @@ alias dotdoctor='dot_doctor'
 # -----------------------------------------------------------------------------
 
 alias gitclean='gits clean'
-alias nvimcfg='dot_nvimcfg'
+alias nvcfg='dot_nvimcfg'
+
+# -----------------------------------------------------------------------------
+# Arch Linux
+# -----------------------------------------------------------------------------
+
+alias pacmanupdate='arch_pacmanupdate'
+alias paruupdate='arch_paruupdate'
+alias sysupdate='arch_sysupdate'
