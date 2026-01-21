@@ -5,8 +5,8 @@
 # Paths
 # -----------------------------------------------------------------------------
 
-DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_DIR="$DOTFILES_DIR"
 PACKAGES_DIR="$REPO_DIR/packages"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 CONFIG_TARGET="$XDG_CONFIG_HOME/.dotfiles"
@@ -52,4 +52,4 @@ SCOOP_INSTALL_URL="https://get.scoop.sh"
 # Init path
 # -----------------------------------------------------------------------------
 
-INIT_SCRIPT="$DOTFILES_DIR/init.sh"
+INIT_SCRIPT="$REPO_DIR/init.sh"

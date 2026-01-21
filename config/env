@@ -11,3 +11,4 @@
 # FZFS_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/fzfs"
 
 export EDITOR=nvim
+export VISUAL=code

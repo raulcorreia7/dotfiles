@@ -28,31 +28,28 @@ __dot_source() {
 }
 
 # -----------------------------------------------------------------------------
-# Load config and scripts
+# Load config and scripts (runtime-only)
 # -----------------------------------------------------------------------------
 
 # Optional config overrides (variables only).
 __dot_source "$DOTFILES_CONFIG_DIR/env"
 
-# -----------------------------------------------------------------------------
-# OS Detection and Scripts
-# -----------------------------------------------------------------------------
-# Detect OS and load OS-specific configuration scripts.
+for script in "$DOTFILES_SCRIPTS_DIR"/*.sh; do
+	[ -r "$script" ] || continue
+	. "$script"
+done
 
-DOTFILES_OS_DIR="$DOTFILES_SCRIPTS_DIR/os"
-case "$(uname -s)" in
-Linux)
-	[ -f /etc/arch-release ] && __dot_source "$DOTFILES_OS_DIR/arch.sh"
-	;;
-Darwin)
-	__dot_source "$DOTFILES_OS_DIR/macos.sh"
-	;;
-esac
+# -----------------------------------------------------------------------------
+# Zimfw (zsh only, no downloads)
+# -----------------------------------------------------------------------------
 
-# Core helpers.
-__dot_source "$DOTFILES_SCRIPTS_DIR/tools.sh"
-__dot_source "$DOTFILES_SCRIPTS_DIR/git.sh"
-__dot_source "$DOTFILES_SCRIPTS_DIR/fzf.sh"
+if [ -n "${ZSH_VERSION:-}" ]; then
+	if [ -r "$HOME/.zim/init.zsh" ]; then
+		. "$HOME/.zim/init.zsh"
+	elif [ -r "$DOTFILES_CONFIG_DIR/zimfw/init.zsh" ]; then
+		. "$DOTFILES_CONFIG_DIR/zimfw/init.zsh"
+	fi
+fi
 
 # -----------------------------------------------------------------------------
 # Tmux auto-start (interactive shells only)
@@ -67,8 +64,8 @@ __dot_tmux_autostart() {
 	[ -z "${TMUX:-}" ] || return 0
 	command -v tmux >/dev/null 2>&1 || return 0
 
-	session="${DOTFILES_TMUX_SESSION:-main}"
-	tmux new-session -A -s "$session"
+	session="${DOTFILES_TMUX_SESSION:-main}-$(date +%s)"
+	tmux new-session -s "$session"
 }
 
 __dot_tmux_autostart
@@ -79,7 +76,6 @@ __dot_tmux_autostart
 
 dot_reload() {
 	# Reload config and functions without restarting shell.
-	__dot_debug "dotfiles: reload"
 	. "$DOTFILES_DIR/init.sh"
 }
 

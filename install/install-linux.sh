@@ -5,7 +5,9 @@ set -eu
 # Load shared configuration
 # -----------------------------------------------------------------------------
 
-. "$(dirname "$0")/config.sh"
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REPO_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+. "$REPO_DIR/install/config.sh"
 
 error() {
 	printf 'Error: %s\n' "$1" >&2
@@ -102,15 +104,36 @@ install_aur_packages() {
 main() {
 	check_sudo
 
-	info "Installing pacman packages"
-	for category in base cli development gui; do
-		install_pacman_packages "$category"
-	done
+	if [ -f /etc/arch-release ] || [ -f /etc/cachyos-release ]; then
+		info "Installing pacman packages"
+		for category in base cli development gui; do
+			install_pacman_packages "$category"
+		done
 
-	install_paru
-	install_aur_packages
+		install_paru
+		install_aur_packages
 
-	info "Installation complete"
+		info "Installation complete"
+		return 0
+	fi
+
+	if [ -f /etc/os-release ]; then
+		. /etc/os-release
+		if [ "${ID:-}" = "arch" ] || [ "${ID:-}" = "cachyos" ]; then
+			info "Installing pacman packages"
+			for category in base cli development gui; do
+				install_pacman_packages "$category"
+			done
+
+			install_paru
+			install_aur_packages
+
+			info "Installation complete"
+			return 0
+		fi
+	fi
+
+	error "Unsupported Linux distro. Arch/CachyOS only."
 }
 
 main "$@"

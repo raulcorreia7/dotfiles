@@ -1,12 +1,14 @@
 #!/bin/sh
 
-set -euo pipefail
+set -e
 
 # -----------------------------------------------------------------------------
 # Load shared configuration
 # -----------------------------------------------------------------------------
 
-. "$(dirname "$0")/config.sh"
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REPO_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+. "$REPO_DIR/install/config.sh"
 
 installed_count=0
 failed_count=0

@@ -6,21 +6,37 @@ Personal dotfiles for zsh, focusing on modern tooling and efficient workflows.
 
 ```
 dotfiles/
-├── config/          # Configuration files
+├── config/          # XDG configuration files
 │   ├── aliases      # Command aliases
-│   └── env          # Environment variables
-├── scripts/         # Helper functions
-│   ├── bootstrap.sh # Bootstraps package managers (Homebrew, paru)
+│   ├── env          # Environment variables
+│   ├── .zimrc       # Zim configuration
+│   ├── zimfw/       # Zim framework (generated + modules)
+│   ├── tmux/        # Tmux configuration
+│   ├── nvim/        # Neovim configuration
+│   ├── mise/        # Mise (version manager) configuration
+│   ├── kitty/       # Kitty terminal configuration
+│   └── gh/          # GitHub CLI configuration
+├── scripts/         # Runtime shell helpers (sourced by init.sh)
 │   ├── fzf.sh       # FZF integration
-│   ├── git.sh       # Git helpers
-│   └── tools.sh     # Utilities
+│   ├── fzf-bindings.sh
+│   ├── fzfs_callbacks.sh
+│   ├── os-arch.sh   # Arch runtime helpers
+│   ├── tools.sh     # Utilities
+│   └── zoxide.sh
+├── install/         # OS installers + linker
+│   ├── install.sh
+│   ├── install-linux.sh
+│   ├── install-macos.sh
+│   ├── install-windows.ps1
+│   ├── config.sh
+│   └── link.sh
 ├── packages/        # OS-specific package lists
 │   ├── macos/       # Homebrew packages (base/cli/development/gui)
 │   ├── arch/        # pacman/AUR packages (base/cli/development/gui)
 │   └── windows/     # choco/scoop/winget packages (base/cli/development/gui)
-├── bin/             # Optional executables
+├── bin/             # Optional executables (linked to ~/.local/bin)
 ├── init.sh          # Entrypoint (sourced by shell)
-└── install.sh       # OS-aware installer dispatcher
+└── install.sh       # Symlink to install/install.sh
 ```
 
 ## Installation
@@ -30,7 +46,7 @@ dotfiles/
 git clone https://github.com/YOUR_USER/dotfiles.git ~/.dotfiles
 ```
 
-2. Run the OS-aware installer:
+2. Run OS-aware installer:
 
 **macOS:**
 ```sh
@@ -38,7 +54,6 @@ cd ~/.dotfiles
 ./install.sh
 ```
 - Auto-detects macOS
-- Bootstraps Homebrew (if missing)
 - Installs packages from packages/macos/ (base → cli → development → gui)
 
 **Arch/CachyOS:**
@@ -46,14 +61,14 @@ cd ~/.dotfiles
 cd ~/.dotfiles
 ./install.sh
 ```
-- Auto-detects Arch/CachyOS
-- Installs pacman packages from packages/arch/
+- Auto-detects Linux
+- Installs pacman packages from packages/arch/ (Arch/CachyOS only)
 - Bootstraps paru AUR helper
 - Installs AUR packages
 
 **Windows:**
 ```pwsh
-pwsh -ExecutionPolicy Bypass -File scripts/install-windows.ps1
+pwsh -ExecutionPolicy Bypass -File install/install-windows.ps1
 ```
 - Supports choco, scoop, or winget package managers
 - Installs packages from packages/windows/
@@ -67,62 +82,11 @@ pwsh -ExecutionPolicy Bypass -File scripts/install-windows.ps1
 [ -r "$HOME/.dotfiles/init.sh" ] && . "$HOME/.dotfiles/init.sh"
 ```
 
-## What it Links
-The install script creates:
-- `config/` → `~/.config/.dotfiles/`
-- `bin/*` → `~/.local/bin`
-
-## Scripts
-
-**FZF Snacks (fzf.sh)**
-- Unified fuzzy finder for files, git, projects, and content search
-- Supports multiple modes with live preview
-- See `fzfs --help` for usage
-
-**Git Helpers (git.sh)**
-- Safe git cleanup with confirmation
-- Prevents accidental destructive operations
-
-**Utilities (tools.sh)**
-- Tool availability diagnostics
-- Config helpers
-
-## Configuration
-
-Edit `config/env` for environment variables:
-
-```sh
-# Editor
-export EDITOR=nvim
-
-# FZF options
-export FZFS_PROJECT_ROOTS="$HOME/personal"
-export FZFS_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/fzfs"
-```
-
-## Recommended Tools
-
-Modern tools are installed automatically via the OS-specific installers. Package lists are organized by category:
-
-- **base:** Core system tools
-- **cli:** Command-line utilities
-- **development:** Development environments
-- **gui:** Desktop applications
-
-See packages/{macos,arch,windows}/ for package details.
-
-**Why modern tools?**
-- **fd** - Faster than `find`
-- **ripgrep (rg)** - Faster than `grep`
-- **bat** - Syntax highlighting
-- **eza** - Enhanced `ls`
-- **delta** - Better git diffs
-
 ## Usage
 
-Reload dotfiles after changes:
+Reload shell configuration:
 ```sh
-dotreload
+exec zsh
 ```
 
 Check tool availability:
