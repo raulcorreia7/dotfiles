@@ -28,4 +28,4 @@ else
 	WIFI_INFO="down"
 fi
 
-echo "$DISK | E:$ETH_INFO | W:$WIFI_INFO"
+echo "D:$DISK | E:$ETH_INFO | W:$WIFI_INFO"
