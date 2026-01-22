@@ -1,0 +1,7 @@
+config:
+  fallback-icon: "?"
+  show-name: true
+  icon-position: "left"
+
+icons:
+  opencode: "󰚩"

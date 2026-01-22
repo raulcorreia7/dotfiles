@@ -27,6 +27,16 @@ __dot_source() {
 	. "$1"
 }
 
+__dot_random_session_name() {
+	adjectives="cosmic happy brave calm dreamy eager fresh grand lucky neon quick rapid swift vivid wild zesty amber bronze coral fuchsia gold indigo jade lavender olive plum salmon teal azure beige crimson emerald ivory magenta ochre scarlet violet"
+	nouns="comet drake eagle falcon goose hawk ibex jaguar kiwi lark moose nightingale oriole pheasant quail raven sparrow tiger vulture whale yak zebra aurora canyon desert forest galaxy horizon island jungle mountain nebula oasis peninsula river savanna tundra valley volcano canyon dune glacier mesa oasis plateau summit valley canyon crater geyser lagoon marsh prairie"
+
+	adj=$(echo "$adjectives" | tr ' ' '\n' | shuf -n 1)
+	noun=$(echo "$nouns" | tr ' ' '\n' | shuf -n 1)
+
+	printf '%s-%s\n' "$adj" "$noun"
+}
+
 # -----------------------------------------------------------------------------
 # Load config and scripts (runtime-only)
 # -----------------------------------------------------------------------------
@@ -64,7 +74,9 @@ __dot_tmux_autostart() {
 	[ -z "${TMUX:-}" ] || return 0
 	command -v tmux >/dev/null 2>&1 || return 0
 
-	session="${DOTFILES_TMUX_SESSION:-main}-$(date +%s)"
+	# Use friendly random session names (like zellij)
+	# Set DOTFILES_TMUX_SESSION env var for custom name
+	session="${DOTFILES_TMUX_SESSION:-$(__dot_random_session_name)}"
 	tmux new-session -s "$session"
 }
 
