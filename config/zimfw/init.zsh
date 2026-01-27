@@ -1,4 +1,4 @@
-# FILE AUTOMATICALLY GENERATED FROM /home/rcorreia/.dotfiles/config/.zimrc
+# FILE AUTOMATICALLY GENERATED FROM /home/raul/.dotfiles/config/.zimrc
 # EDIT THE SOURCE FILE AND THEN RUN zimfw build. DO NOT DIRECTLY EDIT THIS FILE!
 
 if [[ -e ${ZIM_CONFIG_FILE:-${ZDOTDIR:-${HOME}}/.zimrc} ]] zimfw() { source "/usr/share/zimfw/zimfw.zsh" "${@}" }
