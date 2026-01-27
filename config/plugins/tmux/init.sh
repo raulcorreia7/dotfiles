@@ -6,10 +6,14 @@
 # -----------------------------------------------------------------------------
 
 __dot_random_session_name() {
-  awk 'BEGIN{
-    srand()
-    a="spicy crispy turbo sneaky chaotic legendary glitchy pixelated neon caffeinated tactical loot goblin sweaty salty cracked blessed cursed stealthy flashy pog champ retro 8bit arcade cartridge scanline chiptune"
-    b="speedrun lag spike headshot crit combo respawn checkpoint dungeon raid boss quest loot drop questline buff nerf potion mana stamina rogue wizard paladin ranger barbarian quickscope"
+  # Seed includes PID to avoid collisions when multiple shells start in the same second.
+  # $RANDOM is available in zsh/bash; falls back to 0 in plain /bin/sh.
+  awk -v pid="$$" -v r="${RANDOM:-0}" 'BEGIN{
+    srand(systime() + pid + r)
+    # 2-part, screen-share-safe-ish codenames: prefix-suffix.
+    # prefix = tone ∪ retro ∪ spice ; suffix = fantasy/classes ∪ places ∪ objectives ∪ loot/magic
+    a="pixel neon brisk mellow nimble lucid tidy cozy sunny steady lively spicy crispy turbo sneaky chaotic legendary glitchy caffeinated"
+    b="mage wizard rogue ranger paladin bard cleric druid barbarian tavern guild dungeon tower crypt library forge quest questline boss checkpoint respawn speedrun loot drop potion mana stamina relic scroll"
     n=split(a,A," "); m=split(b,B," ")
     print A[int(rand()*n)+1] "-" B[int(rand()*m)+1]
   }'
