@@ -101,6 +101,10 @@ Install:
 - `DOTFILES_MISE_INSTALL=0` skip `mise install`
 - `DOTFILES_ZIMFW_BUILD=0` skip `zimfw build`
 - `DOTFILES_POST_INSTALL=0` skip post-install setup
+- `DOTFILES_POST_INSTALL_ZSH=0` skip setting zsh as default
+- `DOTFILES_POST_INSTALL_PATH=0` skip adding `~/.local/bin` to PATH
+- `DOTFILES_POST_INSTALL_XDG_DIRS=0` skip creating XDG dirs
+- `DOTFILES_POST_INSTALL_GIT=0` skip git defaults (including side-by-side diffs)
 - `DOTFILES_ARCH_ASSUME_YES=1` pacman/paru non-interactive
 - `DOTFILES_TMUX_AUTOSTART=0` disable tmux autostart
 - `DOTFILES_TMUX_SESSION=...` set tmux session name
