@@ -62,7 +62,7 @@ cd ~/.dotfiles
 ```
 link.sh
   ├─ ensure dirs (~/.config, ~/.local/bin)
-  ├─ for each app config: nvim, tmux, mise, zimfw
+  ├─ for each app config: alacritty, ghostty, nvim, tmux, mise, zimfw
   │    ├─ if dest exists and is not a symlink -> backup with timestamp
   │    └─ symlink src -> ~/.config/<app>
   └─ for each file in bin/ -> ~/.local/bin/<file>
