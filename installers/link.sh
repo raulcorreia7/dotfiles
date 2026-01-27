@@ -37,8 +37,17 @@ ensure_dir "$XDG_CONFIG_HOME" && log "install: created $XDG_CONFIG_HOME"
 ensure_dir "$BIN_TARGET" && log "install: created $BIN_TARGET"
 ensure_dir "$DOTFILES_DIR/bin" && log "install: created $DOTFILES_DIR/bin"
 
+CONFIG_DIRS="
+alacritty
+ghostty
+nvim
+tmux
+mise
+zimfw
+"
+
 log "install: linking app config directories..."
-for name in nvim tmux mise zimfw; do
+for name in $CONFIG_DIRS; do
   src="$DOTFILES_DIR/config/$name"
   [ -e "$src" ] || continue
   link_path "$src" "$XDG_CONFIG_HOME/$name"
