@@ -20,6 +20,7 @@ DOTFILES_ZIM_CONFIG="$DOTFILES_CONFIG_DIR/.zimrc"
 
 MISE_INSTALL_ENABLED="${DOTFILES_MISE_INSTALL:-1}"
 ZIMFW_BUILD_ENABLED="${DOTFILES_ZIMFW_BUILD:-1}"
+POST_INSTALL_ENABLED="${DOTFILES_POST_INSTALL:-1}"
 STATE_DIR_NAME="dotfiles"
 
 # -----------------------------------------------------------------------------
@@ -175,6 +176,20 @@ run_tool_setup() {
   run_zimfw_build
 }
 
+run_post_install() {
+  if [ "$POST_INSTALL_ENABLED" != "1" ]; then
+    log "post-install disabled (DOTFILES_POST_INSTALL=0)"
+    return 0
+  fi
+
+  if [ -x "$INSTALL_DIR/post-install.sh" ]; then
+    log "running post-install setup..."
+    "$INSTALL_DIR/post-install.sh"
+  else
+    log "post-install script not found, skipping"
+  fi
+}
+
 # -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
@@ -186,6 +201,7 @@ main() {
   run_bootstrap
   run_package_installation "$os"
   run_tool_setup
+  run_post_install
 
   log "installation complete!"
   log "reload your shell: source ~/.zshrc or source ~/.bashrc"

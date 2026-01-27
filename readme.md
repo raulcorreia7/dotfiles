@@ -26,6 +26,7 @@ What `./install` does:
 - Links configs via `installers/link.sh`
 - Installs OS packages
 - Optionally runs `mise install` and `zimfw build`
+- Runs post-install setup (default: enabled)
 
 ## Layout
 
@@ -89,7 +90,8 @@ Install:
   ├─ run installers/link.sh
   ├─ run OS installer
   ├─ run mise install (optional)
-  └─ run zimfw build (optional)
+  ├─ run zimfw build (optional)
+  └─ run post-install (optional)
 ```
 
 ## Knobs
@@ -98,6 +100,7 @@ Install:
 - `DOTFILES_ENABLE_FZF=0` disable fzf plugin (same for ZOXIDE, TMUX, OS_ARCH)
 - `DOTFILES_MISE_INSTALL=0` skip `mise install`
 - `DOTFILES_ZIMFW_BUILD=0` skip `zimfw build`
+- `DOTFILES_POST_INSTALL=0` skip post-install setup
 - `DOTFILES_ARCH_ASSUME_YES=1` pacman/paru non-interactive
 - `DOTFILES_TMUX_AUTOSTART=0` disable tmux autostart
 - `DOTFILES_TMUX_SESSION=...` set tmux session name
