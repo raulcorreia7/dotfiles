@@ -20,7 +20,7 @@ $PackageMap = @{
     'git'                = @{ choco = 'git'; scoop = 'git'; winget = 'Git.Git' }
     'fzf'                = @{ choco = 'fzf'; scoop = 'fzf'; winget = 'junegunn.fzf' }
     'fd'                 = @{ choco = 'fd'; scoop = 'fd'; winget = 'sharkdp.fd' }
-    'ripgrep'            = @{ choco = 'ripgrep'; scoop = 'ripgrep'; winget = 'Microsoft.VisualStudioCode' }
+    'ripgrep'            = @{ choco = 'ripgrep'; scoop = 'ripgrep'; winget = 'BurntSushi.ripgrep' }
     'bat'                = @{ choco = 'bat'; scoop = 'bat'; winget = 'sharkdp.bat' }
     'eza'                = @{ choco = 'eza'; scoop = 'eza'; winget = 'eza-community.eza' }
     'jq'                 = @{ choco = 'jq'; scoop = 'jq'; winget = 'stedolan.jq' }

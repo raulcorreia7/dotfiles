@@ -12,3 +12,12 @@
 
 export EDITOR=nvim
 export VISUAL=code
+
+# Plugin toggles (1=enabled, 0=disabled)
+DOTFILES_ENABLE_FZF=1
+DOTFILES_ENABLE_ZOXIDE=1
+DOTFILES_ENABLE_TMUX=1
+DOTFILES_ENABLE_OS_ARCH=1
+
+# OS-specific settings
+DOTFILES_ARCH_ASSUME_YES=1

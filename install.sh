@@ -1,1 +1,0 @@
-/home/rcorreia/.dotfiles/install/install.sh

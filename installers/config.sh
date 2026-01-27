@@ -19,7 +19,10 @@ BUILD_DIR="${TMPDIR:-/tmp}"
 
 PKGS_MACOS="$PACKAGES_DIR/macos"
 PKGS_ARCH="$PACKAGES_DIR/arch"
+PKGS_ARCH_PACMAN_FILE="$PKGS_ARCH/pacman"
+PKGS_ARCH_AUR_FILE="$PKGS_ARCH/aur"
 PKGS_WINDOWS="$PACKAGES_DIR/windows"
+
 
 # -----------------------------------------------------------------------------
 # Categories

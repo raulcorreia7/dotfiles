@@ -1,95 +1,91 @@
 # dotfiles
 
-Personal dotfiles for zsh, focusing on modern tooling and efficient workflows.
+Minimal, XDG‑first dotfiles with a single shell entrypoint, explicit linking, and optional package install.
 
-## Layout
+## What it does
 
-```
-dotfiles/
-├── config/          # XDG configuration files
-│   ├── aliases      # Command aliases
-│   ├── env          # Environment variables
-│   ├── .zimrc       # Zim configuration
-│   ├── zimfw/       # Zim framework (generated + modules)
-│   ├── tmux/        # Tmux configuration
-│   ├── nvim/        # Neovim configuration
-│   ├── mise/        # Mise (version manager) configuration
-│   ├── kitty/       # Kitty terminal configuration
-│   └── gh/          # GitHub CLI configuration
-├── scripts/         # Runtime shell helpers (sourced by init.sh)
-│   ├── fzf.sh       # FZF integration
-│   ├── fzf-bindings.sh
-│   ├── fzfs_callbacks.sh
-│   ├── os-arch.sh   # Arch runtime helpers
-│   ├── tools.sh     # Utilities
-│   └── zoxide.sh
-├── install/         # OS installers + linker
-│   ├── install.sh
-│   ├── install-linux.sh
-│   ├── install-macos.sh
-│   ├── install-windows.ps1
-│   ├── config.sh
-│   └── link.sh
-├── packages/        # OS-specific package lists
-│   ├── macos/       # Homebrew packages (base/cli/development/gui)
-│   ├── arch/        # pacman/AUR packages (base/cli/development/gui)
-│   └── windows/     # choco/scoop/winget packages (base/cli/development/gui)
-├── bin/             # Optional executables (linked to ~/.local/bin)
-├── init.sh          # Entrypoint (sourced by shell)
-└── install.sh       # Symlink to install/install.sh
-```
+- Keeps app configs in `~/.dotfiles/config` and links them into `~/.config`.
+- Loads shell helpers from `~/.dotfiles/config` via `init.sh`.
+- Optionally installs OS packages with `./install` (Arch/macOS).
 
-## Installation
+## Clone + setup
 
-1. Clone repository:
 ```sh
 git clone https://github.com/YOUR_USER/dotfiles.git ~/.dotfiles
+~/.dotfiles/installers/link.sh
 ```
 
-2. Run OS-aware installer:
-
-**macOS:**
-```sh
-cd ~/.dotfiles
-./install.sh
-```
-- Auto-detects macOS
-- Installs packages from packages/macos/ (base → cli → development → gui)
-
-**Arch/CachyOS:**
-```sh
-cd ~/.dotfiles
-./install.sh
-```
-- Auto-detects Linux
-- Installs pacman packages from packages/arch/ (Arch/CachyOS only)
-- Bootstraps paru AUR helper
-- Installs AUR packages
-
-**Windows:**
-```pwsh
-pwsh -ExecutionPolicy Bypass -File install/install-windows.ps1
-```
-- Supports choco, scoop, or winget package managers
-- Installs packages from packages/windows/
-
-3. Source init.sh from your shell config:
-
-**For zsh:** Add to `~/.zshrc`
-**For bash:** Add to `~/.bashrc`
+Wire the shell (zsh example):
 
 ```sh
 [ -r "$HOME/.dotfiles/init.sh" ] && . "$HOME/.dotfiles/init.sh"
 ```
 
-## Usage
+## Install (full)
 
-Reload shell configuration:
 ```sh
-exec zsh
+cd ~/.dotfiles
+./install
 ```
 
-Check tool availability:
-```sh
-dotdoctor
+`./install` runs `installers/link.sh` and then OS‑specific package installs:
+- Arch/CachyOS: `installers/install-arch.sh`
+- macOS: `installers/install-macos.sh`
+- Windows: prints the PowerShell command to run
+
+## Layout (relevant)
+
 ```
+.dotfiles/
+├── config/          # app configs + shell modules/plugins
+├── scripts/         # legacy loader (compat)
+├── installers/      # install + link helpers
+├── bin/             # personal scripts -> ~/.local/bin
+└── init.sh          # shell entrypoint
+```
+
+## Shell init flow (init.sh)
+
+```
+~/.zshrc
+  └─ source ~/.dotfiles/init.sh
+       ├─ config/env
+       ├─ config/shell/core.sh
+       ├─ config/loaders/manifest.sh
+       │    └─ config/plugins/* (mise, fzf, zoxide, tmux, os/arch)
+       ├─ zimfw init (if zsh)
+       └─ config/aliases
+```
+
+## Link flow (installers/link.sh)
+
+```
+link.sh
+  ├─ ensure dirs (~/.config, ~/.local/bin)
+  ├─ for each app config: nvim, tmux, mise, zimfw
+  │    ├─ if dest exists and is not a symlink -> backup with timestamp
+  │    └─ symlink src -> ~/.config/<app>
+  └─ for each file in bin/ -> ~/.local/bin/<file>
+```
+
+## Install flow (./install)
+
+```
+install
+  ├─ detect OS
+  ├─ run installers/link.sh
+  ├─ run OS installer
+  │    ├─ Arch/CachyOS -> installers/install-arch.sh
+  │    └─ macOS        -> installers/install-macos.sh
+  └─ print reload note
+```
+
+## Additional knobs
+
+- `DOTFILES_DEBUG=1` to log what `init.sh` sources.
+- `DOTFILES_ENABLE_FZF=0`, `DOTFILES_ENABLE_ZOXIDE=0`, `DOTFILES_ENABLE_TMUX=0`, `DOTFILES_ENABLE_OS_ARCH=0` to disable plugins.
+- `DOTFILES_MISE_INSTALL=0` to skip `mise install` during `./install`.
+- `DOTFILES_ZIMFW_BUILD=0` to skip `zimfw build` during `./install`.
+- `DOTFILES_ARCH_ASSUME_YES=1` to run Arch updates without confirmation prompts.
+- `DOTFILES_TMUX_AUTOSTART=0` to disable tmux autostart.
+- `DOTFILES_TMUX_SESSION=...` to force a tmux session name.

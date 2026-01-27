@@ -1,0 +1,194 @@
+#!/bin/sh
+set -e
+# Main install entrypoint - bootstrap config and install packages for detected OS.
+
+# -----------------------------------------------------------------------------
+# Paths
+# -----------------------------------------------------------------------------
+
+REPO_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+INSTALL_DIR="$REPO_DIR/installers"
+DOTFILES_CONFIG_DIR="$REPO_DIR/config"
+DOTFILES_ZIM_HOME="$DOTFILES_CONFIG_DIR/zimfw"
+DOTFILES_ZIM_CONFIG="$DOTFILES_CONFIG_DIR/.zimrc"
+
+. "$INSTALL_DIR/lib.sh"
+
+# -----------------------------------------------------------------------------
+# Config
+# -----------------------------------------------------------------------------
+
+MISE_INSTALL_ENABLED="${DOTFILES_MISE_INSTALL:-1}"
+ZIMFW_BUILD_ENABLED="${DOTFILES_ZIMFW_BUILD:-1}"
+STATE_DIR_NAME="dotfiles"
+
+# -----------------------------------------------------------------------------
+# OS detection
+# -----------------------------------------------------------------------------
+
+log_os() {
+  log "detected OS: $1"
+}
+
+detect_os() {
+  case "$(uname -s)" in
+    Darwin)
+      echo "macos"
+      ;;
+    Linux)
+      echo "linux"
+      ;;
+    MINGW* | MSYS* | CYGWIN*)
+      echo "windows"
+      ;;
+    *)
+      log "Unknown OS: $(uname -s)"
+      exit 1
+      ;;
+  esac
+}
+
+# -----------------------------------------------------------------------------
+# Bootstrap and install
+# -----------------------------------------------------------------------------
+
+run_bootstrap() {
+  log "running bootstrap..."
+  sh "$INSTALL_DIR/link.sh"
+}
+
+run_package_installation() {
+  os="$1"
+
+  case "$os" in
+    linux)
+      if [ -x "$INSTALL_DIR/install-arch.sh" ]; then
+        log "installing Arch packages..."
+        "$INSTALL_DIR/install-arch.sh"
+      else
+        log "error: installers/install-arch.sh not found or not executable"
+        exit 1
+      fi
+      ;;
+    macos)
+      if [ -x "$INSTALL_DIR/install-macos.sh" ]; then
+        log "installing macOS packages..."
+        "$INSTALL_DIR/install-macos.sh"
+      else
+        log "error: installers/install-macos.sh not found or not executable"
+        exit 1
+      fi
+      ;;
+    windows)
+      log "Windows detected: please run 'pwsh -ExecutionPolicy Bypass -File installers/install-windows.ps1'"
+      log "or: 'powershell.exe -ExecutionPolicy Bypass -File installers/install-windows.ps1'"
+      exit 0
+      ;;
+    *)
+      log "error: unsupported OS: $os"
+      exit 1
+      ;;
+  esac
+}
+
+# -----------------------------------------------------------------------------
+# Tool setup
+# -----------------------------------------------------------------------------
+
+get_user_home() {
+  if [ -n "${SUDO_USER:-}" ]; then
+    user_home=""
+    if command -v getent >/dev/null 2>&1; then
+      user_home=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+    fi
+    if [ -z "$user_home" ]; then
+      user_home=$(eval echo "~$SUDO_USER")
+    fi
+    [ -n "$user_home" ] || user_home="$HOME"
+  else
+    user_home="$HOME"
+  fi
+  printf '%s\n' "$user_home"
+}
+
+get_state_home() {
+  user_home=$(get_user_home)
+  if [ -n "${SUDO_USER:-}" ]; then
+    printf '%s\n' "$user_home/.local/state"
+  else
+    printf '%s\n' "${XDG_STATE_HOME:-$user_home/.local/state}"
+  fi
+}
+
+run_mise_install() {
+  if [ "$MISE_INSTALL_ENABLED" != "1" ]; then
+    log "mise install disabled (DOTFILES_MISE_INSTALL=0)"
+    return 0
+  fi
+
+  if has_command mise; then
+    state_home=$(get_state_home)
+    marker_dir="$state_home/$STATE_DIR_NAME"
+    marker_file="$marker_dir/mise-installed"
+
+    if [ ! -f "$marker_file" ]; then
+      log "installing mise tools from config..."
+      run_as_user "mkdir -p \"$marker_dir\" && mise install && touch \"$marker_file\""
+    else
+      log "mise tools already installed from config, skipping"
+    fi
+  else
+    log "mise not found, skipping tool install"
+  fi
+}
+
+run_zimfw_build() {
+  if [ "$ZIMFW_BUILD_ENABLED" != "1" ]; then
+    log "zimfw build disabled (DOTFILES_ZIMFW_BUILD=0)"
+    return 0
+  fi
+
+  if ! has_command zsh; then
+    log "zsh not found, skipping zimfw build"
+    return 0
+  fi
+
+  zimfw_zsh=""
+  for candidate in "$HOME/.zim/zimfw.zsh" "/usr/share/zimfw/zimfw.zsh"; do
+    if [ -r "$candidate" ]; then
+      zimfw_zsh="$candidate"
+      break
+    fi
+  done
+
+  if [ -z "$zimfw_zsh" ]; then
+    log "zimfw not found, skipping zimfw build"
+    return 0
+  fi
+
+  log "building zimfw init..."
+  run_as_user "ZIM_HOME=\"$DOTFILES_ZIM_HOME\" ZIM_CONFIG_FILE=\"$DOTFILES_ZIM_CONFIG\" zsh -c '. \"$zimfw_zsh\" && zimfw build'"
+}
+
+run_tool_setup() {
+  run_mise_install
+  run_zimfw_build
+}
+
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+
+main() {
+  os=$(detect_os)
+  log_os "$os"
+
+  run_bootstrap
+  run_package_installation "$os"
+  run_tool_setup
+
+  log "installation complete!"
+  log "reload your shell: source ~/.zshrc or source ~/.bashrc"
+}
+
+main "$@"
