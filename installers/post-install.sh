@@ -10,6 +10,7 @@ POST_INSTALL_ZSH="${DOTFILES_POST_INSTALL_ZSH:-1}"
 POST_INSTALL_PATH="${DOTFILES_POST_INSTALL_PATH:-1}"
 POST_INSTALL_XDG_DIRS="${DOTFILES_POST_INSTALL_XDG_DIRS:-1}"
 POST_INSTALL_GIT="${DOTFILES_POST_INSTALL_GIT:-1}"
+POST_INSTALL_DIRS="${DOTFILES_POST_INSTALL_DIRS:-$HOME/projects}"
 
 ensure_line_in_file() {
   file="$1"
@@ -66,6 +67,14 @@ ensure_xdg_dirs() {
   ensure_dir "$HOME/.local/bin"
 }
 
+ensure_dirs() {
+  [ -n "$POST_INSTALL_DIRS" ] || return 0
+
+  for dir in $POST_INSTALL_DIRS; do
+    ensure_dir "$dir"
+  done
+}
+
 setup_git_defaults() {
   [ "$POST_INSTALL_GIT" = "1" ] || return 0
 
@@ -94,6 +103,7 @@ setup_git_defaults() {
 
 main() {
   ensure_xdg_dirs
+  ensure_dirs
   ensure_local_bin_in_path
   ensure_zsh_default
   setup_git_defaults
