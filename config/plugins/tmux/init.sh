@@ -7,12 +7,12 @@
 
 __dot_random_session_name() {
   awk 'BEGIN{
-		srand()
-		a="spicy crispy turbo sneaky chaotic legendary glitchy pixelated neon caffeinated tactical loot goblin sweaty salty cracked blessed cursed stealthy flashy pog champ retro 8bit arcade cartridge scanline chiptune"
-		b="speedrun lag spike headshot crit combo respawn checkpoint dungeon raid boss quest loot drop questline buff nerf potion mana stamina rogue wizard paladin ranger barbarian quickscope"
-		n=split(a,A," "); m=split(b,B," ")
-		print A[int(rand()*n)+1] "-" B[int(rand()*m)+1]
-	}'
+    srand()
+    a="spicy crispy turbo sneaky chaotic legendary glitchy pixelated neon caffeinated tactical loot goblin sweaty salty cracked blessed cursed stealthy flashy pog champ retro 8bit arcade cartridge scanline chiptune"
+    b="speedrun lag spike headshot crit combo respawn checkpoint dungeon raid boss quest loot drop questline buff nerf potion mana stamina rogue wizard paladin ranger barbarian quickscope"
+    n=split(a,A," "); m=split(b,B," ")
+    print A[int(rand()*n)+1] "-" B[int(rand()*m)+1]
+  }'
 }
 
 # -----------------------------------------------------------------------------
