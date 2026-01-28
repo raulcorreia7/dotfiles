@@ -6,7 +6,7 @@
 #   /home/raul/.config/ghostty/config
 #
 # The template does not set any default options, since Ghostty ships
-# with sensible defaults for all options. Users should only need to set
+# with sensible defaults for all available config options. Users should only need to set
 # options that they want to change from the default.
 #
 # Run `ghostty +show-config --default --docs` to view a list of
@@ -23,7 +23,7 @@
 
 # Config syntax crash course
 # ==========================
-# # The config file consists of simple key-value pairs,
+# # The config consists of simple key-value pairs,
 # # separated by equals signs.
 # font-family = Iosevka
 # window-padding-x = 2
@@ -47,3 +47,7 @@
 # # which is explained in the docs for that config option.
 # # Just for example:
 # resize-overlay-duration = 4s 200ms
+
+# Disable all confirmation dialogs
+confirm-close-surface = false
+clipboard-paste-protection = false

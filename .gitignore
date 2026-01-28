@@ -4,3 +4,5 @@ Thumbs.db
 *.swo
 *.tmp
 *.backup.*
+*.old
+MIGRATION_SUMMARY.md

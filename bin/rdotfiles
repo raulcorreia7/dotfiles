@@ -1,8 +1,5 @@
 #!/bin/sh
-set -eu
-if (set -o pipefail) 2>/dev/null; then
-  set -o pipefail
-fi
+set -euo pipefail
 
 # rdotfiles: single entrypoint for dotfiles maintenance.
 
@@ -16,6 +13,7 @@ Commands:
   unlink                Remove dotfiles symlinks
   health                Run health check
   fix                   Fix common issues (link + zimfw)
+  reload                Reload shell configuration (source init.sh)
   update [--health]     Pull latest dotfiles (optional health check)
   update --fix          Pull latest dotfiles, then fix
   help                  Show this help
@@ -43,11 +41,11 @@ resolve_dotfiles_dir() {
   if command -v rdotfiles >/dev/null 2>&1; then
     _self=$(command -v rdotfiles)
   else
-    _self=$0
+    _self="$0"
   fi
   if command -v readlink >/dev/null 2>&1; then
     _resolved=$(readlink "$_self" 2>/dev/null || true)
-    [ -n "$_resolved" ] && _self=$_resolved
+    [ -n "$_resolved" ] && _self="$_resolved"
   fi
   _dir=$(CDPATH= cd -- "$(dirname -- "$_self")" && pwd)
   printf '%s\n' "$(CDPATH= cd -- "$_dir/.." && pwd)"
@@ -55,7 +53,7 @@ resolve_dotfiles_dir() {
 
 DOTFILES_DIR=$(resolve_dotfiles_dir)
 DOTFILES_CONFIG_DIR="${DOTFILES_CONFIG_DIR:-$DOTFILES_DIR/config}"
-DOTFILES_INSTALL_DIR="${DOTFILES_INSTALL_DIR:-$DOTFILES_DIR/installers}"
+DOTFILES_INSTALL_DIR="${DOTFILES_INSTALL_DIR:-$DOTFILES_DIR/lib/install}"
 
 # Load shared defaults (paths, app list)
 if [ -r "$DOTFILES_CONFIG_DIR/paths.sh" ]; then
@@ -98,6 +96,33 @@ cmd_unlink() {
   fi
   warn "unlink.sh not found: $DOTFILES_INSTALL_DIR/unlink.sh"
   return 1
+}
+
+cmd_reload() {
+  if [ $# -gt 0 ]; then
+    case "$1" in
+      -h | --help)
+        cat <<'EOF'
+Usage: rdotfiles reload
+
+Reload shell configuration by sourcing init.sh.
+Run this after making changes to dotfiles.
+EOF
+        return 0
+        ;;
+      *)
+        die "unknown option: $1"
+        ;;
+    esac
+  fi
+
+  if [ -r "$DOTFILES_DIR/init.sh" ]; then
+    log "reloading dotfiles..."
+    . "$DOTFILES_DIR/init.sh"
+    log "reload complete"
+  else
+    die "init.sh not found: $DOTFILES_DIR/init.sh"
+  fi
 }
 
 cmd_health() {
@@ -162,8 +187,8 @@ cmd_health() {
 
   check_links() {
     check_link() {
-      _dest=$1
-      _expected=$2
+      _dest="$1"
+      _expected="$2"
 
       if [ -L "$_dest" ]; then
         _target=$(readlink "$_dest" 2>/dev/null || true)
@@ -262,7 +287,7 @@ cmd_health() {
         warn_ "zimfw modules list empty in $ZIM_CONFIG_FILE"
       else
         for mod in $modules; do
-          name=${mod##*/}
+          name="${mod##*/}"
           mod_dir="$ZIM_HOME/modules/$name"
           if [ ! -d "$mod_dir" ]; then
             missing_modules="$missing_modules $name"
@@ -332,7 +357,7 @@ Usage: rdotfiles fix [options]
 
 Options:
   --all               Run all fixes (includes zimfw install)
-  --link              Re-link configs and bin via installers/link.sh
+  --link              Re-link configs and bin via lib/install/link.sh
   --zimfw             Fully repair zimfw (download/install/build)
   --zimfw-install     Alias for --zimfw
 EOF
@@ -393,7 +418,7 @@ EOF
 
     if [ -n "$modules" ]; then
       for mod in $modules; do
-        name=${mod##*/}
+        name="${mod##*/}"
         mod_dir="$ZIM_HOME/modules/$name"
         if [ ! -d "$mod_dir" ]; then
           missing_count=$((missing_count + 1))
@@ -501,6 +526,10 @@ case "${1:-}" in
   fix)
     shift
     cmd_fix "$@"
+    ;;
+  reload)
+    shift
+    cmd_reload "$@"
     ;;
   update)
     shift

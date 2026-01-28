@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+set -euo pipefail
 # Main install entrypoint - bootstrap config and install packages for detected OS.
 
 # -----------------------------------------------------------------------------
@@ -7,13 +7,144 @@ set -e
 # -----------------------------------------------------------------------------
 
 REPO_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-INSTALL_DIR="$REPO_DIR/installers"
+LIB_INSTALL_DIR="$REPO_DIR/lib/install"
+OS_INSTALL_DIR="$REPO_DIR/os/install"
 DOTFILES_CONFIG_DIR="$REPO_DIR/config"
 ZDOTDIR_DEFAULT="${ZDOTDIR:-$HOME}"
 DOTFILES_ZIM_HOME="${DOTFILES_ZIM_HOME:-$ZDOTDIR_DEFAULT/.zim}"
 DOTFILES_ZIM_CONFIG="${DOTFILES_ZIM_CONFIG:-$ZDOTDIR_DEFAULT/.zimrc}"
 
-. "$INSTALL_DIR/lib.sh"
+. "$LIB_INSTALL_DIR/lib.sh"
+
+# -----------------------------------------------------------------------------
+# Platform/ Distro Detection
+# -----------------------------------------------------------------------------
+
+# Source lib/utils.sh if it exists, otherwise use inline detection
+if [ -f "$LIB_INSTALL_DIR/lib/utils.sh" ]; then
+  . "$LIB_INSTALL_DIR/lib/utils.sh"
+fi
+
+# Inline fallback detection functions (used if lib/utils.sh doesn't exist)
+# These follow the same naming convention as lib/utils.sh for compatibility
+
+_detect_wsl() {
+  # Check for WSL via multiple methods
+  if [ -f /proc/sys/fs/binfmt_misc/WSLInterop ] 2>/dev/null; then
+    return 0
+  fi
+  if [ -f /proc/version ] && grep -qi microsoft /proc/version 2>/dev/null; then
+    return 0
+  fi
+  if [ -n "${WSL_DISTRO_NAME:-}" ]; then
+    return 0
+  fi
+  return 1
+}
+
+_detect_wsl_distro() {
+  # Try to get the WSL distro name
+  if [ -n "${WSL_DISTRO_NAME:-}" ]; then
+    printf '%s\n' "$WSL_DISTRO_NAME"
+    return 0
+  fi
+  if [ -f /etc/os-release ]; then
+    _id=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    printf '%s\n' "$_id"
+    return 0
+  fi
+  printf '%s\n' "Unknown"
+}
+
+_detect_macos_arch() {
+  _arch=$(uname -m)
+  case "$_arch" in
+    arm64) printf '%s\n' "arm64" ;;
+    x86_64) printf '%s\n' "x86_64" ;;
+    *) printf '%s\n' "$_arch" ;;
+  esac
+}
+
+_detect_linux_distro() {
+  if [ -f /etc/os-release ]; then
+    _id=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    _name=$(grep '^NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    case "$_id" in
+      arch|manjaro|endeavouros) printf '%s\n' "Arch Linux" ;;
+      ubuntu) printf '%s\n' "Ubuntu" ;;
+      debian) printf '%s\n' "Debian" ;;
+      fedora) printf '%s\n' "Fedora" ;;
+      *) printf '%s\n' "$_name" ;;
+    esac
+  else
+    printf '%s\n' "Linux"
+  fi
+}
+
+# Public detection API (works with or without lib/utils.sh)
+detect_platform() {
+  _kernel=$(uname -s)
+  case "$_kernel" in
+    Darwin)
+      _arch=$(_detect_macos_arch)
+      printf '%s\n' "macOS ($_arch)"
+      ;;
+    Linux)
+      if _detect_wsl; then
+        _wsl_distro=$(_detect_wsl_distro)
+        # Capitalize first letter of distro
+        _wsl_distro_display=$(printf '%s' "$_wsl_distro" | sed 's/.*/\u&/' 2>/dev/null || printf '%s' "$_wsl_distro")
+        printf '%s\n' "WSL ($_wsl_distro_display)"
+      else
+        _distro=$(_detect_linux_distro)
+        printf '%s\n' "$_distro"
+      fi
+      ;;
+    MINGW* | MSYS* | CYGWIN*)
+      printf '%s\n' "Windows"
+      ;;
+    *)
+      printf '%s\n' "Unknown ($_kernel)"
+      ;;
+  esac
+}
+
+show_platform_info() {
+  _platform=$(detect_platform)
+  log ""
+  log "=== Dotfiles Install ==="
+  log "Platform: $_platform"
+  log ""
+}
+
+show_unsupported_distro_message() {
+  _distro="${1:-}"
+  log ""
+  log "WARNING: $_distro is not fully supported by the automatic installer."
+  log ""
+  log "The following components will still be set up:"
+  log "  - Configuration file symlinks (via link.sh)"
+  log "  - mise tool installation (if mise is available)"
+  log "  - zimfw module setup (if zsh is available)"
+  log ""
+  log "For package installation, please install equivalents of the Arch packages"
+  log "listed in lib/install/packages/arch/ manually for your distribution."
+  log ""
+  log "Continuing with available setup..."
+  log ""
+}
+
+is_distro_supported() {
+  _platform="${1:-}"
+  case "$_platform" in
+    "macOS"*|"WSL"*|"Arch Linux"*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
 
 # -----------------------------------------------------------------------------
 # Config
@@ -27,7 +158,7 @@ POST_INSTALL_ENABLED="${DOTFILES_POST_INSTALL:-1}"
 STATE_DIR_NAME="dotfiles"
 
 # -----------------------------------------------------------------------------
-# OS detection
+# OS detection (legacy compatibility)
 # -----------------------------------------------------------------------------
 
 log_os() {
@@ -58,7 +189,7 @@ detect_os() {
 
 run_bootstrap() {
   log "running bootstrap..."
-  sh "$INSTALL_DIR/link.sh"
+  sh "$LIB_INSTALL_DIR/link.sh"
 }
 
 run_package_installation() {
@@ -66,26 +197,26 @@ run_package_installation() {
 
   case "$os" in
     linux)
-      if [ -x "$INSTALL_DIR/install-arch.sh" ]; then
+      if [ -x "$OS_INSTALL_DIR/arch.sh" ]; then
         log "installing Arch packages..."
-        "$INSTALL_DIR/install-arch.sh"
+        "$OS_INSTALL_DIR/arch.sh"
       else
-        log "error: installers/install-arch.sh not found or not executable"
+        log "error: os/install/arch.sh not found or not executable"
         exit 1
       fi
       ;;
     macos)
-      if [ -x "$INSTALL_DIR/install-macos.sh" ]; then
+      if [ -x "$OS_INSTALL_DIR/macos.sh" ]; then
         log "installing macOS packages..."
-        "$INSTALL_DIR/install-macos.sh"
+        "$OS_INSTALL_DIR/macos.sh"
       else
-        log "error: installers/install-macos.sh not found or not executable"
+        log "error: os/install/macos.sh not found or not executable"
         exit 1
       fi
       ;;
     windows)
-      log "Windows detected: please run 'pwsh -ExecutionPolicy Bypass -File installers/install-windows.ps1'"
-      log "or: 'powershell.exe -ExecutionPolicy Bypass -File installers/install-windows.ps1'"
+      log "Windows detected: please run 'pwsh -ExecutionPolicy Bypass -File lib/install/install-windows.ps1'"
+      log "or: 'powershell.exe -ExecutionPolicy Bypass -File lib/install/install-windows.ps1'"
       exit 0
       ;;
     *)
@@ -143,7 +274,7 @@ run_mise_install() {
     return 0
   fi
 
-  if has_command mise; then
+  if __dot_has mise; then
     _state_home=$(get_state_home)
     _marker_dir="$_state_home/$STATE_DIR_NAME"
     _marker_file="$_marker_dir/mise-installed"
@@ -165,7 +296,7 @@ run_zimfw_build() {
     return 0
   fi
 
-  if ! has_command zsh; then
+  if ! __dot_has zsh; then
     log "zsh not found, skipping zimfw build"
     return 0
   fi
@@ -186,11 +317,11 @@ run_zimfw_build() {
   if [ -z "$_zimfw_zsh" ] && [ "$ZIMFW_DOWNLOAD_ENABLED" = "1" ]; then
     _zimfw_url="https://github.com/zimfw/zimfw/releases/latest/download/zimfw.zsh"
     ensure_dir "$DOTFILES_ZIM_HOME"
-    if has_command curl; then
+    if __dot_has curl; then
       log "downloading zimfw..."
       run_as_user env ZIM_HOME="$DOTFILES_ZIM_HOME" ZIM_CONFIG_FILE="$DOTFILES_ZIM_CONFIG" \
         sh -c 'curl -fsSL "$1" -o "$2"' _ "$_zimfw_url" "$DOTFILES_ZIM_HOME/zimfw.zsh"
-    elif has_command wget; then
+    elif __dot_has wget; then
       log "downloading zimfw..."
       run_as_user env ZIM_HOME="$DOTFILES_ZIM_HOME" ZIM_CONFIG_FILE="$DOTFILES_ZIM_CONFIG" \
         sh -c 'wget -qO "$2" "$1"' _ "$_zimfw_url" "$DOTFILES_ZIM_HOME/zimfw.zsh"
@@ -235,9 +366,9 @@ run_post_install() {
     return 0
   fi
 
-  if [ -x "$INSTALL_DIR/post-install.sh" ]; then
+  if [ -x "$LIB_INSTALL_DIR/post-install.sh" ]; then
     log "running post-install setup..."
-    "$INSTALL_DIR/post-install.sh"
+    "$LIB_INSTALL_DIR/post-install.sh"
   else
     log "post-install script not found, skipping"
   fi
@@ -248,8 +379,17 @@ run_post_install() {
 # -----------------------------------------------------------------------------
 
 main() {
+  # Show platform info at start
+  show_platform_info
+
   _os=$(detect_os)
+  _platform=$(detect_platform)
   log_os "$_os"
+
+  # Check if distro is fully supported for package installation
+  if ! is_distro_supported "$_platform"; then
+    show_unsupported_distro_message "$_platform"
+  fi
 
   run_bootstrap
   run_package_installation "$_os"

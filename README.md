@@ -6,7 +6,13 @@ Minimal, XDG-first dotfiles with one shell entrypoint, explicit linking, and opt
 
 ```sh
 git clone https://github.com/YOUR_USER/dotfiles.git ~/.dotfiles
-~/.dotfiles/installers/link.sh
+~/.dotfiles/install
+```
+
+Or for a minimal setup:
+
+```sh
+~/.dotfiles/lib/install/link.sh
 ```
 
 Add to your shell config:
@@ -18,7 +24,53 @@ Add to your shell config:
 `init.sh` ensures `~/.local/bin` is on PATH by default. Disable with
 `DOTFILES_POST_INSTALL_PATH=0`.
 
-## Workflows
+## Directory Structure
+
+```
+.dotfiles/
+├── init.sh              # Shell entrypoint
+├── install              # Main installer
+│
+├── before/              # Early setup (first to load)
+│   ├── env.sh          # Environment variables
+│   └── paths.sh        # Path definitions
+│
+├── lib/                 # Core libraries
+│   ├── init.sh         # Main loader
+│   ├── loader.sh       # Plugin loading system
+│   ├── utils.sh        # Helper functions
+│   ├── health.sh       # Health check functions
+│   ├── manifest.sh     # Module manifest
+│   └── install/        # Install helpers
+│       ├── lib.sh
+│       ├── link.sh
+│       ├── unlink.sh
+│       └── post-install.sh
+│
+├── modules/             # Feature modules (lazy-loaded)
+│   ├── mise/           # Runtime version manager
+│   ├── fzf/            # Fuzzy finder
+│   ├── zoxide/         # Smart cd
+│   ├── zimfw/          # Zsh module manager
+│   ├── tmux/           # Terminal multiplexer
+│   └── arch/           # Arch Linux helpers
+│
+├── os/                  # Platform-specific
+│   ├── helpers/        # Runtime helpers (arch.sh, linux.sh, wsl.sh, macos.sh)
+│   └── install/        # OS installers (arch.sh, macos.sh, windows.ps1)
+│
+├── after/               # Late loading (last)
+│   ├── aliases.sh      # Shell aliases
+│   └── local.sh        # Machine-specific (gitignored)
+│
+├── config/              # XDG-linked app configs (nvim, tmux, alacritty, ...)
+├── bin/                 # Public scripts -> ~/.local/bin/
+└── scripts/             # Internal/dev tools (lint.sh, format.sh)
+```
+
+**Load Order**: `before/` → `lib/` → `modules/` (lazy) → `os/` → `after/`
+
+## Installation
 
 ### Fresh install (full)
 
@@ -27,12 +79,27 @@ cd ~/.dotfiles
 ./install
 ```
 
+What `./install` does:
+
+- Links configs via `lib/install/link.sh`
+- Installs OS packages
+- Optionally runs `mise install` and `zimfw install/build`
+- Runs post-install setup (default: enabled)
+
 ### Fresh install (minimal)
 
 ```sh
-installers/link.sh
+lib/install/link.sh
 ./bin/rdotfiles fix --zimfw
 ```
+
+## Usage
+
+### Daily use
+
+Open a shell (sources `init.sh`).
+
+Note: if `rdotfiles` is not on your PATH yet, run `./bin/rdotfiles ...` from the repo.
 
 ### Update (fast)
 
@@ -46,108 +113,7 @@ rdotfiles update
 rdotfiles update --fix
 ```
 
-### Daily use
-
-Open a shell (sources `init.sh`).
-
-Note: if `rdotfiles` is not on your PATH yet, run `./bin/rdotfiles ...` from the repo.
-
-## Install
-
-```sh
-cd ~/.dotfiles
-./install
-```
-
-What `./install` does:
-
-- Links configs via `installers/link.sh`
-- Installs OS packages
-- Optionally runs `mise install` and `zimfw install/build`
-- Runs post-install setup (default: enabled)
-
-## Layout
-
-```
-.dotfiles/
-├── config/          # app configs + shell modules/plugins ([README](config/README.md))
-├── installers/      # Link + OS installers + package lists ([README](installers/README.md))
-├── scripts/         # legacy loader (compat) ([README](scripts/README.md))
-├── bin/             # user scripts -> ~/.local/bin ([README](bin/README.md))
-└── init.sh          # shell entrypoint
-```
-
-## Mindmap: Structure
-
-```
-.dotfiles
-├─ config
-│  ├─ alacritty, ghostty, nvim, tmux, mise
-│  ├─ env
-│  ├─ shell/core.sh
-│  ├─ loaders/manifest.sh
-│  ├─ plugins/* (mise, fzf, zoxide, tmux, zimfw, arch)
-│  └─ paths.sh       # centralized path definitions
-├─ installers
-│  ├─ packages/      # OS package lists (arch, macos, windows)
-│  ├─ link.sh
-│  ├─ install-arch.sh
-│  ├─ install-macos.sh
-│  └─ install-windows.ps1
-├─ bin
-└─ init.sh
-```
-
-## Mindmap: Flows
-
-Shell init:
-
-```
-~/.zshrc
-  └─ source ~/.dotfiles/init.sh
-    ├─ config/paths.sh       # load centralized paths
-    ├─ config/env            # user environment overrides
-    ├─ config/shell/core.sh  # core functions + plugin loader
-    ├─ config/loaders/manifest.sh
-    │  └─ config/plugins/*   # load enabled plugins
-    └─ config/aliases        # shell aliases
-```
-
-Linking:
-
-```
-installers/link.sh
-  ├─ ensure ~/.config + ~/.local/bin
-  ├─ link app configs -> ~/.config/<app>
-  ├─ link ~/.zimrc -> config/.zimrc
-  └─ link bin/* -> ~/.local/bin/*
-```
-
-Install:
-
-```
-./install
-  ├─ detect OS
-  ├─ run installers/link.sh
-  ├─ run OS installer
-  ├─ run mise install (optional)
-  ├─ run zimfw install/build (optional)
-  └─ run post-install (optional)
-```
-
-## Documentation
-
-Detailed documentation for specific components:
-
-- [`bin/README.md`](bin/README.md) - User scripts and utilities
-- [`config/README.md`](config/README.md) - App configs, shell modules, and plugins
-- [`installers/README.md`](installers/README.md) - Link and OS installers
-
-- [`scripts/README.md`](scripts/README.md) - Legacy loader and development scripts
-
-## Commands
-
-### rdotfiles
+### rdotfiles commands
 
 Single entrypoint for dotfiles maintenance:
 
@@ -161,7 +127,7 @@ rdotfiles update --fix
 rdotfiles unlink
 ```
 
-Aliases: `df` → `rdotfiles`, `dotreload` → source `init.sh`, `dotdoctor` → `rdotfiles health`, `nvcfg` → open Neovim config.
+Aliases: `df` → `rdotfiles`, `dotreload` → `rdotfiles reload`, `dotdoctor` → `rdotfiles health`, `nvcfg` → open Neovim config.
 
 ### Uninstall
 
@@ -171,19 +137,30 @@ Remove dotfiles symlinks:
 rdotfiles unlink
 ```
 
+## Documentation
+
+Detailed documentation is available in the [`docs/`](docs/) directory:
+
+For component-specific documentation, see the README files in each directory:
+
+- [`bin/README.md`](bin/README.md) - User scripts and utilities
+- [`config/README.md`](config/README.md) - XDG app configs (nvim, tmux, etc.)
+- [`docs/reference/install.md`](docs/reference/install.md) - Installation scripts reference
+- [`scripts/README.md`](scripts/README.md) - Development scripts (lint, format)
+
 ## Knobs
 
 ### General
 
 - `DOTFILES_DEBUG=1` - log what `init.sh` sources
 
-### Plugin Enable/Disable
+### Module Enable/Disable
 
-- `DOTFILES_ENABLE_ZIMFW=0` - disable zimfw plugin
-- `DOTFILES_ENABLE_FZF=0` - disable fzf plugin
-- `DOTFILES_ENABLE_ZOXIDE=0` - disable zoxide plugin
-- `DOTFILES_ENABLE_TMUX=0` - disable tmux plugin
-- `DOTFILES_ENABLE_ARCH=0` - disable Arch-specific OS plugin
+- `DOTFILES_ENABLE_ZIMFW=0` - disable zimfw module
+- `DOTFILES_ENABLE_FZF=0` - disable fzf module
+- `DOTFILES_ENABLE_ZOXIDE=0` - disable zoxide module
+- `DOTFILES_ENABLE_TMUX=0` - disable tmux module
+- `DOTFILES_ENABLE_ARCH=0` - disable Arch-specific OS module
 
 ### Install Options
 
@@ -213,11 +190,11 @@ rdotfiles unlink
 Run the lint script to check and fix code style:
 
 ```sh
-./scripts/format.sh
 ./scripts/lint.sh
+./scripts/format.sh
 ```
 
-Exclude paths by editing `config/paths.sh`:
+Exclude paths by editing `before/paths.sh`:
 
 - `DOTFILES_EXCLUDE_DIRS` (space-separated)
 - `DOTFILES_EXCLUDE_FILES` (space-separated)
@@ -229,8 +206,12 @@ After making changes, test with:
 ```sh
 # Syntax check
 sh -n init.sh
-sh -n config/shell/core.sh
+sh -n lib/loader.sh
 
 # Reload in current shell
 source "$HOME/.dotfiles/init.sh"
 ```
+
+## License
+
+MIT

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Master lint runner for dotfiles.
 
-set -e
+set -euo pipefail
 
 # ------------------------------------------------------------------------------
 # SECTION 1: Setup
@@ -9,8 +9,8 @@ set -e
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
-if [ -r "$ROOT_DIR/config/paths.sh" ]; then
-  . "$ROOT_DIR/config/paths.sh"
+if [ -r "$ROOT_DIR/before/paths.sh" ]; then
+  . "$ROOT_DIR/before/paths.sh"
 fi
 
 # Directories/files to exclude (third-party or generated)

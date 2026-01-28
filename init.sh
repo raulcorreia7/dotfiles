@@ -15,11 +15,11 @@ _dotfiles_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 DOTFILES_DIR="${DOTFILES_DIR:-$_dotfiles_root}"
 unset _dotfiles_root
 
-[ -r "$DOTFILES_DIR/config/paths.sh" ] || {
+[ -r "$DOTFILES_DIR/before/paths.sh" ] || {
   __dot_log "dotfiles: ERROR: paths.sh not found"
   return 1
 }
-. "$DOTFILES_DIR/config/paths.sh" || {
+. "$DOTFILES_DIR/before/paths.sh" || {
   __dot_log "dotfiles: ERROR: failed to load paths.sh"
   return 1
 }
@@ -58,18 +58,18 @@ __dot_source_required() {
 # SECTION 3: Main Loading
 # ------------------------------------------------------------------------------
 
-__dot_source "$DOTFILES_CONFIG_DIR/env"
-__dot_source_required "$DOTFILES_SHELL_DIR/core.sh" || return 1
-__dot_source "$DOTFILES_LOADERS_DIR/manifest.sh"
+__dot_source "$DOTFILES_BEFORE_DIR/env"
+__dot_source_required "$DOTFILES_LIB_DIR/loader.sh" || return 1
+__dot_source "$DOTFILES_LIB_DIR/manifest.sh"
 
 # ------------------------------------------------------------------------------
 # SECTION 4: PATH
 # ------------------------------------------------------------------------------
 
 if [ "${DOTFILES_POST_INSTALL_PATH:-1}" != "0" ]; then
-  case ":$PATH:" in
-    *":$USER_BIN_DIR:"*) : ;;
-    *) export PATH="$USER_BIN_DIR:$PATH" ;;
+  case ":${PATH}:" in
+    *":${USER_BIN_DIR}:"*) : ;;
+    *) export PATH="${USER_BIN_DIR}:${PATH}" ;;
   esac
 fi
 
@@ -77,4 +77,4 @@ fi
 # SECTION 5: Final Loading
 # ------------------------------------------------------------------------------
 
-__dot_source "$DOTFILES_CONFIG_DIR/aliases"
+__dot_source "$DOTFILES_AFTER_DIR/aliases.sh"
