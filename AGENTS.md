@@ -199,11 +199,11 @@ Add to `config/shell/` or `config/plugins/` — use appropriate prefix from Nami
 
 ### Adding Packages
 
-**Arch**: Edit `packages/arch/pacman` (official) or `packages/arch/aur` (AUR)
+**Arch**: Edit `installers/packages/arch/pacman` (official) or `installers/packages/arch/aur` (AUR)
 
-**macOS**: Edit appropriate file in `packages/macos/` (base, cli, development, gui)
+**macOS**: Edit appropriate file in `installers/packages/macos/` (base, cli, development, gui)
 
-**Windows**: Edit `packages/windows/packages`
+**Windows**: Edit `installers/packages/windows/packages`
 
 ### Adding Scripts
 
