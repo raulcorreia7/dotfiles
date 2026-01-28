@@ -73,7 +73,7 @@ arch_sys_update_full() {
 
     printf '%s\n' '=== Arch Linux System Maintenance ==='
 
-    orphans=$(pacman -Qdtq)
+    orphans=$(pacman -Qdtq || true)
     if [ -n "$orphans" ]; then
       printf '%s\n' 'Orphan packages found:'
       printf '%s\n' "$orphans"
