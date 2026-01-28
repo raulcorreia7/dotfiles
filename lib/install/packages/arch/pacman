@@ -44,6 +44,7 @@ yazi
 ttf-nerd-fonts-symbols
 ttf-nerd-fonts-symbols-mono
 font-manager
+ttf-jetbrains-mono-nerd
 
 # -----------------------------------------------------------------------------
 # NETWORK & DOWNLOAD
@@ -179,4 +180,3 @@ bitwarden
 # GUI - CONTAINERIZATION
 # -----------------------------------------------------------------------------
 # docker
-ttf-jetbrains-mono-nerd
