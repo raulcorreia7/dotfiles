@@ -32,10 +32,7 @@ FZFS_SCRIPT="$0"
 # SECTION 2: Utilities
 # ------------------------------------------------------------------------------
 
-die() {
-  printf "%bError:%b %s\n" "$CLR_RED" "$CLR_RESET" "$1" >&2
-  exit "${2:-1}"
-}
+die() { printf "%bError:%b %s\n" "$CLR_RED" "$CLR_RESET" "$1" >&2; exit "${2:-1}"; }
 expand_path() { case "$1" in ~/*) printf '%s' "$HOME/${1#~/}" ;; ~) printf '%s' "$HOME" ;; *) printf '%s' "$1" ;; esac }
 is_abs() { case "$1" in /* | ~/* | ~) return 0 ;; *) return 1 ;; esac }
 resolve_path() {
@@ -125,16 +122,24 @@ gen_projects() {
 }
 
 # ------------------------------------------------------------------------------
-# SECTION 4: Previews
+# SECTION 4: Previews (Updated with better directory preview)
 # ------------------------------------------------------------------------------
 
 preview_file() {
   path="$(resolve_path "${1%%:*}")"
   [ -n "$path" ] || return 0
   if [ -d "$path" ]; then
-    if [ "$HAS_EZA" -eq 1 ]; then
-      eza -lah --color=always --icons --group-directories-first --git "$path"
-    else ls -lah "$path"; fi
+    # Compact directory preview - try different tools in order of preference
+    if command -v tree >/dev/null 2>&1; then
+      # Tree view with limited depth for compact preview
+      tree -L 2 -C --dirsfirst "$path" 2>/dev/null | head -n 50
+    elif [ "$HAS_EZA" -eq 1 ]; then
+      # Simplified eza: just names, no permissions/sizes, grouped by type
+      eza -1 --color=always --icons --group-directories-first "$path" | head -n 30
+    else
+      # Simple ls fallback
+      ls -1 --color=always "$path" | head -n 30
+    fi
   elif [ -f "$path" ]; then
     if command -v file >/dev/null 2>&1 && file --mime "$path" | grep -q "binary"; then
       printf "%bBinary file (preview disabled)%b" "$CLR_YELLOW" "$CLR_RESET"
@@ -188,7 +193,7 @@ Key Bindings:
   PgUp/PgDn - Preview page
   ctrl-u/d  - Preview half page
 EOF
-  else printf '%s\n' "Enter(Select) C-e(Edit) C-o(Cd) C-p(Preview) C-r(Reload) C-y(Copy) C-h(Hidden) Alt-h(Friendly) ?(Help) Alt-Up/Down(Scroll) PgUp/PgDn(Page) C-u/C-d(Half-Page)"; fi
+  else printf '%s\n' "Enter(Select) C-e(Edit) C-o(Cd) C-n(Next) C-p(Prev) A-p(Preview) C-r(Reload) C-y(Copy) C-h(Hidden) Alt-h(Friendly) ?(Help) Alt-Up/Down(Scroll) PgUp/PgDn(Page) C-u/C-d(Half-Page)"; fi
 }
 
 # ------------------------------------------------------------------------------
