@@ -63,7 +63,18 @@ __dot_source_required "$DOTFILES_SHELL_DIR/core.sh" || return 1
 __dot_source "$DOTFILES_LOADERS_DIR/manifest.sh"
 
 # ------------------------------------------------------------------------------
-# SECTION 4: Final Loading
+# SECTION 4: PATH
+# ------------------------------------------------------------------------------
+
+if [ "${DOTFILES_POST_INSTALL_PATH:-1}" != "0" ]; then
+  case ":$PATH:" in
+    *":$USER_BIN_DIR:"*) : ;;
+    *) export PATH="$USER_BIN_DIR:$PATH" ;;
+  esac
+fi
+
+# ------------------------------------------------------------------------------
+# SECTION 5: Final Loading
 # ------------------------------------------------------------------------------
 
 __dot_source "$DOTFILES_CONFIG_DIR/aliases"
