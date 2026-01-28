@@ -173,9 +173,8 @@ Transform the dotfiles repository into a production-grade, multi-platform config
 1. Add WSL detection to `lib/utils.sh`
 2. Update `install` script for distro detection
 3. Create OS-specific helpers:
-   - `os/wsl.sh`
-   - `os/ubuntu.sh` (stub with helpful message)
-   - `os/fedora.sh` (stub with helpful message)
+   - `os/wsl.sh` - WSL detection and Windows interop
+   - `os/linux.sh` - Linux base with distro detection (Arch/Ubuntu/Debian)
 4. Update Arch plugin with better guards
 
 **Exit Criteria**:
@@ -350,7 +349,7 @@ git checkout migration-backup-$(date +%Y%m%d)
 ### Nice to Have (Soft Targets)
 - [ ] Startup time <50ms (aspirational target)
 - [ ] All lazy loading implemented
-- [ ] Full platform support (WSL, Ubuntu, Fedora stubs)
+- [ ] Full platform support (Linux, macOS, Windows, WSL)
 
 ### Won't Do (Out of Scope)
 - [ ] New features beyond restructuring
