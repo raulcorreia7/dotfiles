@@ -34,7 +34,6 @@ What `./install` does:
 ```
 .dotfiles/
 ├── config/          # app configs + shell modules/plugins ([README](config/README.md))
-├── installers/      # link + OS installers ([README](installers/README.md))
 ├── installers/      # Link + OS installers + package lists ([README](installers/README.md))
 ├── scripts/         # legacy loader (compat) ([README](scripts/README.md))
 ├── bin/             # user scripts -> ~/.local/bin ([README](bin/README.md))
@@ -53,11 +52,11 @@ What `./install` does:
 │  ├─ plugins/* (mise, fzf, zoxide, tmux, zimfw, arch)
 │  └─ paths.sh       # centralized path definitions
 ├─ installers
+│  ├─ packages/      # OS package lists (arch, macos, windows)
 │  ├─ link.sh
 │  ├─ install-arch.sh
 │  ├─ install-macos.sh
 │  └─ install-windows.ps1
-
 ├─ bin
 └─ init.sh
 ```
