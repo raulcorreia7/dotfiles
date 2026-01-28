@@ -293,7 +293,7 @@ ui_branch() {
   c_rem="'$FZFS_SCRIPT' --internal-gen-branches remote"
   binds="ctrl-l:change-prompt(Local> )+reload($c_loc),ctrl-r:change-prompt(Remote> )+reload($c_rem)"
   binds="$binds,ctrl-f:execute-silent(git fetch --all --prune >/dev/null 2>&1)+reload($c_loc)"
-  binds="$binds,ctrl-p:toggle-preview,alt-up:preview-up,alt-down:preview-down"
+  binds="$binds,alt-p:toggle-preview,alt-up:preview-up,alt-down:preview-down"
   binds="$binds,pgup:preview-page-up,pgdn:preview-page-down,ctrl-u:preview-half-page-up,ctrl-d:preview-half-page-down"
   binds="$binds,?:preview('$FZFS_SCRIPT' --internal-help)"
   result="$(eval "$c_loc" | "$FZFS_BIN" --ansi --header "Branches: C-l(Local) C-r(Remote) C-f(Fetch) ?(Help)" $FZFS_OPTS_UI --prompt "Local> " --preview "'$FZFS_SCRIPT' --internal-branch-preview {}" --preview-window "$FZFS_OPTS_PREVIEW" --bind "$binds")" || return 1
