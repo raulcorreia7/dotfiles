@@ -6,3 +6,6 @@ Thumbs.db
 *.backup.*
 *.old
 MIGRATION_SUMMARY.md
+
+# Testing environments (local only)
+/test/
