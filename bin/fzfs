@@ -18,7 +18,7 @@ FZFS_FRIENDLY="${FZFS_FRIENDLY:-1}"
 CLR_RESET='\033[0m' CLR_BOLD='\033[1m' CLR_RED='\033[31m' CLR_GREEN='\033[32m'
 CLR_YELLOW='\033[33m' CLR_CYAN='\033[36m' CLR_BOLD_CYAN='\033[1;36m' CLR_BOLD_YELLOW='\033[1;33m'
 
-BIND_EDIT='ctrl-e' BIND_CD='ctrl-o' BIND_PREVIEW='ctrl-P' BIND_YANK='ctrl-y' BIND_HIDDEN='ctrl-h'
+BIND_EDIT='ctrl-e' BIND_CD='ctrl-o' BIND_PREVIEW='alt-p' BIND_YANK='ctrl-y' BIND_HIDDEN='ctrl-h'
 
 command -v fd >/dev/null 2>&1 && HAS_FD=1 || HAS_FD=0
 command -v rg >/dev/null 2>&1 && HAS_RG=1 || HAS_RG=0
@@ -178,7 +178,7 @@ Key Bindings:
   ctrl-o    - Change directory
   ctrl-n    - Next item
   ctrl-p    - Previous item
-  ctrl-P    - Toggle preview
+  alt-p     - Toggle preview
   ctrl-r    - Reload source
   ctrl-y    - Copy to clipboard
   ctrl-h    - Toggle hidden files
@@ -344,7 +344,7 @@ MODES:
 KEYS:
   Enter     - Select    ctrl-e    - Edit
   ctrl-o    - cd        ctrl-n    - Next
-  ctrl-p    - Previous  ctrl-P    - Toggle preview
+  ctrl-p    - Previous  alt-p     - Toggle preview
   ctrl-r    - Reload    ctrl-y    - Copy
   ctrl-h    - Hidden    alt-h     - Friendly mode
   ?         - Help
