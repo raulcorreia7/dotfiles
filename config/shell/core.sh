@@ -9,16 +9,6 @@ __dot_has() {
   command -v "$1" >/dev/null 2>&1
 }
 
-__dot_pick() {
-  for cmd in "$@"; do
-    if __dot_has "$cmd"; then
-      printf '%s\n' "$cmd"
-      return 0
-    fi
-  done
-  return 1
-}
-
 # ------------------------------------------------------------------------------
 # SECTION 2: Shell Detection Helpers
 # ------------------------------------------------------------------------------
@@ -76,57 +66,20 @@ __dot_load_plugin() {
   __DOT_PLUGIN_LOADED="$__DOT_PLUGIN_LOADED $plugin"
 }
 
-# ------------------------------------------------------------------------------
-# SECTION 4: Doctor
-# ------------------------------------------------------------------------------
-
-__dot_doctor_line() {
-  _label=$1
-  shift
-  _cmd=$(__dot_pick "$@")
-  if [ -n "$_cmd" ]; then
-    _alts=""
-    for _alt in "$@"; do
-      [ "$_alt" = "$_cmd" ] && continue
-      if __dot_has "$_alt"; then
-        _alts="${_alts}${_alts:+ }$_alt"
-      fi
-    done
-    if [ -n "$_alts" ]; then
-      printf '%s: ok (%s; alt: %s)\n' "$_label" "$_cmd" "$_alts"
-    else
-      printf '%s: ok (%s)\n' "$_label" "$_cmd"
-    fi
-  else
-    printf '%s: missing (try: %s)\n' "$_label" "$*"
-  fi
-}
-
-dot_doctor() {
-  __dot_doctor_line "fzf" fzf
-  __dot_doctor_line "git" git
-  __dot_doctor_line "sed" gsed sed
-  __dot_doctor_line "rg" rg
-  __dot_doctor_line "fd" fd
-  __dot_doctor_line "grep" grep
-  __dot_doctor_line "cat" cat
-  __dot_doctor_line "bat" bat
-  __dot_doctor_line "exa" eza exa
-}
-
-# ------------------------------------------------------------------------------
-# SECTION 5: Editor Helpers
-# ------------------------------------------------------------------------------
-
-dot_nvimcfg() {
-  case "$1" in
-    -h | --help)
-      printf 'Usage: nvimcfg\nOpen ~/.config/nvim.\n'
-      return 0
+rdotfiles() {
+  _cmd=$(command -v rdotfiles 2>/dev/null || true)
+  case "$_cmd" in
+    /*)
+      command rdotfiles "$@"
+      return $?
       ;;
   esac
-  # Open the Neovim config in the preferred editor.
-  _editor="${EDITOR:-nvim}"
-  _nvimcfg_path="$HOME/.config/nvim"
-  "$_editor" "$_nvimcfg_path"
+
+  if [ -x "$DOTFILES_DIR/bin/rdotfiles" ]; then
+    "$DOTFILES_DIR/bin/rdotfiles" "$@"
+    return $?
+  fi
+
+  __dot_log "dotfiles: rdotfiles not found (run installers/link.sh)"
+  return 1
 }

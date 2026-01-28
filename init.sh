@@ -11,11 +11,15 @@ __DOTFILES_INIT=1
 
 # Setup paths
 # Source centralized paths (required)
-[ -r "$HOME/.dotfiles/config/paths.sh" ] || {
+_dotfiles_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+DOTFILES_DIR="${DOTFILES_DIR:-$_dotfiles_root}"
+unset _dotfiles_root
+
+[ -r "$DOTFILES_DIR/config/paths.sh" ] || {
   __dot_log "dotfiles: ERROR: paths.sh not found"
   return 1
 }
-. "$HOME/.dotfiles/config/paths.sh" || {
+. "$DOTFILES_DIR/config/paths.sh" || {
   __dot_log "dotfiles: ERROR: failed to load paths.sh"
   return 1
 }
@@ -59,31 +63,7 @@ __dot_source_required "$DOTFILES_SHELL_DIR/core.sh" || return 1
 __dot_source "$DOTFILES_LOADERS_DIR/manifest.sh"
 
 # ------------------------------------------------------------------------------
-# SECTION 4: Public API
-# ------------------------------------------------------------------------------
-
-dot_reload() {
-  __DOTFILES_INIT=""
-  __DOT_PLUGIN_LOADED=""
-  . "$DOTFILES_DIR/init.sh"
-}
-
-dot_status() {
-  printf 'Dotfiles Status\n===============\n\n'
-  printf 'Paths:\n'
-  printf '  DOTFILES_DIR: %s\n' "$DOTFILES_DIR"
-  printf '  DOTFILES_CONFIG_DIR: %s\n' "$DOTFILES_CONFIG_DIR"
-  printf '\nShell: %s\n' "$(__dot_shell_type 2>/dev/null || echo 'unknown')"
-  printf '\nLoaded Plugins:\n'
-  if [ -n "${__DOT_PLUGIN_LOADED:-}" ]; then
-    for plugin in $__DOT_PLUGIN_LOADED; do printf '  - %s\n' "$plugin"; done
-  else
-    printf '  (none)\n'
-  fi
-}
-
-# ------------------------------------------------------------------------------
-# SECTION 5: Final Loading
+# SECTION 4: Final Loading
 # ------------------------------------------------------------------------------
 
 __dot_source "$DOTFILES_CONFIG_DIR/aliases"
