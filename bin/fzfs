@@ -31,11 +31,19 @@ FZFS_SCRIPT="$0"
 # SECTION 2: Utilities
 # ------------------------------------------------------------------------------
 
-die() { printf "%bError:%b %s\n" "$CLR_RED" "$CLR_RESET" "$1" >&2; exit "${2:-1}"; }
+die() {
+  printf "%bError:%b %s\n" "$CLR_RED" "$CLR_RESET" "$1" >&2
+  exit "${2:-1}"
+}
 expand_path() { case "$1" in ~/*) printf '%s' "$HOME/${1#~/}" ;; ~) printf '%s' "$HOME" ;; *) printf '%s' "$1" ;; esac }
 is_abs() { case "$1" in /* | ~/* | ~) return 0 ;; *) return 1 ;; esac }
-resolve_path() { path="$1"; base="${FZFS_BASE:-}"; [ "$FZFS_RELATIVE" -ne 0 ] && [ -n "$base" ] && ! is_abs "$path" && path="${base%/}/$path"; expand_path "$path"; }
-copy() { if command -v pbcopy >/dev/null 2>&1; then printf '%s' "$1" | pbcopy; elif command -v xclip >/dev/null 2>&1; then printf '%s' "$1" | xclip -selection clipboard; elif command -v xsel >/dev/null 2>&1; then printf '%s' "$1" | xsel --clipboard --input; fi }
+resolve_path() {
+  path="$1"
+  base="${FZFS_BASE:-}"
+  [ "$FZFS_RELATIVE" -ne 0 ] && [ -n "$base" ] && ! is_abs "$path" && path="${base%/}/$path"
+  expand_path "$path"
+}
+copy() { if command -v pbcopy >/dev/null 2>&1; then printf '%s' "$1" | pbcopy; elif command -v xclip >/dev/null 2>&1; then printf '%s' "$1" | xclip -selection clipboard; elif command -v xsel >/dev/null 2>&1; then printf '%s' "$1" | xsel --clipboard --input; fi; }
 
 # ------------------------------------------------------------------------------
 # SECTION 3: Generators
@@ -43,29 +51,37 @@ copy() { if command -v pbcopy >/dev/null 2>&1; then printf '%s' "$1" | pbcopy; e
 
 gen_files() {
   type="$1" base="$(expand_path "$2")" show_hidden="${3:-1}"
-  use_relative=0; [ "$FZFS_RELATIVE" -ne 0 ] && [ "$base" != "." ] && [ "$base" != "./" ] && use_relative=1
+  use_relative=0
+  [ "$FZFS_RELATIVE" -ne 0 ] && [ "$base" != "." ] && [ "$base" != "./" ] && use_relative=1
 
   if [ "$HAS_FD" -eq 1 ]; then
-    opts="--follow --color=never"; [ "$show_hidden" -eq 1 ] && opts="$opts --hidden"
+    opts="--follow --color=never"
+    [ "$show_hidden" -eq 1 ] && opts="$opts --hidden"
     for ex in $FZFS_EXCLUDES; do opts="$opts --exclude '$ex'"; done
     case "$type" in f) opts="$opts --type f" ;; d) opts="$opts --type d" ;; esac
     [ "$type" = "recent" ] && opts="$opts --changed-within 24h --type f"
     [ "$use_relative" -eq 1 ] && opts="$opts --absolute-path"
-    if [ "$base" = "." ] || [ "$base" = "./" ]; then eval "fd $opts --strip-cwd-prefix"
-    elif [ "$use_relative" -eq 1 ]; then eval "fd $opts . '$base'" | sed "s|^${base%/}/||"
+    if [ "$base" = "." ] || [ "$base" = "./" ]; then
+      eval "fd $opts --strip-cwd-prefix"
+    elif [ "$use_relative" -eq 1 ]; then
+      eval "fd $opts . '$base'" | sed "s|^${base%/}/||"
     else eval "fd $opts . '$base'"; fi
   else
-    fopts=""; [ "$show_hidden" -eq 1 ] && fopts="-name .*"
-    [ "$type" = "f" ] && fopts="$fopts -type f"; [ "$type" = "d" ] && fopts="$fopts -type d"
+    fopts=""
+    [ "$show_hidden" -eq 1 ] && fopts="-name .*"
+    [ "$type" = "f" ] && fopts="$fopts -type f"
+    [ "$type" = "d" ] && fopts="$fopts -type d"
     [ "$type" = "recent" ] && fopts="$fopts -type f -mtime -1"
-    if [ "$use_relative" -eq 1 ]; then eval "find '$base' $fopts 2>/dev/null" | sed "s|^${base%/}/||"
+    if [ "$use_relative" -eq 1 ]; then
+      eval "find '$base' $fopts 2>/dev/null" | sed "s|^${base%/}/||"
     else eval "find '$base' $fopts 2>/dev/null"; fi
   fi
 }
 
 gen_search() {
   base="$(expand_path "$1")" query="$2"
-  if [ "$HAS_RG" -eq 1 ]; then rg -uu --no-heading --column --line-number --color=always -S --glob '!.git' -- "$query" "$base" 2>/dev/null
+  if [ "$HAS_RG" -eq 1 ]; then
+    rg -uu --no-heading --column --line-number --color=always -S --glob '!.git' -- "$query" "$base" 2>/dev/null
   else grep -rIn "$query" "$base" 2>/dev/null; fi
 }
 
@@ -79,19 +95,30 @@ gen_git() {
   esac
 }
 
-gen_commits() { git rev-parse --git-dir >/dev/null 2>&1 || die "Not a git repository."; git log --color=always --format="%C(yellow)%h%Creset %C(magenta)%ad%Creset %C(cyan)%an%Creset %s" --date=short; }
-gen_branches() { git rev-parse --git-dir >/dev/null 2>&1 || die "Not a git repository."; [ "$1" = "remote" ] && git for-each-ref --format="%(refname:short)" refs/remotes | grep -v '/HEAD$' || git for-each-ref --format="%(refname:short)" refs/heads; }
+gen_commits() {
+  git rev-parse --git-dir >/dev/null 2>&1 || die "Not a git repository."
+  git log --color=always --format="%C(yellow)%h%Creset %C(magenta)%ad%Creset %C(cyan)%an%Creset %s" --date=short
+}
+gen_branches() {
+  git rev-parse --git-dir >/dev/null 2>&1 || die "Not a git repository."
+  [ "$1" = "remote" ] && git for-each-ref --format="%(refname:short)" refs/remotes | grep -v '/HEAD$' || git for-each-ref --format="%(refname:short)" refs/heads
+}
 
 gen_projects() {
   roots="${1:-.}" dirs="" rel_base=""
   [ "$FZFS_RELATIVE" -ne 0 ] && set -- $roots && [ "$#" -eq 1 ] && [ "$1" != "." ] && [ "$1" != "./" ] && rel_base="$(expand_path "$1")"
-  for r in $roots; do r="$(expand_path "$r")"; [ -d "$r" ] && dirs="$dirs '$r'"; done
+  for r in $roots; do
+    r="$(expand_path "$r")"
+    [ -d "$r" ] && dirs="$dirs '$r'"
+  done
   [ -z "$dirs" ] && return
   if [ "$HAS_FD" -eq 1 ]; then
-    if [ -n "$rel_base" ]; then eval "fd --hidden --no-ignore --type d --glob .git $dirs -x dirname" | sed "s|^${rel_base%/}/||"
+    if [ -n "$rel_base" ]; then
+      eval "fd --hidden --no-ignore --type d --glob .git $dirs -x dirname" | sed "s|^${rel_base%/}/||"
     else eval "fd --hidden --no-ignore --type d --glob .git $dirs -x dirname"; fi
   else
-    if [ -n "$rel_base" ]; then eval "for d in $dirs; do find \"\$d\" -type d -name .git -exec dirname {} \\;; done" | sed "s|^${rel_base%/}/||"
+    if [ -n "$rel_base" ]; then
+      eval "for d in $dirs; do find \"\$d\" -type d -name .git -exec dirname {} \\;; done" | sed "s|^${rel_base%/}/||"
     else eval "for d in $dirs; do find \"\$d\" -type d -name .git -exec dirname {} \\;; done"; fi
   fi
 }
@@ -101,36 +128,49 @@ gen_projects() {
 # ------------------------------------------------------------------------------
 
 preview_file() {
-  path="$(resolve_path "${1%%:*}")"; [ -n "$path" ] || return 0
+  path="$(resolve_path "${1%%:*}")"
+  [ -n "$path" ] || return 0
   if [ -d "$path" ]; then
-    if [ "$HAS_EZA" -eq 1 ]; then eza -lah --color=always --icons --group-directories-first --git "$path"
+    if [ "$HAS_EZA" -eq 1 ]; then
+      eza -lah --color=always --icons --group-directories-first --git "$path"
     else ls -lah "$path"; fi
   elif [ -f "$path" ]; then
-    if command -v file >/dev/null 2>&1 && file --mime "$path" | grep -q "binary"; then printf "%bBinary file (preview disabled)%b" "$CLR_YELLOW" "$CLR_RESET"; return; fi
+    if command -v file >/dev/null 2>&1 && file --mime "$path" | grep -q "binary"; then
+      printf "%bBinary file (preview disabled)%b" "$CLR_YELLOW" "$CLR_RESET"
+      return
+    fi
     if [ "$HAS_BAT" -eq 1 ]; then bat --style=numbers --color=always --line-range :200 "$path"; else head -n 100 "$path"; fi
   fi
 }
 
 preview_git() {
-  hash="$(printf '%s' "$1" | awk '{print $1}')"; printf "%bCommit:%b %s\n" "$CLR_BOLD_CYAN" "$CLR_RESET" "$hash"
-  diff_tool="cat"; [ "$HAS_DELTA" -eq 1 ] && diff_tool="delta --width $(tput cols 2>/dev/null || echo 80)" || [ "$HAS_BAT" -eq 1 ] && diff_tool="bat -pl diff"
+  hash="$(printf '%s' "$1" | awk '{print $1}')"
+  printf "%bCommit:%b %s\n" "$CLR_BOLD_CYAN" "$CLR_RESET" "$hash"
+  diff_tool="cat"
+  [ "$HAS_DELTA" -eq 1 ] && diff_tool="delta --width $(tput cols 2>/dev/null || echo 80)" || [ "$HAS_BAT" -eq 1 ] && diff_tool="bat -pl diff"
   git log -1 --color=always --date=short --format="%C(yellow)%h%Creset %C(magenta)%ad%Creset %C(cyan)%an%Creset%n%n%C(auto)%s%Creset%n" "$hash" 2>/dev/null
   printf "\n%bChanges:%b\n" "$CLR_BOLD_YELLOW" "$CLR_RESET"
   git show --color=always --stat --patch "$hash" | eval "$diff_tool" | head -n 150
 }
 
 preview_branch() {
-  ref="$(printf '%s' "$1" | awk '{print $1}')"; base="main"; git show-ref --verify --quiet refs/heads/master && base="master"
+  ref="$(printf '%s' "$1" | awk '{print $1}')"
+  base="main"
+  git show-ref --verify --quiet refs/heads/master && base="master"
   printf "%bBranch:%b %s\n" "$CLR_BOLD_CYAN" "$CLR_RESET" "$ref"
   ab="$(git rev-list --left-right --count "$base...$ref" 2>/dev/null)"
   [ -n "$ab" ] && printf "%bDiff vs %s:%b Ahead %s, Behind %s\n" "$CLR_BOLD" "$base" "$CLR_RESET" "${ab#*\t}" "${ab%%\t*}"
-  printf "\n%bGraph:%b\n" "$CLR_BOLD_YELLOW" "$CLR_RESET"; git log --oneline --abbrev-commit --graph --decorate --color "$base" "$ref" -20 2>/dev/null | cut -c1-120
-  printf "\n%bLatest:%b\n" "$CLR_BOLD_YELLOW" "$CLR_RESET"; git log -1 --color=always --date=short --format="%C(yellow)%h%Creset %C(magenta)%ad%Creset %C(cyan)%an%Creset %s" "$ref" 2>/dev/null
-  printf "\n%bChanges:%b\n" "$CLR_BOLD_YELLOW" "$CLR_RESET"; git diff --stat --color=always "$base...$ref" 2>/dev/null | head -n 10
+  printf "\n%bGraph:%b\n" "$CLR_BOLD_YELLOW" "$CLR_RESET"
+  git log --oneline --abbrev-commit --graph --decorate --color "$base" "$ref" -20 2>/dev/null | cut -c1-120
+  printf "\n%bLatest:%b\n" "$CLR_BOLD_YELLOW" "$CLR_RESET"
+  git log -1 --color=always --date=short --format="%C(yellow)%h%Creset %C(magenta)%ad%Creset %C(cyan)%an%Creset %s" "$ref" 2>/dev/null
+  printf "\n%bChanges:%b\n" "$CLR_BOLD_YELLOW" "$CLR_RESET"
+  git diff --stat --color=always "$base...$ref" 2>/dev/null | head -n 10
 }
 
 preview_help() {
-  if [ "$FZFS_FRIENDLY" -ne 0 ]; then cat <<'EOF'
+  if [ "$FZFS_FRIENDLY" -ne 0 ]; then
+    cat <<'EOF'
 Key Bindings:
   Enter     - Select
   ctrl-e    - Edit file(s)
@@ -154,18 +194,20 @@ EOF
 
 mode_label() {
   case "$1" in f) printf 'files' ;; d) printf 'dirs' ;; a) printf 'all' ;; search) printf 'search' ;; recent) printf 'recent' ;;
-    git_all) printf 'git' ;; git_tracked) printf 'git-files' ;; git_status) printf 'status' ;; git_staged) printf 'staged' ;;
-    git_dir) printf 'git-dirs' ;; branch) printf 'branches' ;; commits) printf 'commits' ;; projects) printf 'projects' ;; *) printf '%s' "$1" ;; esac
+  git_all) printf 'git' ;; git_tracked) printf 'git-files' ;; git_status) printf 'status' ;; git_staged) printf 'staged' ;;
+  git_dir) printf 'git-dirs' ;; branch) printf 'branches' ;; commits) printf 'commits' ;; projects) printf 'projects' ;; *) printf '%s' "$1" ;; esac
 }
 
 build_header() {
   mode="$1" base="${2:-.}" show_hidden="${3:-1}"
   hidden_label="Vis" preview_label="OFF" friendly_ind="" relative_ind=""
-  [ "$show_hidden" -ne 0 ] && hidden_label="All"; [ "${4:-1}" -ne 0 ] && preview_label="ON"
+  [ "$show_hidden" -ne 0 ] && hidden_label="All"
+  [ "${4:-1}" -ne 0 ] && preview_label="ON"
   [ "$FZFS_FRIENDLY" -ne 0 ] && friendly_ind="${CLR_GREEN}[F]${CLR_RESET}"
   [ "$FZFS_RELATIVE" -ne 0 ] && relative_ind="${CLR_GREEN}[R]${CLR_RESET}"
   label="$(mode_label "$mode")"
-  if [ "$FZFS_FRIENDLY" -ne 0 ]; then printf 'fzf helper: %s%s Mode: %s | Path: %s | Hidden: %s | Preview: %s | ? for help' "$friendly_ind" "$relative_ind" "$label" "$base" "$hidden_label" "$preview_label"
+  if [ "$FZFS_FRIENDLY" -ne 0 ]; then
+    printf 'fzf helper: %s%s Mode: %s | Path: %s | Hidden: %s | Preview: %s | ? for help' "$friendly_ind" "$relative_ind" "$label" "$base" "$hidden_label" "$preview_label"
   else printf '%s%s|%s|%s|%s|%s|?' "$friendly_ind" "$relative_ind" "$label" "$base" "$hidden_label" "$preview_label"; fi
 }
 
@@ -175,14 +217,24 @@ ui_search() {
   preview_cmd="FZFS_BASE='$base_path' '$FZFS_SCRIPT' --internal-preview {}"
   fzf_opts="--multi" show_hidden="$FZFS_SHOW_HIDDEN" use_relative=0
 
-  case "$mode" in f|d|a|recent|projects) [ "$FZFS_RELATIVE" -ne 0 ] && [ "$base" != "." ] && [ "$base" != "./" ] && use_relative=1 ;; esac
+  case "$mode" in f | d | a | recent | projects) [ "$FZFS_RELATIVE" -ne 0 ] && [ "$base" != "." ] && [ "$base" != "./" ] && use_relative=1 ;; esac
 
   case "$mode" in
-    git_all|git_tracked|git_status|git_staged|git_dir) git_type="${mode#git_}"; [ "$git_type" = "dir" ] && git_type="dirs"; src_cmd="'$FZFS_SCRIPT' --internal-gen-git '$git_type'" ;;
+    git_all | git_tracked | git_status | git_staged | git_dir)
+      git_type="${mode#git_}"
+      [ "$git_type" = "dir" ] && git_type="dirs"
+      src_cmd="'$FZFS_SCRIPT' --internal-gen-git '$git_type'"
+      ;;
     projects) src_cmd="'$FZFS_SCRIPT' --internal-gen-projects '$base'" ;;
-    commits) src_cmd="'$FZFS_SCRIPT' --internal-gen-commits"; preview_cmd="'$FZFS_SCRIPT' --internal-git-preview {}" ;;
+    commits)
+      src_cmd="'$FZFS_SCRIPT' --internal-gen-commits"
+      preview_cmd="'$FZFS_SCRIPT' --internal-git-preview {}"
+      ;;
     recent) src_cmd="'$FZFS_SCRIPT' --internal-gen-files recent '$base' $show_hidden" ;;
-    search) fzf_opts="$fzf_opts --disabled"; src_cmd="'$FZFS_SCRIPT' --internal-gen-search '$base' ''" ;;
+    search)
+      fzf_opts="$fzf_opts --disabled"
+      src_cmd="'$FZFS_SCRIPT' --internal-gen-search '$base' ''"
+      ;;
     *) src_cmd="'$FZFS_SCRIPT' --internal-gen-files '$mode' '$base' $show_hidden" ;;
   esac
 
@@ -191,14 +243,14 @@ ui_search() {
   binds="$binds,ctrl-u:preview-half-page-up,ctrl-d:preview-half-page-down,?:preview('$FZFS_SCRIPT' --internal-help)"
   b_edit="${BIND_EDIT}:become(${EDITOR:-vi} {+})"
 
-  case "$mode" in f|d|a|recent) binds="$binds,${BIND_HIDDEN}:reload(FZFS_SHOW_HIDDEN=$((1-FZFS_SHOW_HIDDEN)) && $src_cmd)" ;; esac
+  case "$mode" in f | d | a | recent) binds="$binds,${BIND_HIDDEN}:reload(FZFS_SHOW_HIDDEN=$((1 - FZFS_SHOW_HIDDEN)) && $src_cmd)" ;; esac
 
   if [ "$mode" = "search" ]; then
     b_edit="${BIND_EDIT}:become(${EDITOR:-vi} {1} +{2})"
     binds="$binds,change:reload:sleep 0.1; [ -n {q} ] && '$FZFS_SCRIPT' --internal-gen-search '$base' {q} || true"
   fi
 
-  binds="$binds,ctrl-r:reload($src_cmd),alt-h:reload(FZFS_FRIENDLY=$((1-FZFS_FRIENDLY)) && $src_cmd),$b_edit"
+  binds="$binds,ctrl-r:reload($src_cmd),alt-h:reload(FZFS_FRIENDLY=$((1 - FZFS_FRIENDLY)) && $src_cmd),$b_edit"
   header="$(build_header "$mode" "$base" "$show_hidden" 1)"
 
   result="$(eval "$src_cmd" | "$FZFS_BIN" --ansi --no-sort --header "$header" $FZFS_OPTS_UI $fzf_opts --preview "$preview_cmd" --preview-window "$FZFS_OPTS_PREVIEW" --bind "$binds" --expect="$BIND_CD")" || return 1
@@ -211,9 +263,13 @@ ui_search() {
 
   if [ "$key" = "$BIND_CD" ]; then
     first_sel="$(printf '%s\n' "$sel" | head -n1)"
-    first_path="$first_sel"; [ "$use_relative" -ne 0 ] && first_path="${base_path%/}/$first_sel"
+    first_path="$first_sel"
+    [ "$use_relative" -ne 0 ] && first_path="${base_path%/}/$first_sel"
     first_path="$(expand_path "$first_path")"
-    if [ -d "$first_path" ]; then cd "$first_path" || return 1; return 0; fi
+    if [ -d "$first_path" ]; then
+      cd "$first_path" || return 1
+      return 0
+    fi
     edit=1
   fi
 
@@ -249,7 +305,8 @@ doctor() {
   printf "%bfzf helper - Diagnostics%b\n" "$CLR_BOLD_CYAN" "$CLR_RESET"
   printf "  Script: %s\n\n" "$FZFS_SCRIPT"
   printf "  %bCore:%b\n" "$CLR_BOLD" "$CLR_RESET"
-  if command -v "$FZFS_BIN" >/dev/null 2>&1; then printf "    %-18s : %b%s%b\n" "FZF" "$CLR_GREEN" "$("$FZFS_BIN" --version | awk '{print $1}')" "$CLR_RESET"
+  if command -v "$FZFS_BIN" >/dev/null 2>&1; then
+    printf "    %-18s : %b%s%b\n" "FZF" "$CLR_GREEN" "$("$FZFS_BIN" --version | awk '{print $1}')" "$CLR_RESET"
   else printf "    %-18s : %bmissing%b\n" "FZF" "$CLR_RED" "$CLR_RESET"; fi
   printf "\n  %bTools:%b\n" "$CLR_BOLD" "$CLR_RESET"
   printf "    %-18s : %b%s%b\n" "File Finder" "$([ "$HAS_FD" -eq 1 ] && printf '%s%s' "$CLR_GREEN" "$(fd --version 2>/dev/null | awk '{print $2}')" || printf '%sfind' "$CLR_YELLOW")" "$CLR_RESET"
@@ -302,23 +359,67 @@ main() {
   mode="a" base="." edit=0
   while [ "$#" -gt 0 ]; do
     case "$1" in
-      -f|--files) mode="f" ;; -d|--dirs) mode="d" ;; -a|--all) mode="a" ;; -s|--search) mode="search" ;;
-      -g|--git) mode="git_all" ;; -gd|--git-dirs) mode="git_dir" ;; -gf|--git-files) mode="git_tracked" ;;
-      -gs|--status) mode="git_status" ;; -gst|--staged) mode="git_staged" ;; -r|--recent) mode="recent" ;;
-      -gb|--branch) mode="branch" ;; -gc|--commits) mode="commits" ;; -gp|--projects) mode="projects" ;;
-      -e|--edit) edit=1 ;; --check|--doctor) doctor; return 0 ;; -h|--help) show_help; return 0 ;;
-      --internal-gen-files) gen_files "$2" "$3" "$4"; return 0 ;;
-      --internal-gen-search) gen_search "$2" "$3"; return 0 ;;
-      --internal-gen-git) gen_git "$2"; return 0 ;;
-      --internal-gen-branches) gen_branches "$2"; return 0 ;;
-      --internal-gen-commits) gen_commits; return 0 ;;
-      --internal-gen-projects) gen_projects "$2"; return 0 ;;
-      --internal-preview) preview_file "$2"; return 0 ;;
-      --internal-git-preview) preview_git "$2"; return 0 ;;
-      --internal-branch-preview) preview_branch "$2"; return 0 ;;
-      --internal-copy) copy "$2"; return 0 ;;
-      --internal-help) preview_help; return 0 ;;
-      --) shift; break ;; -*) die "Unknown option: $1" ;; *) base="$1" ;;
+      -f | --files) mode="f" ;; -d | --dirs) mode="d" ;; -a | --all) mode="a" ;; -s | --search) mode="search" ;;
+      -g | --git) mode="git_all" ;; -gd | --git-dirs) mode="git_dir" ;; -gf | --git-files) mode="git_tracked" ;;
+      -gs | --status) mode="git_status" ;; -gst | --staged) mode="git_staged" ;; -r | --recent) mode="recent" ;;
+      -gb | --branch) mode="branch" ;; -gc | --commits) mode="commits" ;; -gp | --projects) mode="projects" ;;
+      -e | --edit) edit=1 ;; --check | --doctor)
+        doctor
+        return 0
+        ;;
+      -h | --help)
+        show_help
+        return 0
+        ;;
+      --internal-gen-files)
+        gen_files "$2" "$3" "$4"
+        return 0
+        ;;
+      --internal-gen-search)
+        gen_search "$2" "$3"
+        return 0
+        ;;
+      --internal-gen-git)
+        gen_git "$2"
+        return 0
+        ;;
+      --internal-gen-branches)
+        gen_branches "$2"
+        return 0
+        ;;
+      --internal-gen-commits)
+        gen_commits
+        return 0
+        ;;
+      --internal-gen-projects)
+        gen_projects "$2"
+        return 0
+        ;;
+      --internal-preview)
+        preview_file "$2"
+        return 0
+        ;;
+      --internal-git-preview)
+        preview_git "$2"
+        return 0
+        ;;
+      --internal-branch-preview)
+        preview_branch "$2"
+        return 0
+        ;;
+      --internal-copy)
+        copy "$2"
+        return 0
+        ;;
+      --internal-help)
+        preview_help
+        return 0
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*) die "Unknown option: $1" ;; *) base="$1" ;;
     esac
     shift
   done

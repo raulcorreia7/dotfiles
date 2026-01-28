@@ -4,7 +4,7 @@
 # Linked to ~/.local/bin/ by installers/link.sh
 
 if [ $# -eq 0 ]; then
-    echo "Hello from dotfiles!"
+  echo "Hello from dotfiles!"
 else
-    echo "Hello, $1!"
+  echo "Hello, $1!"
 fi
