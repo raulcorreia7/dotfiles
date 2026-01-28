@@ -10,12 +10,8 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 . "$SCRIPT_DIR/lib.sh"
 
-# Save current SCRIPT_DIR and temporarily set it for config.sh
-_LINK_SCRIPT_DIR="$SCRIPT_DIR"
-SCRIPT_DIR="$_LINK_SCRIPT_DIR/../../installers"
+# Source config.sh from same directory
 . "$SCRIPT_DIR/config.sh"
-SCRIPT_DIR="$_LINK_SCRIPT_DIR"
-unset _LINK_SCRIPT_DIR
 
 # Use REPO_DIR if available, otherwise use the parent of SCRIPT_DIR
 if [ -n "${REPO_DIR:-}" ]; then

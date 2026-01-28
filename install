@@ -70,7 +70,7 @@ _detect_linux_distro() {
     _id=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
     _name=$(grep '^NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
     case "$_id" in
-      arch|manjaro|endeavouros) printf '%s\n' "Arch Linux" ;;
+      arch|manjaro|endeavouros|cachyos|garuda|artix) printf '%s\n' "Arch Linux" ;;
       ubuntu) printf '%s\n' "Ubuntu" ;;
       debian) printf '%s\n' "Debian" ;;
       fedora) printf '%s\n' "Fedora" ;;
