@@ -35,7 +35,7 @@ What `./install` does:
 .dotfiles/
 ├── config/          # app configs + shell modules/plugins ([README](config/README.md))
 ├── installers/      # link + OS installers ([README](installers/README.md))
-├── packages/        # OS package lists ([README](packages/README.md))
+├── installers/      # Link + OS installers + package lists ([README](installers/README.md))
 ├── scripts/         # legacy loader (compat) ([README](scripts/README.md))
 ├── bin/             # user scripts -> ~/.local/bin ([README](bin/README.md))
 └── init.sh          # shell entrypoint
@@ -57,7 +57,7 @@ What `./install` does:
 │  ├─ install-arch.sh
 │  ├─ install-macos.sh
 │  └─ install-windows.ps1
-├─ packages
+
 ├─ bin
 └─ init.sh
 ```
@@ -105,7 +105,7 @@ Detailed documentation for specific components:
 - [`bin/README.md`](bin/README.md) - User scripts and utilities
 - [`config/README.md`](config/README.md) - App configs, shell modules, and plugins
 - [`installers/README.md`](installers/README.md) - Link and OS installers
-- [`packages/README.md`](packages/README.md) - OS package lists
+
 - [`scripts/README.md`](scripts/README.md) - Legacy loader and development scripts
 
 ## Commands

@@ -79,7 +79,7 @@ check_brew() {
 
 get_category_file() {
   _category="$1"
-  _file="$PKGS_MACOS/$_category"
+  _file="$INSTALLERS_DIR/packages/macos/$_category"
   if [ -f "$_file" ]; then
     printf '%s' "$_file"
   else

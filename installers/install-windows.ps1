@@ -31,7 +31,7 @@ Options:
 }
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$PackagesDir = Join-Path $ScriptDir "..\packages\windows"
+$PackagesDir = Join-Path $ScriptDir "packages\windows"
 
 $script:InstalledCount = 0
 $script:SkippedCount = 0

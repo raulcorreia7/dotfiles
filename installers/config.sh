@@ -24,10 +24,10 @@ INSTALLERS_DIR="$DOTFILES_INSTALL_DIR"
 PACKAGES_DIR="$DOTFILES_DIR/packages"
 BUILD_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles/build"
 
-# Package list directories
-PKGS_ARCH="$PACKAGES_DIR/arch"
-PKGS_MACOS="$PACKAGES_DIR/macos"
-PKGS_WINDOWS="$PACKAGES_DIR/windows"
+# Package list directories (moved to installers/packages/)
+PKGS_ARCH="$INSTALLERS_DIR/packages/arch"
+PKGS_MACOS="$INSTALLERS_DIR/packages/macos"
+PKGS_WINDOWS="$INSTALLERS_DIR/packages/windows"
 
 # Package list files
 PKGS_ARCH_PACMAN_FILE="$PKGS_ARCH/pacman"

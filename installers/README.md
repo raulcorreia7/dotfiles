@@ -81,6 +81,8 @@ installers/install-macos.sh --category cli
 
 ## Package Files
 
+Package lists are stored in `installers/packages/`:
+
 ### Arch Linux
 
 - `packages/arch/pacman` — Official repository packages
