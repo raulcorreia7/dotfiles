@@ -158,10 +158,10 @@ cmd_health() {
       fail "init.sh missing: $DOTFILES_DIR/init.sh"
     fi
 
-    if [ -r "$DOTFILES_CONFIG_DIR/paths.sh" ]; then
+    if [ -r "$DOTFILES_DIR/before/paths.sh" ]; then
       ok "paths.sh present"
     else
-      fail "paths.sh missing: $DOTFILES_CONFIG_DIR/paths.sh"
+      fail "paths.sh missing: $DOTFILES_DIR/before/paths.sh"
     fi
 
     if [ -x "$DOTFILES_INSTALL_DIR/link.sh" ] || [ -r "$DOTFILES_INSTALL_DIR/link.sh" ]; then
