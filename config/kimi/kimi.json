@@ -1,0 +1,19 @@
+{
+  "work_dirs": [
+    {
+      "path": "/home/rcorreia/.dotfiles",
+      "kaos": "local",
+      "last_session_id": "694b7013-9dbb-4f7b-b335-88db8965f2b9"
+    },
+    {
+      "path": "/home/rcorreia/projects/doom-mcp",
+      "kaos": "local",
+      "last_session_id": "3f6b782c-d803-4592-80bc-650f8e84e200"
+    },
+    {
+      "path": "/home/rcorreia",
+      "kaos": "local",
+      "last_session_id": "7059b8d8-e73f-49df-91a7-9fac3ce9b0e1"
+    }
+  ]
+}

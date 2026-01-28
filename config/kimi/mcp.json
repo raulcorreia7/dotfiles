@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "transport": "http"
+    },
+    "grep": {
+      "url": "https://mcp.grep.app",
+      "transport": "http"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+# Kimi runtime data - don't version control
+/device_id
+/latest_version.txt
+/logs/
+/sessions/
+/user-history/
