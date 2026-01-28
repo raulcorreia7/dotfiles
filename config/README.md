@@ -37,7 +37,8 @@ The `init.sh` entrypoint sources files in this order:
 2. `env` - Environment variables
 3. `shell/core.sh` - Core functions
 4. `loaders/manifest.sh` - Loads enabled plugins
-5. `aliases` - Command aliases
+5. Ensure `~/.local/bin` is on PATH (opt-out: `DOTFILES_POST_INSTALL_PATH=0`)
+6. `aliases` - Command aliases
 
 ## App Configs
 

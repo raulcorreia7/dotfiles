@@ -15,6 +15,43 @@ Add to your shell config:
 [ -r "$HOME/.dotfiles/init.sh" ] && . "$HOME/.dotfiles/init.sh"
 ```
 
+`init.sh` ensures `~/.local/bin` is on PATH by default. Disable with
+`DOTFILES_POST_INSTALL_PATH=0`.
+
+## Workflows
+
+### Fresh install (full)
+
+```sh
+cd ~/.dotfiles
+./install
+```
+
+### Fresh install (minimal)
+
+```sh
+installers/link.sh
+./bin/rdotfiles fix --zimfw
+```
+
+### Update (fast)
+
+```sh
+rdotfiles update
+```
+
+### Update + health + fix
+
+```sh
+rdotfiles update --fix
+```
+
+### Daily use
+
+Open a shell (sources `init.sh`).
+
+Note: if `rdotfiles` is not on your PATH yet, run `./bin/rdotfiles ...` from the repo.
+
 ## Install
 
 ```sh
@@ -26,7 +63,7 @@ What `./install` does:
 
 - Links configs via `installers/link.sh`
 - Installs OS packages
-- Optionally runs `mise install` and `zimfw build`
+- Optionally runs `mise install` and `zimfw install/build`
 - Runs post-install setup (default: enabled)
 
 ## Layout
@@ -45,7 +82,7 @@ What `./install` does:
 ```
 .dotfiles
 ├─ config
-│  ├─ alacritty, ghostty, nvim, tmux, mise, zimfw
+│  ├─ alacritty, ghostty, nvim, tmux, mise
 │  ├─ env
 │  ├─ shell/core.sh
 │  ├─ loaders/manifest.sh
@@ -68,12 +105,12 @@ Shell init:
 ```
 ~/.zshrc
   └─ source ~/.dotfiles/init.sh
-       ├─ config/paths.sh       # load centralized paths
-       ├─ config/env            # user environment overrides
-       ├─ config/shell/core.sh  # core functions + plugin loader
-       ├─ config/loaders/manifest.sh
-       │    └─ config/plugins/* # load enabled plugins
-       └─ config/aliases        # shell aliases
+    ├─ config/paths.sh       # load centralized paths
+    ├─ config/env            # user environment overrides
+    ├─ config/shell/core.sh  # core functions + plugin loader
+    ├─ config/loaders/manifest.sh
+    │  └─ config/plugins/*   # load enabled plugins
+    └─ config/aliases        # shell aliases
 ```
 
 Linking:
@@ -82,6 +119,7 @@ Linking:
 installers/link.sh
   ├─ ensure ~/.config + ~/.local/bin
   ├─ link app configs -> ~/.config/<app>
+  ├─ link ~/.zimrc -> config/.zimrc
   └─ link bin/* -> ~/.local/bin/*
 ```
 
@@ -93,7 +131,7 @@ Install:
   ├─ run installers/link.sh
   ├─ run OS installer
   ├─ run mise install (optional)
-  ├─ run zimfw build (optional)
+  ├─ run zimfw install/build (optional)
   └─ run post-install (optional)
 ```
 
@@ -109,28 +147,28 @@ Detailed documentation for specific components:
 
 ## Commands
 
-### dot_reload
+### rdotfiles
 
-Reload dotfiles configuration without restarting shell:
+Single entrypoint for dotfiles maintenance:
 
 ```sh
-dot_reload
+rdotfiles setup
+rdotfiles link
+rdotfiles health
+rdotfiles fix --zimfw
+rdotfiles update --health
+rdotfiles update --fix
+rdotfiles unlink
 ```
 
-### dot_status
+Aliases: `df` → `rdotfiles`, `dotreload` → source `init.sh`, `dotdoctor` → `rdotfiles health`, `nvcfg` → open Neovim config.
 
-Show dotfiles loading status (paths, shell type, loaded plugins):
+### Uninstall
 
-```sh
-dot_status
-```
-
-### dot_doctor
-
-Check if required tools are installed:
+Remove dotfiles symlinks:
 
 ```sh
-dot_doctor
+rdotfiles unlink
 ```
 
 ## Knobs
@@ -150,14 +188,16 @@ dot_doctor
 ### Install Options
 
 - `DOTFILES_MISE_INSTALL=0` - skip `mise install`
+- `DOTFILES_ZIMFW_INSTALL=0` - skip `zimfw install`
 - `DOTFILES_ZIMFW_BUILD=0` - skip `zimfw build`
+- `DOTFILES_ZIMFW_DOWNLOAD=0` - skip zimfw download fallback
 - `DOTFILES_POST_INSTALL=0` - skip post-install setup
 - `DOTFILES_ARCH_ASSUME_YES=1` - pacman/paru non-interactive
 
 ### Post-Install Options
 
 - `DOTFILES_POST_INSTALL_ZSH=0` - skip setting zsh as default
-- `DOTFILES_POST_INSTALL_PATH=0` - skip adding `~/.local/bin` to PATH
+- `DOTFILES_POST_INSTALL_PATH=0` - skip adding `~/.local/bin` to PATH (init.sh)
 - `DOTFILES_POST_INSTALL_XDG_DIRS=0` - skip creating XDG dirs
 - `DOTFILES_POST_INSTALL_GIT=0` - skip git defaults (including side-by-side diffs)
 
@@ -173,8 +213,14 @@ dot_doctor
 Run the lint script to check and fix code style:
 
 ```sh
+./scripts/format.sh
 ./scripts/lint.sh
 ```
+
+Exclude paths by editing `config/paths.sh`:
+
+- `DOTFILES_EXCLUDE_DIRS` (space-separated)
+- `DOTFILES_EXCLUDE_FILES` (space-separated)
 
 ### Testing Changes
 
@@ -186,8 +232,5 @@ sh -n init.sh
 sh -n config/shell/core.sh
 
 # Reload in current shell
-dot_reload
-
-# Check status
-dot_status
+source "$HOME/.dotfiles/init.sh"
 ```
