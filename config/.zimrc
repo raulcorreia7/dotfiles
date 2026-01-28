@@ -8,14 +8,20 @@
 
 # Sets sane Zsh built-in environment options.
 zmodule environment
+# mise integration (keep early so other modules can detect tools)
+zmodule joke/zim-mise
 # Provides handy git aliases and functions.
 zmodule git
 # Applies correct bindkeys for input events.
 zmodule input
+# Figures out where to get the best help, and gets it.
+zmodule run-help
 # Sets a custom terminal title.
 zmodule termtitle
 # Utility aliases and functions. Adds colour to ls, grep and less.
 zmodule utility
+# Sets up the direnv Zsh shell integration.
+zmodule direnv
 
 # <-- Normally new modules should be added here. Check each module documentation
 # for any caveats.

@@ -6,21 +6,23 @@
 # Only for zsh
 [ -n "${ZSH_VERSION:-}" ] || return 0
 
-# Check if zimfw is available (bundled or user-installed)
-_zimfw_init=""
-if [ -r "$DOTFILES_CONFIG_DIR/zimfw/init.zsh" ]; then
-  _zimfw_init="$DOTFILES_CONFIG_DIR/zimfw/init.zsh"
-elif [ -r "$HOME/.zim/init.zsh" ]; then
-  _zimfw_init="$HOME/.zim/init.zsh"
+ZDOTDIR="${ZDOTDIR:-$HOME}"
+export ZIM_HOME="${ZIM_HOME:-${DOTFILES_ZIM_HOME:-$ZDOTDIR/.zim}}"
+export ZIM_CONFIG_FILE="${ZIM_CONFIG_FILE:-${DOTFILES_ZIM_CONFIG:-$ZDOTDIR/.zimrc}}"
+
+_zimfw_init="$ZIM_HOME/init.zsh"
+
+if [ ! -r "$_zimfw_init" ]; then
+  __dot_debug "dotfiles: zimfw init missing (run: rdotfiles fix --zimfw)"
+  unset _zimfw_init
+  return 0
 fi
 
-[ -r "$_zimfw_init" ] || return 0
+if [ -r "$ZIM_CONFIG_FILE" ] && [ "$_zimfw_init" -ot "$ZIM_CONFIG_FILE" ]; then
+  __dot_debug "dotfiles: zimfw init stale (run: rdotfiles fix --zimfw)"
+  unset _zimfw_init
+  return 0
+fi
 
-# Set zimfw environment to use dotfiles config
-export ZIM_HOME="${ZIM_HOME:-$DOTFILES_CONFIG_DIR/zimfw}"
-export ZIM_CONFIG_FILE="${ZIM_CONFIG_FILE:-$DOTFILES_CONFIG_DIR/.zimrc}"
-
-# Load zimfw
 . "$_zimfw_init" || return 0
-
 unset _zimfw_init
