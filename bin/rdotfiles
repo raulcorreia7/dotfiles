@@ -1,0 +1,512 @@
+#!/bin/sh
+set -eu
+if (set -o pipefail) 2>/dev/null; then
+  set -o pipefail
+fi
+
+# rdotfiles: single entrypoint for dotfiles maintenance.
+
+usage() {
+  cat <<'EOF'
+Usage: rdotfiles <command> [options]
+
+Commands:
+  setup                 Run full install (packages + link + tools)
+  link                  Link configs and bin
+  unlink                Remove dotfiles symlinks
+  health                Run health check
+  fix                   Fix common issues (link + zimfw)
+  update [--health]     Pull latest dotfiles (optional health check)
+  update --fix          Pull latest dotfiles, then fix
+  help                  Show this help
+EOF
+}
+
+log() {
+  printf '%s\n' "$*"
+}
+
+warn() {
+  printf 'warn: %s\n' "$*" >&2
+}
+
+die() {
+  printf 'error: %s\n' "$*" >&2
+  exit 1
+}
+
+resolve_dotfiles_dir() {
+  if [ -n "${DOTFILES_DIR:-}" ]; then
+    printf '%s\n' "$DOTFILES_DIR"
+    return 0
+  fi
+  if command -v rdotfiles >/dev/null 2>&1; then
+    _self=$(command -v rdotfiles)
+  else
+    _self=$0
+  fi
+  if command -v readlink >/dev/null 2>&1; then
+    _resolved=$(readlink "$_self" 2>/dev/null || true)
+    [ -n "$_resolved" ] && _self=$_resolved
+  fi
+  _dir=$(CDPATH= cd -- "$(dirname -- "$_self")" && pwd)
+  printf '%s\n' "$(CDPATH= cd -- "$_dir/.." && pwd)"
+}
+
+DOTFILES_DIR=$(resolve_dotfiles_dir)
+DOTFILES_CONFIG_DIR="${DOTFILES_CONFIG_DIR:-$DOTFILES_DIR/config}"
+DOTFILES_INSTALL_DIR="${DOTFILES_INSTALL_DIR:-$DOTFILES_DIR/installers}"
+
+# Load shared defaults (paths, app list)
+if [ -r "$DOTFILES_CONFIG_DIR/paths.sh" ]; then
+  . "$DOTFILES_CONFIG_DIR/paths.sh"
+fi
+
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+USER_BIN_DIR="${USER_BIN_DIR:-$HOME/.local/bin}"
+ZDOTDIR="${ZDOTDIR:-$HOME}"
+
+is_disabled() {
+  case "${1:-}" in
+    0 | false | no | off) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+cmd_setup() {
+  if [ -r "$DOTFILES_DIR/install" ]; then
+    sh "$DOTFILES_DIR/install"
+    return $?
+  fi
+  warn "install script not found: $DOTFILES_DIR/install"
+  return 1
+}
+
+cmd_link() {
+  if [ -r "$DOTFILES_INSTALL_DIR/link.sh" ]; then
+    sh "$DOTFILES_INSTALL_DIR/link.sh"
+    return $?
+  fi
+  warn "link.sh not found: $DOTFILES_INSTALL_DIR/link.sh"
+  return 1
+}
+
+cmd_unlink() {
+  if [ -r "$DOTFILES_INSTALL_DIR/unlink.sh" ]; then
+    sh "$DOTFILES_INSTALL_DIR/unlink.sh"
+    return $?
+  fi
+  warn "unlink.sh not found: $DOTFILES_INSTALL_DIR/unlink.sh"
+  return 1
+}
+
+cmd_health() {
+  ok_count=0
+  warn_count=0
+  fail_count=0
+
+  ok() {
+    ok_count=$((ok_count + 1))
+    printf 'ok: %s\n' "$*"
+  }
+
+  warn_() {
+    warn_count=$((warn_count + 1))
+    printf 'warn: %s\n' "$*"
+  }
+
+  fail() {
+    fail_count=$((fail_count + 1))
+    printf 'fail: %s\n' "$*"
+  }
+
+  check_paths() {
+    if [ -d "$DOTFILES_DIR" ]; then
+      ok "dotfiles dir: $DOTFILES_DIR"
+    else
+      fail "dotfiles dir missing: $DOTFILES_DIR"
+    fi
+
+    if [ -r "$DOTFILES_DIR/init.sh" ]; then
+      ok "init.sh present"
+    else
+      fail "init.sh missing: $DOTFILES_DIR/init.sh"
+    fi
+
+    if [ -r "$DOTFILES_CONFIG_DIR/paths.sh" ]; then
+      ok "paths.sh present"
+    else
+      fail "paths.sh missing: $DOTFILES_CONFIG_DIR/paths.sh"
+    fi
+
+    if [ -x "$DOTFILES_INSTALL_DIR/link.sh" ] || [ -r "$DOTFILES_INSTALL_DIR/link.sh" ]; then
+      ok "link.sh present"
+    else
+      warn_ "link.sh missing: $DOTFILES_INSTALL_DIR/link.sh"
+    fi
+  }
+
+  check_xdg() {
+    if [ -d "$XDG_CONFIG_HOME" ]; then
+      ok "XDG config dir: $XDG_CONFIG_HOME"
+    else
+      warn_ "XDG config dir missing: $XDG_CONFIG_HOME"
+    fi
+
+    if [ -d "$USER_BIN_DIR" ]; then
+      ok "user bin dir: $USER_BIN_DIR"
+    else
+      warn_ "user bin dir missing: $USER_BIN_DIR"
+    fi
+  }
+
+  check_links() {
+    check_link() {
+      _dest=$1
+      _expected=$2
+
+      if [ -L "$_dest" ]; then
+        _target=$(readlink "$_dest" 2>/dev/null || true)
+        case "$_target" in
+          "$_expected")
+            ok "linked: $_dest"
+            ;;
+          *)
+            warn_ "link mismatch: $_dest -> $_target (run: rdotfiles fix --link)"
+            ;;
+        esac
+        return 0
+      fi
+
+      if [ -e "$_dest" ]; then
+        warn_ "not linked: $_dest (run: rdotfiles fix --link)"
+      else
+        warn_ "missing: $_dest (run: rdotfiles fix --link)"
+      fi
+    }
+
+    APP_CONFIGS="${DOTFILES_APP_CONFIGS:-alacritty ghostty nvim tmux mise}"
+    for name in $APP_CONFIGS; do
+      check_link "$XDG_CONFIG_HOME/$name" "$DOTFILES_DIR/config/$name"
+    done
+
+    for f in "$DOTFILES_DIR"/bin/*; do
+      [ -f "$f" ] || continue
+      target="$USER_BIN_DIR/$(basename "$f")"
+      check_link "$target" "$f"
+    done
+
+    ZIM_CONFIG_DEST="${DOTFILES_ZIM_CONFIG:-$ZDOTDIR/.zimrc}"
+    check_link "$ZIM_CONFIG_DEST" "$DOTFILES_DIR/config/.zimrc"
+  }
+
+  resolve_zimfw() {
+    _candidates="${DOTFILES_ZIMFW_CANDIDATES:-$ZIM_HOME/zimfw.zsh /usr/share/zimfw/zimfw.zsh /opt/homebrew/opt/zimfw/share/zimfw.zsh /usr/local/opt/zimfw/share/zimfw.zsh}"
+    for _candidate in $_candidates; do
+      if [ -r "$_candidate" ]; then
+        printf '%s\n' "$_candidate"
+        return 0
+      fi
+    done
+    return 1
+  }
+
+  check_zimfw() {
+    if is_disabled "${DOTFILES_ENABLE_ZIMFW:-1}"; then
+      return 0
+    fi
+
+    ZIM_HOME="${ZIM_HOME:-${DOTFILES_ZIM_HOME:-$ZDOTDIR/.zim}}"
+    ZIM_CONFIG_FILE="${ZIM_CONFIG_FILE:-${DOTFILES_ZIM_CONFIG:-$ZDOTDIR/.zimrc}}"
+
+    if [ -d "$ZIM_HOME" ]; then
+      ok "zimfw home: $ZIM_HOME"
+    else
+      fail "zimfw home missing: $ZIM_HOME"
+    fi
+
+    if [ -r "$ZIM_CONFIG_FILE" ]; then
+      ok "zimfw config: $ZIM_CONFIG_FILE"
+    else
+      fail "zimfw config missing: $ZIM_CONFIG_FILE"
+    fi
+
+    if resolve_zimfw >/dev/null 2>&1; then
+      ok "zimfw command available"
+    else
+      warn_ "zimfw command not found (run: rdotfiles fix --zimfw)"
+    fi
+
+    if [ -r "$ZIM_HOME/init.zsh" ]; then
+      ok "zimfw init present"
+    else
+      warn_ "zimfw init missing: $ZIM_HOME/init.zsh (run: rdotfiles fix --zimfw)"
+    fi
+
+    if [ -r "$ZIM_HOME/init.zsh" ] && [ -r "$ZIM_CONFIG_FILE" ]; then
+      if [ "$ZIM_HOME/init.zsh" -ot "$ZIM_CONFIG_FILE" ]; then
+        warn_ "zimfw init stale (run: rdotfiles fix --zimfw)"
+      fi
+    fi
+
+    if [ -r "$ZIM_CONFIG_FILE" ]; then
+      missing_modules=""
+      missing_count=0
+      present_count=0
+      modules=$(awk '
+        /^[[:space:]]*#/ {next}
+        /^[[:space:]]*zmodule[[:space:]]+/ {print $2}
+      ' "$ZIM_CONFIG_FILE" 2>/dev/null || true)
+
+      if [ -z "$modules" ]; then
+        warn_ "zimfw modules list empty in $ZIM_CONFIG_FILE"
+      else
+        for mod in $modules; do
+          name=${mod##*/}
+          mod_dir="$ZIM_HOME/modules/$name"
+          if [ ! -d "$mod_dir" ]; then
+            missing_modules="$missing_modules $name"
+            missing_count=$((missing_count + 1))
+            continue
+          fi
+          if find "$mod_dir" -type f -print -quit 2>/dev/null | grep -q .; then
+            present_count=$((present_count + 1))
+          else
+            missing_modules="$missing_modules $name"
+            missing_count=$((missing_count + 1))
+          fi
+        done
+
+        if [ "$missing_count" -gt 0 ]; then
+          warn_ "zimfw modules missing:$missing_modules (run: rdotfiles fix --zimfw)"
+        else
+          ok "zimfw modules present ($present_count)"
+        fi
+      fi
+    fi
+  }
+
+  check_paths
+  check_xdg
+  check_links
+  check_zimfw
+
+  printf '\nSummary: %s ok, %s warn, %s fail\n' "$ok_count" "$warn_count" "$fail_count"
+  if [ "$fail_count" -ne 0 ] || [ "$warn_count" -ne 0 ]; then
+    return 1
+  fi
+  return 0
+}
+
+cmd_fix() {
+  do_link=0
+  do_zimfw=0
+  allow_zimfw_install=0
+
+  if [ $# -eq 0 ]; then
+    do_link=1
+    do_zimfw=1
+  fi
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --all)
+        do_link=1
+        do_zimfw=1
+        allow_zimfw_install=1
+        ;;
+      --link)
+        do_link=1
+        ;;
+      --zimfw)
+        do_zimfw=1
+        allow_zimfw_install=1
+        ;;
+      --zimfw-install)
+        do_zimfw=1
+        allow_zimfw_install=1
+        ;;
+      -h | --help)
+        cat <<'EOF'
+Usage: rdotfiles fix [options]
+
+Options:
+  --all               Run all fixes (includes zimfw install)
+  --link              Re-link configs and bin via installers/link.sh
+  --zimfw             Fully repair zimfw (download/install/build)
+  --zimfw-install     Alias for --zimfw
+EOF
+        return 0
+        ;;
+      *)
+        die "unknown option: $1"
+        ;;
+    esac
+    shift
+  done
+
+  if [ "$do_link" -eq 1 ]; then
+    cmd_link
+  fi
+
+  if [ "$do_zimfw" -eq 1 ] && ! is_disabled "${DOTFILES_ENABLE_ZIMFW:-1}"; then
+    if ! command -v zsh >/dev/null 2>&1; then
+      warn "zsh not found, skipping zimfw"
+      return 0
+    fi
+
+    ZIM_HOME="${ZIM_HOME:-${DOTFILES_ZIM_HOME:-$ZDOTDIR/.zim}}"
+    ZIM_CONFIG_FILE="${ZIM_CONFIG_FILE:-${DOTFILES_ZIM_CONFIG:-$ZDOTDIR/.zimrc}}"
+
+    if [ ! -r "$ZIM_CONFIG_FILE" ]; then
+      warn "zimfw config missing: $ZIM_CONFIG_FILE"
+      return 0
+    fi
+
+    zimfw_zsh=$(resolve_zimfw || true)
+
+    if [ -z "$zimfw_zsh" ]; then
+      if [ "$allow_zimfw_install" -ne 1 ]; then
+        warn "zimfw not found; rerun with --zimfw"
+        return 1
+      fi
+      mkdir -p "$ZIM_HOME"
+      zimfw_url="https://github.com/zimfw/zimfw/releases/latest/download/zimfw.zsh"
+      if command -v curl >/dev/null 2>&1; then
+        log "downloading zimfw..."
+        curl -fsSL "$zimfw_url" -o "$ZIM_HOME/zimfw.zsh"
+      elif command -v wget >/dev/null 2>&1; then
+        log "downloading zimfw..."
+        wget -qO "$ZIM_HOME/zimfw.zsh" "$zimfw_url"
+      else
+        warn "curl/wget not found; cannot download zimfw"
+        return 1
+      fi
+      zimfw_zsh="$ZIM_HOME/zimfw.zsh"
+    fi
+
+    missing_count=0
+    modules=$(awk '
+      /^[[:space:]]*#/ {next}
+      /^[[:space:]]*zmodule[[:space:]]+/ {print $2}
+    ' "$ZIM_CONFIG_FILE" 2>/dev/null || true)
+
+    if [ -n "$modules" ]; then
+      for mod in $modules; do
+        name=${mod##*/}
+        mod_dir="$ZIM_HOME/modules/$name"
+        if [ ! -d "$mod_dir" ]; then
+          missing_count=$((missing_count + 1))
+          continue
+        fi
+        if find "$mod_dir" -type f -print -quit 2>/dev/null | grep -q .; then
+          continue
+        fi
+        missing_count=$((missing_count + 1))
+      done
+    fi
+
+    if [ ! -r "$ZIM_HOME/init.zsh" ]; then
+      missing_count=$((missing_count + 1))
+    fi
+
+    if [ "$missing_count" -gt 0 ]; then
+      if [ "$allow_zimfw_install" -ne 1 ]; then
+        warn "zimfw modules missing; rerun with --zimfw"
+        return 1
+      fi
+      log "running zimfw install..."
+      ZIM_HOME="$ZIM_HOME" ZIM_CONFIG_FILE="$ZIM_CONFIG_FILE" \
+        zsh -c '. "$1" install' zsh "$zimfw_zsh"
+    fi
+
+    log "building zimfw init..."
+    ZIM_HOME="$ZIM_HOME" ZIM_CONFIG_FILE="$ZIM_CONFIG_FILE" \
+      zsh -c '. "$1" build' zsh "$zimfw_zsh"
+  fi
+}
+
+cmd_update() {
+  do_health=0
+  do_fix=0
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --health)
+        do_health=1
+        ;;
+      --fix)
+        do_fix=1
+        do_health=1
+        ;;
+      -h | --help)
+        cat <<'EOF'
+Usage: rdotfiles update [--health] [--fix]
+EOF
+        return 0
+        ;;
+      *)
+        die "unknown option: $1"
+        ;;
+    esac
+    shift
+  done
+
+  if ! command -v git >/dev/null 2>&1; then
+    warn "git not found"
+    return 1
+  fi
+
+  if [ ! -d "$DOTFILES_DIR/.git" ]; then
+    warn "dotfiles repo not found: $DOTFILES_DIR"
+    return 1
+  fi
+
+  log "updating dotfiles..."
+  git -C "$DOTFILES_DIR" pull --ff-only
+
+  if [ "$do_health" -eq 1 ]; then
+    if cmd_health; then
+      log "health: ok"
+    elif [ "$do_fix" -eq 1 ]; then
+      cmd_fix --all
+    else
+      warn "health issues detected (run: rdotfiles fix)"
+      return 1
+    fi
+  fi
+}
+
+case "${1:-}" in
+  "" | -h | --help | help)
+    usage
+    exit 0
+    ;;
+  setup)
+    shift
+    cmd_setup "$@"
+    ;;
+  link)
+    shift
+    cmd_link "$@"
+    ;;
+  unlink | uninstall)
+    shift
+    cmd_unlink "$@"
+    ;;
+  health)
+    shift
+    cmd_health "$@"
+    ;;
+  fix)
+    shift
+    cmd_fix "$@"
+    ;;
+  update)
+    shift
+    cmd_update "$@"
+    ;;
+  *)
+    die "unknown command: $1"
+    ;;
+esac

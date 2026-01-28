@@ -31,16 +31,28 @@ link_path() {
   _src=$1
   _dest=$2
 
+  [ -e "$_src" ] || return 0
+
+  if [ -L "$_dest" ]; then
+    _target=$(readlink "$_dest" 2>/dev/null || true)
+    if [ "$_target" = "$_src" ]; then
+      return 0
+    fi
+    rm "$_dest"
+    log "install: removed stale link $_dest"
+  fi
+
   if [ -e "$_dest" ] && [ ! -L "$_dest" ]; then
     _backup_path="$_dest.backup.$(date +%Y%m%d%H%M%S)"
     mv "$_dest" "$_backup_path"
+    log "install: backed up $_dest -> $_backup_path"
   fi
 
-  if [ -L "$_dest" ] && [ ! -e "$_dest" ]; then
-    rm "$_dest"
-  fi
-
-  ln -sfn "$_src" "$_dest" 2>/dev/null || log "install: failed to link $_dest"
+  ln -sfn "$_src" "$_dest" 2>/dev/null || {
+    log "install: failed to link $_dest"
+    return 0
+  }
+  log "install: linked $_dest -> $_src"
 }
 
 # ------------------------------------------------------------------------------
@@ -50,16 +62,8 @@ link_path() {
 ensure_dir "$XDG_CONFIG_HOME"
 ensure_dir "$USER_BIN_DIR"
 
-CONFIG_DIRS="
-alacritty
-ghostty
-nvim
-tmux
-mise
-zimfw
-"
-
-for name in $CONFIG_DIRS; do
+APP_CONFIGS="${DOTFILES_APP_CONFIGS:-alacritty ghostty nvim tmux mise}"
+for name in $APP_CONFIGS; do
   src="$DOTFILES_DIR/config/$name"
   [ -e "$src" ] || continue
   link_path "$src" "$XDG_CONFIG_HOME/$name"
@@ -71,6 +75,15 @@ for f in "$DOTFILES_DIR"/bin/*; do
   target="$USER_BIN_DIR/$(basename "$f")"
   link_path "$f" "$target"
 done
+
+# Zimfw (native locations)
+ZDOTDIR="${ZDOTDIR:-$HOME}"
+ZIM_CONFIG_DEST="${DOTFILES_ZIM_CONFIG:-$ZDOTDIR/.zimrc}"
+ZIM_HOME_DEST="${DOTFILES_ZIM_HOME:-$ZDOTDIR/.zim}"
+if [ -r "$DOTFILES_DIR/config/.zimrc" ]; then
+  link_path "$DOTFILES_DIR/config/.zimrc" "$ZIM_CONFIG_DEST"
+fi
+ensure_dir "$ZIM_HOME_DEST"
 
 # ------------------------------------------------------------------------------
 # SECTION 4: Shell Setup Notes

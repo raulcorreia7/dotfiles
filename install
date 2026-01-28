@@ -9,8 +9,9 @@ set -e
 REPO_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 INSTALL_DIR="$REPO_DIR/installers"
 DOTFILES_CONFIG_DIR="$REPO_DIR/config"
-DOTFILES_ZIM_HOME="$DOTFILES_CONFIG_DIR/zimfw"
-DOTFILES_ZIM_CONFIG="$DOTFILES_CONFIG_DIR/.zimrc"
+ZDOTDIR_DEFAULT="${ZDOTDIR:-$HOME}"
+DOTFILES_ZIM_HOME="${DOTFILES_ZIM_HOME:-$ZDOTDIR_DEFAULT/.zim}"
+DOTFILES_ZIM_CONFIG="${DOTFILES_ZIM_CONFIG:-$ZDOTDIR_DEFAULT/.zimrc}"
 
 . "$INSTALL_DIR/lib.sh"
 
@@ -19,7 +20,9 @@ DOTFILES_ZIM_CONFIG="$DOTFILES_CONFIG_DIR/.zimrc"
 # -----------------------------------------------------------------------------
 
 MISE_INSTALL_ENABLED="${DOTFILES_MISE_INSTALL:-1}"
+ZIMFW_INSTALL_ENABLED="${DOTFILES_ZIMFW_INSTALL:-1}"
 ZIMFW_BUILD_ENABLED="${DOTFILES_ZIMFW_BUILD:-1}"
+ZIMFW_DOWNLOAD_ENABLED="${DOTFILES_ZIMFW_DOWNLOAD:-1}"
 POST_INSTALL_ENABLED="${DOTFILES_POST_INSTALL:-1}"
 STATE_DIR_NAME="dotfiles"
 
@@ -168,20 +171,57 @@ run_zimfw_build() {
   fi
 
   _zimfw_zsh=""
-  for _candidate in "$HOME/.zim/zimfw.zsh" "/usr/share/zimfw/zimfw.zsh"; do
+  for _candidate in \
+    "$DOTFILES_ZIM_HOME/zimfw.zsh" \
+    "$HOME/.zim/zimfw.zsh" \
+    "/usr/share/zimfw/zimfw.zsh" \
+    "/opt/homebrew/opt/zimfw/share/zimfw.zsh" \
+    "/usr/local/opt/zimfw/share/zimfw.zsh"; do
     if [ -r "$_candidate" ]; then
       _zimfw_zsh="$_candidate"
       break
     fi
   done
 
+  if [ -z "$_zimfw_zsh" ] && [ "$ZIMFW_DOWNLOAD_ENABLED" = "1" ]; then
+    _zimfw_url="https://github.com/zimfw/zimfw/releases/latest/download/zimfw.zsh"
+    ensure_dir "$DOTFILES_ZIM_HOME"
+    if has_command curl; then
+      log "downloading zimfw..."
+      run_as_user env ZIM_HOME="$DOTFILES_ZIM_HOME" ZIM_CONFIG_FILE="$DOTFILES_ZIM_CONFIG" \
+        sh -c 'curl -fsSL "$1" -o "$2"' _ "$_zimfw_url" "$DOTFILES_ZIM_HOME/zimfw.zsh"
+    elif has_command wget; then
+      log "downloading zimfw..."
+      run_as_user env ZIM_HOME="$DOTFILES_ZIM_HOME" ZIM_CONFIG_FILE="$DOTFILES_ZIM_CONFIG" \
+        sh -c 'wget -qO "$2" "$1"' _ "$_zimfw_url" "$DOTFILES_ZIM_HOME/zimfw.zsh"
+    fi
+    if [ -r "$DOTFILES_ZIM_HOME/zimfw.zsh" ]; then
+      _zimfw_zsh="$DOTFILES_ZIM_HOME/zimfw.zsh"
+    fi
+  fi
+
   if [ -z "$_zimfw_zsh" ]; then
     log "zimfw not found, skipping zimfw build"
     return 0
   fi
 
+  _modules_present=0
+  if [ -d "$DOTFILES_ZIM_HOME/modules" ]; then
+    if find "$DOTFILES_ZIM_HOME/modules" -type f -print -quit 2>/dev/null | grep -q .; then
+      _modules_present=1
+    fi
+  fi
+
+  if [ "$ZIMFW_INSTALL_ENABLED" = "1" ] && [ "$_modules_present" -eq 0 ]; then
+    log "zimfw modules missing, running zimfw init..."
+    run_as_user env ZIM_HOME="$DOTFILES_ZIM_HOME" ZIM_CONFIG_FILE="$DOTFILES_ZIM_CONFIG" \
+      zsh "$_zimfw_zsh" init
+    return 0
+  fi
+
   log "building zimfw init..."
-  run_as_user sh -c 'ZIM_HOME="$1" ZIM_CONFIG_FILE="$2" zsh -c ". \"$3\" && zimfw build"' _ "$DOTFILES_ZIM_HOME" "$DOTFILES_ZIM_CONFIG" "$_zimfw_zsh"
+  run_as_user env ZIM_HOME="$DOTFILES_ZIM_HOME" ZIM_CONFIG_FILE="$DOTFILES_ZIM_CONFIG" \
+    zsh "$_zimfw_zsh" build
 }
 
 run_tool_setup() {
