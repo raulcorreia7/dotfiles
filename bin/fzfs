@@ -132,7 +132,7 @@ preview_file() {
     # Compact directory preview - try different tools in order of preference
     if command -v tree >/dev/null 2>&1; then
       # Tree view with limited depth for compact preview
-      tree -L 2 -C --dirsfirst "$path" 2>/dev/null | head -n 50
+      tree -L 1 -C --dirsfirst "$path" 2>/dev/null | head -n 30
     elif [ "$HAS_EZA" -eq 1 ]; then
       # Simplified eza: just names, no permissions/sizes, grouped by type
       eza -1 --color=always --icons --group-directories-first "$path" | head -n 30
