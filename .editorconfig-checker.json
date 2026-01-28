@@ -1,0 +1,10 @@
+{
+  "Exclude": [
+    "config/tmux/plugins",
+    "config/zimfw/modules",
+    "config/kimi",
+    ".git",
+    ".sisyphus",
+    "readme.md"
+  ]
+}

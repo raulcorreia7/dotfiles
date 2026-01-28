@@ -2,35 +2,46 @@
 set -e
 # Link config and bin entries into standard locations.
 
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+# ------------------------------------------------------------------------------
+# SECTION 1: Setup
+# ------------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
-# Paths and config
-# -----------------------------------------------------------------------------
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 . "$SCRIPT_DIR/lib.sh"
 . "$SCRIPT_DIR/config.sh"
 DOTFILES_DIR="$REPO_DIR"
+
+# ------------------------------------------------------------------------------
+# SECTION 2: Helper Functions
+# ------------------------------------------------------------------------------
 
 debug() {
   [ "${DOTFILES_DEBUG:-0}" = "1" ] && log "$@"
 }
 
 link_path() {
-  src=$1
-  dest=$2
-  log "install: linking $src -> $dest"
-  if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-    backup_path="$dest.backup.$(date +%Y%m%d%H%M%S)"
-    log "install: backing up $dest to $backup_path"
-    mv "$dest" "$backup_path"
+  _src=$1
+  _dest=$2
+  log "install: linking $_src -> $_dest"
+
+  if [ -e "$_dest" ] && [ ! -L "$_dest" ]; then
+    _backup_path="$_dest.backup.$(date +%Y%m%d%H%M%S)"
+    log "install: backing up $_dest to $_backup_path"
+    mv "$_dest" "$_backup_path"
   fi
-  ln -sfn "$src" "$dest" && log "install: successfully linked $dest" || log "install: failed to link $dest"
+
+  if [ -L "$_dest" ] && [ ! -e "$_dest" ]; then
+    log "install: removing broken symlink $_dest"
+    rm "$_dest"
+  fi
+
+  ln -sfn "$_src" "$_dest" && log "install: successfully linked $_dest" || log "install: failed to link $_dest"
 }
 
-# -----------------------------------------------------------------------------
-# Link config and bin
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# SECTION 3: Link Config and Bin
+# ------------------------------------------------------------------------------
 
 log "install: creating directories..."
 ensure_dir "$XDG_CONFIG_HOME" && log "install: created $XDG_CONFIG_HOME"
@@ -60,15 +71,15 @@ for f in "$DOTFILES_DIR"/bin/*; do
   link_path "$f" "$target"
 done
 
-# -----------------------------------------------------------------------------
-# Shell setup notes
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# SECTION 4: Shell Setup Notes
+# ------------------------------------------------------------------------------
 
 install_note() {
-  shell_rc=$1
-  if [ -r "$shell_rc" ]; then
-    if ! grep -Fq "$DOTFILES_DIR/init.sh" "$shell_rc"; then
-      log "install: add this to $shell_rc:"
+  _shell_rc=$1
+  if [ -r "$_shell_rc" ]; then
+    if ! grep -Fq "$DOTFILES_DIR/init.sh" "$_shell_rc"; then
+      log "install: add this to $_shell_rc:"
       log "[ -r \"$DOTFILES_DIR/init.sh\" ] && . \"$DOTFILES_DIR/init.sh\""
     fi
   fi

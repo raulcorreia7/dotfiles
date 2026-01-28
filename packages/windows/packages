@@ -1,19 +1,48 @@
 # =============================================================================
-# DEVELOPMENT - Development tools
+# WINDOWS PACKAGES
 # =============================================================================
+
+# Core
+fzf
+git
+fd
+ripgrep
+bat
+eza
+jq
+zoxide
+
+# System
+btop
+fastfetch
+7zip
+
+# Network
+wget
+curl
+
+# Docs
+tldr
+glow
+
+# Terminal
+alacritty
 
 # Version control
 git-delta
-difftastic
-git-lfs
-gh
 lazygit
 
 # Editors
 neovim
 
-# Build tools
-mise
-
 # Dev tools
+shellcheck
 just
+
+# Browsers
+firefox
+googlechrome
+
+# Apps
+vscode
+bitwarden

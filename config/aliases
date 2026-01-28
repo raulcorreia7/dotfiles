@@ -1,29 +1,15 @@
 #!/bin/sh
 # Aliases map simple commands to dot_* functions.
 
-# -----------------------------------------------------------------------------
 # Core
-# -----------------------------------------------------------------------------
-
 alias dotreload='dot_reload'
 alias dotdoctor='dot_doctor'
 
-# -----------------------------------------------------------------------------
-# fzf snacks
-# -----------------------------------------------------------------------------
-
-#alias fzfs='fzf_snacks'
-
-# -----------------------------------------------------------------------------
-# Utilities
-# -----------------------------------------------------------------------------
-
+# Editor
 alias nvcfg='dot_nvimcfg'
+alias nv="nvim"
 
-# -----------------------------------------------------------------------------
 # Arch Linux
-# -----------------------------------------------------------------------------
-
-alias pacmanupdate='arch_pacmanupdate'
-alias paruupdate='arch_paruupdate'
-alias sysupdate='arch_sysupdate'
+alias pacmanupdate='arch_pacman_update'
+alias paruupdate='arch_paru_update'
+alias sysupdate='arch_sys_update'

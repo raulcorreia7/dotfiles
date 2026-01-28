@@ -3,7 +3,24 @@
 
 set -e
 
+# ------------------------------------------------------------------------------
+# SECTION 1: Setup
+# ------------------------------------------------------------------------------
+
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+# Directories to exclude (third-party code)
+EXCLUDE_DIRS="config/tmux/plugins config/zimfw/modules config/kimi .git .sisyphus"
+
+# Build exclude arguments for ripgrep
+EXCLUDE_ARGS=""
+for dir in $EXCLUDE_DIRS; do
+  EXCLUDE_ARGS="$EXCLUDE_ARGS --exclude-dir $dir"
+done
+
+# ------------------------------------------------------------------------------
+# SECTION 2: Helper Functions
+# ------------------------------------------------------------------------------
 
 info() {
   printf '%s\n' "$*"
@@ -28,13 +45,17 @@ run() {
   return 1
 }
 
+# ------------------------------------------------------------------------------
+# SECTION 3: Main
+# ------------------------------------------------------------------------------
+
 fail=0
 
 info "==> dotfiles lint/format: $ROOT_DIR"
 
 # Shell
 if have shfmt; then
-  files=$(rg --files -g '*.sh' "$ROOT_DIR" || true)
+  files=$(rg --files -g '*.sh' $EXCLUDE_ARGS "$ROOT_DIR" 2>/dev/null || true)
   if [ -n "$files" ]; then
     run "shfmt" sh -c 'printf "%s\n" "$@" | xargs shfmt -w -i 2 -bn -ci' shfmt $files || fail=1
   else
@@ -46,7 +67,7 @@ fi
 
 # Lua
 if have stylua; then
-  files=$(rg --files -g '*.lua' "$ROOT_DIR" || true)
+  files=$(rg --files -g '*.lua' $EXCLUDE_ARGS "$ROOT_DIR" 2>/dev/null || true)
   if [ -n "$files" ]; then
     run "stylua" sh -c 'printf "%s\n" "$@" | xargs stylua' stylua $files || fail=1
   else
@@ -58,7 +79,7 @@ fi
 
 # TOML
 if have taplo; then
-  files=$(rg --files -g '*.toml' "$ROOT_DIR" || true)
+  files=$(rg --files -g '*.toml' $EXCLUDE_ARGS "$ROOT_DIR" 2>/dev/null || true)
   if [ -n "$files" ]; then
     run "taplo fmt" sh -c 'printf "%s\n" "$@" | xargs taplo fmt' taplo $files || fail=1
   else
@@ -70,7 +91,7 @@ fi
 
 # YAML
 if have yamlfmt; then
-  files=$(rg --files -g '*.yml' -g '*.yaml' "$ROOT_DIR" || true)
+  files=$(rg --files -g '*.yml' -g '*.yaml' $EXCLUDE_ARGS "$ROOT_DIR" 2>/dev/null || true)
   if [ -n "$files" ]; then
     run "yamlfmt" sh -c 'printf "%s\n" "$@" | xargs yamlfmt' yamlfmt $files || fail=1
   else
@@ -82,7 +103,7 @@ fi
 
 # Prettier (web formats)
 if have prettier; then
-  files=$(rg --files -g '*.json' -g '*.md' -g '*.yml' -g '*.yaml' -g '*.css' -g '*.scss' -g '*.html' -g '*.js' -g '*.ts' "$ROOT_DIR" || true)
+  files=$(rg --files -g '*.json' -g '*.md' -g '*.yml' -g '*.yaml' -g '*.css' -g '*.scss' -g '*.html' -g '*.js' -g '*.ts' $EXCLUDE_ARGS "$ROOT_DIR" 2>/dev/null || true)
   if [ -n "$files" ]; then
     run "prettier" sh -c 'printf "%s\n" "$@" | xargs prettier --write' prettier $files || fail=1
   else
@@ -92,7 +113,7 @@ else
   info "skip: prettier (not installed)"
 fi
 
-# EditorConfig
+# EditorConfig (only our code)
 if have editorconfig-checker; then
   run "editorconfig-checker" editorconfig-checker "$ROOT_DIR" || fail=1
 else

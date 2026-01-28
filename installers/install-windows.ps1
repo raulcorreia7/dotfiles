@@ -1,168 +1,130 @@
+#!/usr/bin/env pwsh
+# Windows package installer using Chocolatey, Scoop, or Winget.
+#
+# Usage:
+#   .\install-windows.ps1 [options]
+#
+# Options:
+#   -DryRun      Preview what would be installed without installing
+#   -Help        Show this help message
+
+# ------------------------------------------------------------------------------
+# SECTION 1: Configuration
+# ------------------------------------------------------------------------------
+
 param(
-    [ValidateSet('base', 'cli', 'development', 'gui', 'all')]
-    [string]$Category = 'all'
+    [switch]$DryRun,
+    [switch]$Help
 )
 
-# -----------------------------------------------------------------------------
-# Configuration
-# -----------------------------------------------------------------------------
+if ($Help) {
+    Write-Host @"
+Windows Package Installer
 
-$CHOCO_INSTALL_URL = "https://community.chocolatey.org/install.ps1"
-$SCOOP_INSTALL_URL = "https://get.scoop.sh"
+Usage: .\install-windows.ps1 [options]
 
-$PackageMap = @{
-    'googlechrome'       = @{ choco = 'google-chrome'; scoop = 'googlechrome'; winget = 'Google.Chrome' }
-    'firefox'            = @{ choco = 'firefox'; scoop = 'firefox'; winget = 'Mozilla.Firefox' }
-    'vscode'             = @{ choco = 'vscode'; scoop = 'vscode'; winget = 'Microsoft.VisualStudioCode' }
-    '7zip'               = @{ choco = '7zip'; scoop = '7zip'; winget = '7zip.7zip' }
-    '7-Zip'              = @{ choco = '7zip'; scoop = '7zip'; winget = '7zip.7zip' }
-    'wezterm'            = @{ choco = 'wezterm'; scoop = 'wezterm'; winget = 'wez.wezterm' }
-    'git'                = @{ choco = 'git'; scoop = 'git'; winget = 'Git.Git' }
-    'fzf'                = @{ choco = 'fzf'; scoop = 'fzf'; winget = 'junegunn.fzf' }
-    'fd'                 = @{ choco = 'fd'; scoop = 'fd'; winget = 'sharkdp.fd' }
-    'ripgrep'            = @{ choco = 'ripgrep'; scoop = 'ripgrep'; winget = 'BurntSushi.ripgrep' }
-    'bat'                = @{ choco = 'bat'; scoop = 'bat'; winget = 'sharkdp.bat' }
-    'eza'                = @{ choco = 'eza'; scoop = 'eza'; winget = 'eza-community.eza' }
-    'jq'                 = @{ choco = 'jq'; scoop = 'jq'; winget = 'stedolan.jq' }
-    'btop'               = @{ choco = 'btop'; scoop = 'btop'; winget = 'aristocratos.btop' }
-    'fastfetch'          = @{ choco = 'fastfetch'; scoop = 'fastfetch'; winget = 'FastfetchTeam.Fastfetch' }
-    'tree'               = @{ choco = 'tree'; scoop = 'tree'; winget = 'GnuWin32.Tree' }
-    'rsync'              = @{ choco = 'rsync'; scoop = 'rsync'; winget = 'RsyncForWindows.Rsync' }
-    'wget'               = @{ choco = 'wget'; scoop = 'wget'; winget = 'GnuWin32.Wget' }
-    'curlie'             = @{ choco = 'curlie'; scoop = 'curlie'; winget = 'curlie' }
-    'tldr'               = @{ choco = 'tldr'; scoop = 'tldr'; winget = 'tldr-pages.tlrc' }
-    'glow'               = @{ choco = 'glow'; scoop = 'glow'; winget = 'charmbracelet.glow' }
-    'oh-my-posh'         = @{ choco = 'oh-my-posh'; scoop = 'oh-my-posh'; winget = 'JanDeDobbeleer.OhMyPosh' }
-    'zellij'             = @{ choco = 'zellij'; scoop = 'zellij'; winget = 'zellij-org.zellij' }
-    'watch'              = @{ choco = 'watch'; scoop = 'watch'; winget = 'MikePopoloski.watch' }
-    'coreutils'          = @{ choco = 'coreutils'; scoop = 'coreutils'; winget = 'CoreUtils.CoreUtils' }
-    'sed'                = @{ choco = 'sed'; scoop = 'sed'; winget = 'GnuWin32.sed' }
-    'neovim'             = @{ choco = 'neovim'; scoop = 'neovim'; winget = 'Neovim.Neovim' }
-    'git-delta'          = @{ choco = 'git-delta'; scoop = 'git-delta'; winget = 'dandavison.delta' }
-    'difftastic'         = @{ choco = 'difftastic'; scoop = 'difftastic'; winget = 'Wilfred.difftastic' }
-    'git-lfs'            = @{ choco = 'git-lfs'; scoop = 'git-lfs'; winget = 'GitLFS.GitLFS' }
-    'gh'                 = @{ choco = 'gh'; scoop = 'gh'; winget = 'GitHub.cli' }
-    'lazygit'            = @{ choco = 'lazygit'; scoop = 'lazygit'; winget = 'JesseDuffield.lazygit' }
-    'awscli'             = @{ choco = 'awscli'; scoop = 'awscli'; winget = 'Amazon.AWSCLI' }
-    'aws-vault'          = @{ choco = 'aws-vault'; scoop = 'aws-vault'; winget = '99designs.aws-vault' }
-    'shellcheck'         = @{ choco = 'shellcheck'; scoop = 'shellcheck'; winget = 'KoichiSasada.shellcheck' }
-    'shfmt'              = @{ choco = 'shfmt'; scoop = 'shfmt'; winget = 'mvdan.shfmt' }
-    'watchexec'          = @{ choco = 'watchexec'; scoop = 'watchexec'; winget = 'watchexec.watchexec' }
-    'just'               = @{ choco = 'just'; scoop = 'just'; winget = 'casey.just' }
-    'lazydocker'         = @{ choco = 'lazydocker'; scoop = 'lazydocker'; winget = 'JesseDuffield.lazydocker' }
-    'microsoft-windows-terminal' = @{ choco = 'microsoft-windows-terminal'; scoop = 'windows-terminal'; winget = 'Microsoft.WindowsTerminal' }
-    'PowerToys'          = @{ choco = 'powertoys'; scoop = 'powertoys'; winget = 'Microsoft.PowerToys' }
-    'AutoHotkey'         = @{ choco = 'autohotkey'; scoop = 'autohotkey'; winget = 'Lexikos.AutoHotkey' }
-    'Flameshot'          = @{ choco = 'flameshot'; scoop = 'flameshot'; winget = 'Flameshot.Flameshot' }
-    'Obsidian'           = @{ choco = 'obsidian'; scoop = 'obsidian'; winget = 'Obsidian.Obsidian' }
-    'bruno'              = @{ choco = 'bruno'; scoop = 'bruno'; winget = 'Bruno.Bruno' }
-    'dbeaver'            = @{ choco = 'dbeaver'; scoop = 'dbeaver'; winget = 'DBeaver.DBeaverCE' }
-    'db-browser-for-sqlite' = @{ choco = 'db-browser-for-sqlite'; scoop = 'sqlitebrowser'; winget = 'sqlitebrowser.sqlitebrowser' }
-    'mongodb-compass'    = @{ choco = 'mongodb-database-tools'; scoop = 'mongodb-compass'; winget = 'MongoDB.Compass' }
-    'postman'            = @{ choco = 'postman'; scoop = 'postman'; winget = 'Postman.Postman' }
-    'Microsoft-Teams'    = @{ choco = 'microsoft-teams'; scoop = 'teams'; winget = 'Microsoft.Teams' }
-    'ChatGPT'            = @{ choco = 'chatgpt'; scoop = 'chatgpt'; winget = 'OpenAI.ChatGPT' }
-    'github-desktop'     = @{ choco = 'github-desktop'; scoop = 'github'; winget = 'GitHub.GitHubDesktop' }
-    'KeePassXC'          = @{ choco = 'keepassxc'; scoop = 'keepassxc'; winget = 'KeePassXCTeam.KeePassXC' }
-    'adb'                = @{ choco = 'adb'; scoop = 'android-tools'; winget = 'Google.PlatformTools' }
-    'scrcpy'             = @{ choco = 'scrcpy'; scoop = 'scrcpy'; winget = 'Genymobile.scrcpy' }
-    'deskreen'           = @{ choco = 'deskreen'; scoop = 'deskreen'; winget = 'Deskreen.Deskreen' }
-    'LocalSend'          = @{ choco = 'localsend'; scoop = 'localsend'; winget = 'LocalSend.LocalSend' }
-    'docker-desktop'     = @{ choco = 'docker-desktop'; scoop = 'docker'; winget = 'Docker.DockerDesktop' }
+Options:
+  -DryRun    Preview what would be installed
+  -Help      Show this help message
+"@
+    exit 0
 }
 
-function Install-ChocolateyPackage {
-    param([string]$Package)
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$PackagesDir = Join-Path $ScriptDir "..\packages\windows"
 
-    if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-        Write-Host "Chocolatey not found. Install with:" -ForegroundColor Yellow
-        Write-Host "Set-ExecutionPolicy Bypass -Scope Process; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('${CHOCO_INSTALL_URL}'))"
-        return $false
-    }
+$script:InstalledCount = 0
+$script:SkippedCount = 0
+$script:FailedCount = 0
 
-    Write-Host "  [Chocolatey] Installing $Package..." -ForegroundColor Cyan
-    choco install $Package -y
-    return $?
+# ------------------------------------------------------------------------------
+# SECTION 2: Helper Functions
+# ------------------------------------------------------------------------------
+
+function Test-Command($Command) {
+    return [bool](Get-Command -Name $Command -ErrorAction SilentlyContinue)
 }
 
-function Install-ScoopPackage {
-    param([string]$Package)
+function Install-Package($Package) {
+    $Installed = $false
 
-    if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
-        Write-Host "  [Scoop] not installed. Install with:" -ForegroundColor Yellow
-        Write-Host "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser; irm ${SCOOP_INSTALL_URL} | iex"
-        return $false
+    if ($DryRun) {
+        Write-Host "  [dry-run] Would install: $Package" -ForegroundColor Gray
+        return $true
     }
 
-    Write-Host "  [Scoop] Installing $Package..." -ForegroundColor Cyan
-    scoop install $Package
-    return $?
+    # Try Chocolatey
+    if (Test-Command 'choco') {
+        Write-Host "  [choco] $Package" -ForegroundColor Cyan
+        choco install $Package -y 2>$null
+        if ($LASTEXITCODE -eq 0) { $Installed = $true }
+    }
+
+    # Try Scoop
+    if (-not $Installed -and (Test-Command 'scoop')) {
+        Write-Host "  [scoop] $Package" -ForegroundColor Cyan
+        scoop install $Package 2>$null
+        if ($LASTEXITCODE -eq 0) { $Installed = $true }
+    }
+
+    # Try Winget
+    if (-not $Installed -and (Test-Command 'winget')) {
+        Write-Host "  [winget] $Package" -ForegroundColor Cyan
+        winget install --id $Package --accept-package-agreements --silent 2>$null
+        if ($LASTEXITCODE -eq 0) { $Installed = $true }
+    }
+
+    return $Installed
 }
 
-function Install-WingetPackage {
-    param([string]$Package)
-
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host "  [Winget] not available" -ForegroundColor Gray
-        return $false
+function Install-FromFile($FilePath) {
+    if (-not (Test-Path $FilePath)) {
+        Write-Host "Package file not found: $FilePath" -ForegroundColor Red
+        return
     }
 
-    Write-Host "  [Winget] Installing $Package..." -ForegroundColor Cyan
-    winget install --id $Package --accept-package-agreements --accept-source-agreements
-    return $?
-}
+    $Packages = Get-Content $FilePath | Where-Object { $_ -match '^\S+$' -and $_ -notmatch '^#' }
+    $Total = ($Packages | Measure-Object).Count
 
-function Install-Package {
-    param([string]$PackageName)
-
-    $Mapping = $PackageMap[$PackageName]
-    if (-not $Mapping) {
-        $Mapping = @{ choco = $PackageName; scoop = $PackageName; winget = $PackageName }
-    }
-
-    Write-Host "Installing $PackageName..." -ForegroundColor White
-
-    $Success = $false
-
-    if (Install-ChocolateyPackage -Package $Mapping.choco) {
-        $Success = $true
-    } elseif (Get-Command scoop -ErrorAction SilentlyContinue) {
-        if (Install-ScoopPackage -Package $Mapping.scoop) {
-            $Success = $true
-        }
-    }
-
-    if (-not $Success) {
-        if (Install-WingetPackage -Package $Mapping.winget) {
-            $Success = $true
-        }
-    }
-
-    if ($Success) {
-        Write-Host "  => Installed" -ForegroundColor Green
-    } else {
-        Write-Host "  => Failed" -ForegroundColor Red
-    }
-
-    return $Success
-}
-
-$Categories = @('base', 'cli', 'development', 'gui')
-if ($Category -ne 'all') {
-    $Categories = @($Category)
-}
-
-foreach ($Cat in $Categories) {
-    $PackageFile = Join-Path $PSScriptRoot "..\packages\windows\$Cat"
-    if (-not (Test-Path $PackageFile)) {
-        Write-Host "Package file not found: $PackageFile" -ForegroundColor Red
-        continue
-    }
-
-    Write-Host "`n=== Category: $Cat ===" -ForegroundColor Magenta
-    $Packages = Get-Content $PackageFile | Where-Object { $_ -match '^\S+$' }
+    Write-Host "Found $Total packages" -ForegroundColor White
+    Write-Host ""
 
     foreach ($Pkg in $Packages) {
-        Install-Package -PackageName $Pkg
+        # Check if already installed (simplified check)
+        $AlreadyInstalled = $false
+        if (Test-Command $Pkg) { $AlreadyInstalled = $true }
+
+        if ($AlreadyInstalled) {
+            Write-Host "  [skip] $Pkg (already installed)" -ForegroundColor DarkGray
+            $script:SkippedCount++
+        } else {
+            if (Install-Package $Pkg) {
+                Write-Host "  [ok] $Pkg" -ForegroundColor Green
+                $script:InstalledCount++
+            } else {
+                Write-Host "  [fail] $Pkg" -ForegroundColor Red
+                $script:FailedCount++
+            }
+        }
     }
 }
+
+# ------------------------------------------------------------------------------
+# SECTION 3: Main
+# ------------------------------------------------------------------------------
+
+Write-Host "=== Windows Package Installer ===" -ForegroundColor White
+if ($DryRun) { Write-Host "Mode: DRY RUN" -ForegroundColor Yellow }
+Write-Host ""
+
+# Install from packages file
+$PackageFile = Join-Path $PackagesDir "packages"
+Install-FromFile $PackageFile
+
+# Summary
+Write-Host ""
+Write-Host "=== Summary ===" -ForegroundColor White
+if ($DryRun) { Write-Host "Mode: DRY RUN" }
+Write-Host "Installed: $script:InstalledCount"
+Write-Host "Skipped: $script:SkippedCount"
+if ($script:FailedCount -gt 0) { Write-Host "Failed: $script:FailedCount" }

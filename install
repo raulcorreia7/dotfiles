@@ -98,26 +98,39 @@ run_package_installation() {
 
 get_user_home() {
   if [ -n "${SUDO_USER:-}" ]; then
-    user_home=""
+    # Validate SUDO_USER is a valid username (alphanumeric, underscores, hyphens)
+    case "$SUDO_USER" in
+      *[!a-zA-Z0-9_-]*)
+        printf '%s\n' "$HOME"
+        return 0
+        ;;
+    esac
+
+    _user_home=""
     if command -v getent >/dev/null 2>&1; then
-      user_home=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+      _user_home=$(getent passwd "$SUDO_USER" 2>/dev/null | cut -d: -f6)
     fi
-    if [ -z "$user_home" ]; then
-      user_home=$(eval echo "~$SUDO_USER")
+    if [ -z "$_user_home" ]; then
+      # Fallback: check user's home directory directly
+      if [ -d "/home/$SUDO_USER" ]; then
+        _user_home="/home/$SUDO_USER"
+      elif [ -n "${HOME:-}" ]; then
+        _user_home="$HOME"
+      fi
     fi
-    [ -n "$user_home" ] || user_home="$HOME"
+    [ -n "$_user_home" ] || _user_home="$HOME"
   else
-    user_home="$HOME"
+    _user_home="$HOME"
   fi
-  printf '%s\n' "$user_home"
+  printf '%s\n' "$_user_home"
 }
 
 get_state_home() {
-  user_home=$(get_user_home)
+  _user_home=$(get_user_home)
   if [ -n "${SUDO_USER:-}" ]; then
-    printf '%s\n' "$user_home/.local/state"
+    printf '%s\n' "$_user_home/.local/state"
   else
-    printf '%s\n' "${XDG_STATE_HOME:-$user_home/.local/state}"
+    printf '%s\n' "${XDG_STATE_HOME:-$_user_home/.local/state}"
   fi
 }
 
@@ -128,13 +141,13 @@ run_mise_install() {
   fi
 
   if has_command mise; then
-    state_home=$(get_state_home)
-    marker_dir="$state_home/$STATE_DIR_NAME"
-    marker_file="$marker_dir/mise-installed"
+    _state_home=$(get_state_home)
+    _marker_dir="$_state_home/$STATE_DIR_NAME"
+    _marker_file="$_marker_dir/mise-installed"
 
-    if [ ! -f "$marker_file" ]; then
+    if [ ! -f "$_marker_file" ]; then
       log "installing mise tools from config..."
-      run_as_user "mkdir -p \"$marker_dir\" && mise install && touch \"$marker_file\""
+      run_as_user sh -c 'mkdir -p "$1" && mise install && touch "$2"' _ "$_marker_dir" "$_marker_file"
     else
       log "mise tools already installed from config, skipping"
     fi
@@ -154,21 +167,21 @@ run_zimfw_build() {
     return 0
   fi
 
-  zimfw_zsh=""
-  for candidate in "$HOME/.zim/zimfw.zsh" "/usr/share/zimfw/zimfw.zsh"; do
-    if [ -r "$candidate" ]; then
-      zimfw_zsh="$candidate"
+  _zimfw_zsh=""
+  for _candidate in "$HOME/.zim/zimfw.zsh" "/usr/share/zimfw/zimfw.zsh"; do
+    if [ -r "$_candidate" ]; then
+      _zimfw_zsh="$_candidate"
       break
     fi
   done
 
-  if [ -z "$zimfw_zsh" ]; then
+  if [ -z "$_zimfw_zsh" ]; then
     log "zimfw not found, skipping zimfw build"
     return 0
   fi
 
   log "building zimfw init..."
-  run_as_user "ZIM_HOME=\"$DOTFILES_ZIM_HOME\" ZIM_CONFIG_FILE=\"$DOTFILES_ZIM_CONFIG\" zsh -c '. \"$zimfw_zsh\" && zimfw build'"
+  run_as_user sh -c 'ZIM_HOME="$1" ZIM_CONFIG_FILE="$2" zsh -c ". \"$3\" && zimfw build"' _ "$DOTFILES_ZIM_HOME" "$DOTFILES_ZIM_CONFIG" "$_zimfw_zsh"
 }
 
 run_tool_setup() {
@@ -195,11 +208,11 @@ run_post_install() {
 # -----------------------------------------------------------------------------
 
 main() {
-  os=$(detect_os)
-  log_os "$os"
+  _os=$(detect_os)
+  log_os "$_os"
 
   run_bootstrap
-  run_package_installation "$os"
+  run_package_installation "$_os"
   run_tool_setup
   run_post_install
 

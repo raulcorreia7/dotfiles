@@ -1,14 +1,7 @@
 #!/bin/sh
-# Mise: runtime manager init.
+# Runtime version manager integration.
 
-if ! __dot_has mise; then
-  return 0
-fi
+__dot_has mise || return 0
+[ -t 0 ] || return 0
 
-if [ -n "${ZSH_VERSION:-}" ]; then
-  eval "$(mise activate zsh)"
-elif [ -n "${BASH_VERSION:-}" ]; then
-  eval "$(mise activate bash)"
-else
-  eval "$(mise activate sh)"
-fi
+eval "$(mise activate "$(__dot_shell_type)" 2>/dev/null)" || true

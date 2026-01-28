@@ -1,33 +1,41 @@
 #!/bin/sh
 # Arch Linux system maintenance helpers.
 
-# -----------------------------------------------------------------------------
-# Package Updates
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# SECTION 1: Guard/Checks
+# ------------------------------------------------------------------------------
 
 __dot_has pacman || return 0
 
-__arch_assume_yes_flag() {
+# ------------------------------------------------------------------------------
+# SECTION 2: Helper Functions
+# ------------------------------------------------------------------------------
+
+_arch_assume_yes_flag() {
   # Set DOTFILES_ARCH_ASSUME_YES=1 to skip prompts for pacman/paru.
   if [ "${DOTFILES_ARCH_ASSUME_YES:-0}" = "1" ]; then
     printf '%s\n' "--noconfirm"
   fi
 }
 
-arch_pacmanupdate() {
+# ------------------------------------------------------------------------------
+# SECTION 3: Package Updates
+# ------------------------------------------------------------------------------
+
+arch_pacman_update() {
   case "$1" in
     -h | --help)
-      printf 'Usage: arch_pacmanupdate\nUpdate system packages via pacman.\n'
+      printf 'Usage: arch_pacman_update\nUpdate system packages via pacman.\n'
       return 0
       ;;
   esac
-  sudo pacman -Syu "$(__arch_assume_yes_flag)"
+  sudo pacman -Syu "$(_arch_assume_yes_flag)"
 }
 
-arch_paruupdate() {
+arch_paru_update() {
   case "$1" in
     -h | --help)
-      printf 'Usage: arch_paruupdate\nUpdate AUR packages via paru.\n'
+      printf 'Usage: arch_paru_update\nUpdate AUR packages via paru.\n'
       return 0
       ;;
   esac
@@ -35,27 +43,27 @@ arch_paruupdate() {
     printf '%s\n' 'paru not found; skipping AUR updates.'
     return 0
   }
-  paru -Syu "$(__arch_assume_yes_flag)"
+  paru -Syu "$(_arch_assume_yes_flag)"
 }
 
-arch_sysupdate() {
+arch_sys_update() {
   case "$1" in
     -h | --help)
-      printf 'Usage: arch_sysupdate\nUpdate system and AUR packages.\n'
+      printf 'Usage: arch_sys_update\nUpdate system and AUR packages.\n'
       return 0
       ;;
   esac
-  arch_pacmanupdate && arch_paruupdate
+  arch_pacman_update && arch_paru_update
 }
 
-# -----------------------------------------------------------------------------
-# System Maintenance
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# SECTION 4: System Maintenance
+# ------------------------------------------------------------------------------
 
-arch_sysupdatefull() {
+arch_sys_update_full() {
   case "$1" in
     -h | --help)
-      printf 'Usage: arch_sysupdatefull\nInteractive system maintenance workflow.\n'
+      printf 'Usage: arch_sys_update_full\nInteractive system maintenance workflow.\n'
       return 0
       ;;
   esac
@@ -97,7 +105,7 @@ arch_sysupdatefull() {
         ;;
     esac
 
-    arch_pacmanupdate && arch_paruupdate
+    arch_pacman_update && arch_paru_update
 
     printf '%s\n' '=== System maintenance complete ==='
   )

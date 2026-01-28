@@ -2,6 +2,10 @@
 set -e
 # Post-install setup tasks (sane defaults).
 
+# ------------------------------------------------------------------------------
+# SECTION 1: Setup
+# ------------------------------------------------------------------------------
+
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/lib.sh"
 . "$SCRIPT_DIR/config.sh"
@@ -12,12 +16,16 @@ POST_INSTALL_XDG_DIRS="${DOTFILES_POST_INSTALL_XDG_DIRS:-1}"
 POST_INSTALL_GIT="${DOTFILES_POST_INSTALL_GIT:-1}"
 POST_INSTALL_DIRS="${DOTFILES_POST_INSTALL_DIRS:-$HOME/projects}"
 
+# ------------------------------------------------------------------------------
+# SECTION 2: Helper Functions
+# ------------------------------------------------------------------------------
+
 ensure_line_in_file() {
   file="$1"
   line="$2"
   [ -f "$file" ] || return 0
   grep -Fqx "$line" "$file" && return 0
-  printf '\n%s\n' "$line" >> "$file"
+  printf '\n%s\n' "$line" >>"$file"
 }
 
 ensure_zsh_default() {
@@ -31,10 +39,10 @@ ensure_zsh_default() {
   current_shell="${SHELL:-}"
   zsh_path=$(command -v zsh)
 
-  if [ "$current_shell" = "$zsh_path" ]; then
+  [ "$current_shell" = "$zsh_path" ] && {
     log "default shell already set to zsh"
     return 0
-  fi
+  }
 
   if command -v chsh >/dev/null 2>&1; then
     log "setting default shell to zsh..."
@@ -100,6 +108,10 @@ setup_git_defaults() {
     git config --global diff.external difft
   fi
 }
+
+# ------------------------------------------------------------------------------
+# SECTION 3: Main
+# ------------------------------------------------------------------------------
 
 main() {
   ensure_xdg_dirs
