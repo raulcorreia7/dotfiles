@@ -1,0 +1,14 @@
+# Tmux plugins managed by TPM
+# These are auto-installed when you press `prefix + I` in tmux
+plugins/
+
+# Plugin state/resurrect data (user-specific)
+resurrect/
+
+# tmux-continuum save files
+*.tmux_resurrect_*
+
+# Local/backup files
+*.local
+*.backup
+*.log
