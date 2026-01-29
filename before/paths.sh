@@ -27,7 +27,7 @@ DOTFILES_EXCLUDE_FILES="${DOTFILES_EXCLUDE_FILES:-config/zimfw/init.zsh config/z
 ZDOTDIR_DEFAULT="${ZDOTDIR:-$HOME}"
 DOTFILES_ZIM_HOME="${DOTFILES_ZIM_HOME:-$ZDOTDIR_DEFAULT/.zim}"
 DOTFILES_ZIM_CONFIG="${DOTFILES_ZIM_CONFIG:-$ZDOTDIR_DEFAULT/.zimrc}"
-DOTFILES_ZIMFW_CANDIDATES="${DOTFILES_ZIMFW_CANDIDATES:-$DOTFILES_ZIM_HOME/zimfw.zsh /usr/share/zimfw/zimfw.zsh /opt/homebrew/opt/zimfw/share/zimfw/zimfw.zsh /usr/local/opt/zimfw/share/zimfw/zimfw.zsh}"
+DOTFILES_ZIMFW_CANDIDATES="${DOTFILES_ZIMFW_CANDIDATES:-$DOTFILES_DIR/config/zimfw/zimfw.zsh $DOTFILES_ZIM_HOME/zimfw.zsh /usr/share/zimfw/zimfw.zsh /home/linuxbrew/.linuxbrew/opt/zimfw/share/zimfw.zsh /opt/homebrew/opt/zimfw/share/zimfw.zsh /usr/local/opt/zimfw/share/zimfw/zimfw.zsh}"
 
 # User paths (install targets)
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
