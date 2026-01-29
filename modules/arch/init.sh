@@ -24,7 +24,7 @@ fi
 _is_arch=false
 if command -v linux_get_distro_family >/dev/null 2>&1; then
   case "$(linux_get_distro_family)" in
-    arch) _is_arch=true ;;
+  arch) _is_arch=true ;;
   esac
 elif command -v is_arch >/dev/null 2>&1; then
   if is_arch; then
@@ -59,34 +59,34 @@ _arch_assume_yes_flag() {
 
 arch_pacman_update() {
   case "$1" in
-    -h | --help)
-      printf 'Usage: arch_pacman_update\nUpdate system packages via pacman.\n'
-      return 0
-      ;;
+  -h | --help)
+    printf 'Usage: arch_pacman_update\nUpdate system packages via pacman.\n'
+    return 0
+    ;;
   esac
-  sudo pacman -Syu "$(_arch_assume_yes_flag)"
+  sudo pacman -Syu $(_arch_assume_yes_flag)
 }
 
 arch_paru_update() {
   case "$1" in
-    -h | --help)
-      printf 'Usage: arch_paru_update\nUpdate AUR packages via paru.\n'
-      return 0
-      ;;
+  -h | --help)
+    printf 'Usage: arch_paru_update\nUpdate AUR packages via paru.\n'
+    return 0
+    ;;
   esac
   if ! command -v paru >/dev/null 2>&1; then
     printf '%s\n' 'paru not found; skipping AUR updates.'
     return 0
   fi
-  paru -Syu "$(_arch_assume_yes_flag)"
+  paru -Syu $(_arch_assume_yes_flag)
 }
 
 arch_sys_update() {
   case "$1" in
-    -h | --help)
-      printf 'Usage: arch_sys_update\nUpdate system and AUR packages.\n'
-      return 0
-      ;;
+  -h | --help)
+    printf 'Usage: arch_sys_update\nUpdate system and AUR packages.\n'
+    return 0
+    ;;
   esac
   arch_pacman_update && arch_paru_update
 }
@@ -97,10 +97,10 @@ arch_sys_update() {
 
 arch_sys_update_full() {
   case "$1" in
-    -h | --help)
-      printf 'Usage: arch_sys_update_full\nInteractive system maintenance workflow.\n'
-      return 0
-      ;;
+  -h | --help)
+    printf 'Usage: arch_sys_update_full\nInteractive system maintenance workflow.\n'
+    return 0
+    ;;
   esac
 
   (
@@ -115,9 +115,9 @@ arch_sys_update_full() {
       printf '%s' 'Remove orphans? [y/N] '
       read -r response
       case "$response" in
-        [yY][eE][sS] | [yY])
-          pacman -Qdtq | sudo pacman -Rns -
-          ;;
+      [yY][eE][sS] | [yY])
+        pacman -Qdtq | sudo pacman -Rns -
+        ;;
       esac
     fi
 
@@ -135,9 +135,9 @@ arch_sys_update_full() {
     printf '%s' 'Clean package cache? [y/N] '
     read -r response
     case "$response" in
-      [yY][eE][sS] | [yY])
-        sudo pacman -Sc
-        ;;
+    [yY][eE][sS] | [yY])
+      sudo pacman -Sc
+      ;;
     esac
 
     arch_pacman_update && arch_paru_update
