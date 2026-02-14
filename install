@@ -167,6 +167,26 @@ run_zimfw_build() {
     return 0
   fi
 
+  # Check if modules need to be cloned (fresh install case)
+  modules_dir="$DOTFILES_ZIM_HOME/modules"
+  if [ -d "$modules_dir" ]; then
+    # Count empty module directories (git submodules that weren't cloned)
+    empty_modules=0
+    for mod_dir in "$modules_dir"/*; do
+      if [ -d "$mod_dir" ] && [ -z "$(ls -A "$mod_dir" 2>/dev/null)" ]; then
+        empty_modules=$((empty_modules + 1))
+      fi
+    done
+    
+    if [ "$empty_modules" -gt 0 ]; then
+      log "found $empty_modules empty module directories, cloning zimfw modules..."
+      run_as_user "cd \"$modules_dir\" && \"$REPO_DIR/installers/install-zimfw-modules.sh\""
+    fi
+  fi
+
+  log "installing zimfw modules..."
+  run_as_user "ZIM_HOME=\"$DOTFILES_ZIM_HOME\" ZIM_CONFIG_FILE=\"$DOTFILES_ZIM_CONFIG\" zsh -c '. \"$zimfw_zsh\" && zimfw install'"
+
   log "building zimfw init..."
   run_as_user "ZIM_HOME=\"$DOTFILES_ZIM_HOME\" ZIM_CONFIG_FILE=\"$DOTFILES_ZIM_CONFIG\" zsh -c '. \"$zimfw_zsh\" && zimfw build'"
 }

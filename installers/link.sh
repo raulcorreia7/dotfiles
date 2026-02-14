@@ -61,18 +61,29 @@ for f in "$DOTFILES_DIR"/bin/*; do
 done
 
 # -----------------------------------------------------------------------------
-# Shell setup notes
+# Shell setup
 # -----------------------------------------------------------------------------
 
-install_note() {
+setup_shell_rc() {
   shell_rc=$1
-  if [ -r "$shell_rc" ]; then
-    if ! grep -Fq "$DOTFILES_DIR/init.sh" "$shell_rc"; then
-      log "install: add this to $shell_rc:"
-      log "[ -r \"$DOTFILES_DIR/init.sh\" ] && . \"$DOTFILES_DIR/init.sh\""
-    fi
+
+  if [ ! -r "$shell_rc" ]; then
+    return 0
   fi
+
+  if grep -Fq "$DOTFILES_DIR/init.sh" "$shell_rc"; then
+    log "install: dotfiles already sourced in $shell_rc"
+    return 0
+  fi
+
+  log "install: adding dotfiles source to $shell_rc"
+  {
+    echo ""
+    echo "# Source dotfiles"
+    echo "[ -r \"$DOTFILES_DIR/init.sh\" ] && . \"$DOTFILES_DIR/init.sh\""
+  } >>"$shell_rc"
+  log "install: successfully updated $shell_rc"
 }
 
-install_note "$SHELL_ZSHRC"
-install_note "$SHELL_BASHRC"
+setup_shell_rc "$SHELL_ZSHRC"
+setup_shell_rc "$SHELL_BASHRC"
