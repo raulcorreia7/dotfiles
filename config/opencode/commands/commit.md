@@ -1,7 +1,5 @@
-# /commit
-
-Transform pending changes into clean Conventional Commit plan.
-
+---
+description: Transform pending changes into clean Conventional Commit plan
 ---
 
 ## Purpose
@@ -36,7 +34,7 @@ Coverage: tests/docs included or N/A
 ## Ordering
 
 1. Config/chores
-2. Refactors  
+2. Refactors
 3. Features/fixes
 4. Tests
 5. Docs
@@ -44,4 +42,3 @@ Coverage: tests/docs included or N/A
 ## Closing
 
 State: "Run these git add + git commit commands in order."
-

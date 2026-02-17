@@ -1,7 +1,5 @@
-# /docs
-
-Maintain human-first documentation.
-
+---
+description: Maintain human-first documentation
 ---
 
 ## Purpose
@@ -32,4 +30,3 @@ Keep product knowledge current, linked, and actionable.
 - Summary: what was reviewed/updated/removed
 - Completed actions: per file with links
 - Next steps: owner + due date
-

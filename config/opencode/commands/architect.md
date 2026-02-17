@@ -1,7 +1,5 @@
-# /architect
-
-Design system architecture with components and flows.
-
+---
+description: Design system architecture with components and flows
 ---
 
 ## Purpose
@@ -36,4 +34,3 @@ Decide what to build and why. Other agents deliver it.
 - No implementation details
 - Patterns and interfaces only
 - Ask questions if requirements conflict
-

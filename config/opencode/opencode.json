@@ -133,37 +133,5 @@
       "temperature": 0.6
     }
   },
-  "lsp": {},
-  "command": {
-    "architect": {
-      "template": "{file:~/.config/opencode/commands/architect.md}",
-      "description": "Design system architecture with components and flows",
-      "subtask": true
-    },
-    "plan": {
-      "template": "{file:~/.config/opencode/commands/planner.md}",
-      "description": "Break complex task into parallel, self-contained tasks",
-      "subtask": true
-    },
-    "review": {
-      "template": "{file:~/.config/opencode/commands/code-review.md}",
-      "description": "Review diff for correctness, safety, maintainability",
-      "subtask": true
-    },
-    "commit": {
-      "template": "{file:~/.config/opencode/commands/commiter.md}",
-      "description": "Plan Conventional Commits",
-      "subtask": true
-    },
-    "docs": {
-      "template": "{file:~/.config/opencode/commands/documentation.md}",
-      "description": "Maintain documentation",
-      "subtask": true
-    },
-    "orchestrate": {
-      "template": "{file:~/.config/opencode/commands/orchestrator.md}",
-      "description": "Coordinate multi-agent workflows",
-      "subtask": true
-    }
-  }
+  "lsp": {}
 }

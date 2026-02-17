@@ -1,7 +1,5 @@
-# /review
-
-Review diff for correctness, safety, maintainability.
-
+---
+description: Review diff for correctness, safety, maintainability
 ---
 
 ## Purpose
@@ -40,4 +38,3 @@ Judge only the presented change set. Defect-first review.
 - Focus on correctness and safety
 - Flag only when it affects future risk
 - Mark claims `Unverified` without evidence
-

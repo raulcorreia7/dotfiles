@@ -3,18 +3,10 @@
 ## Format
 `type(scope): imperative description`
 
-Scope is preferred but optional for trivial/single-file changes.
+Optional body/footer.
 
 ## Types
 `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `chore`
-
-## Scopes (Preferred)
-Use scope to indicate where the change applies.
-
-Examples:
-- Module, component, or feature name (e.g., `auth`, `api`, `ui`)
-- Layer or directory (e.g., `core`, `cli`, `config`)
-- File or area for small changes (e.g., `readme`, `deps`)
 
 ## Message Guidelines
 - Imperative mood

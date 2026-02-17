@@ -1,7 +1,5 @@
-# /orchestrate
-
-Coordinate multi-agent workflows.
-
+---
+description: Coordinate multi-agent workflows
 ---
 
 ## Purpose
@@ -35,4 +33,3 @@ Manage workflows; agents execute.
 - Don't implement yourself
 - Update plan grid as single source of truth
 - Escalate blockers promptly
-
