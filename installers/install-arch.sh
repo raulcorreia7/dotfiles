@@ -111,10 +111,14 @@ install_pacman_packages() {
   fi
 
   packages_to_install=$(comm -23 "$pkg_list_file" "$installed_list_file")
+
   if [ -n "$packages_to_install" ]; then
     log_info "Installing pacman packages ($(printf '%s\n' "$packages_to_install" | count_lines))"
-    has_sudo_access && sudo pacman -S --needed --noconfirm $packages_to_install ||
+    if has_sudo_access; then
+      sudo pacman -S --needed --noconfirm $packages_to_install
+    else
       log_info "Skipping pacman install (no sudo access): $packages_to_install"
+    fi
   else
     log_info "No new pacman packages to install"
   fi
@@ -135,14 +139,16 @@ install_paru() {
   fi
 
   log_info "Bootstrapping paru from AUR"
+
   for pkg in git base-devel; do
     pacman -Q "$pkg" >/dev/null 2>&1 && continue
     log_info "Installing ${pkg} for paru bootstrap"
-    has_sudo_access && sudo pacman -S --needed --noconfirm "$pkg" ||
-      {
-        log_info "Missing dependency: $pkg (no sudo access)"
-        return 0
-      }
+    if has_sudo_access; then
+      sudo pacman -S --needed --noconfirm "$pkg"
+    else
+      log_info "Missing dependency: $pkg (no sudo access)"
+      return 0
+    fi
   done
 
   build_dir="${BUILD_DIR}/paru"

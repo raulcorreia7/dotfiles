@@ -66,14 +66,19 @@ __rdf_doctor() {
     cmds="${label#*:}"
     found=""
     alts=""
+
     for cmd in ${cmds//,/ }; do
       if dot_has "$cmd"; then
         [ -z "$found" ] && found="$cmd" || alts="$alts $cmd"
       fi
     done
+
     if [ -n "$found" ]; then
-      [ -n "$alts" ] && printf '%s: ok (%s; alt:%s)\n' "$name" "$found" "$alts" ||
+      if [ -n "$alts" ]; then
+        printf '%s: ok (%s; alt:%s)\n' "$name" "$found" "$alts"
+      else
         printf '%s: ok (%s)\n' "$name" "$found"
+      fi
     else
       printf '%s: missing (try: %s)\n' "$name" "${cmds//,/ or }"
     fi
@@ -97,10 +102,18 @@ EOF
 
 rdf() {
   case "${1:-}" in
-  reload) . "${DOTFILES_DIR:-$HOME/.dotfiles}/init.sh" && echo "Reloaded" ;;
-  edit) ${EDITOR:-nvim} "${DOTFILES_DIR:-$HOME/.dotfiles}" ;;
-  doctor) __rdf_doctor ;;
-  cd) cd "${DOTFILES_DIR:-$HOME/.dotfiles}" ;;
+  reload)
+    . "${DOTFILES_DIR:-$HOME/.dotfiles}/init.sh" && echo "Reloaded"
+    ;;
+  edit)
+    ${EDITOR:-nvim} "${DOTFILES_DIR:-$HOME/.dotfiles}"
+    ;;
+  doctor)
+    __rdf_doctor
+    ;;
+  cd)
+    cd "${DOTFILES_DIR:-$HOME/.dotfiles}" || return 1
+    ;;
   update | orphans | cache)
     sub="__rdf_arch_$1"
     shift
@@ -111,7 +124,9 @@ rdf() {
       return 1
     fi
     ;;
-  help | --help | -h | "") __rdf_help ;;
+  help | --help | -h | "")
+    __rdf_help
+    ;;
   *)
     echo "rdf: unknown command '$1'" >&2
     return 1

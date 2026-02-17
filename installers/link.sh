@@ -1,21 +1,24 @@
 #!/bin/sh
 set -e
-# Link config and bin entries into standard locations.
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/lib.sh"
 . "$SCRIPT_DIR/config.sh"
 
 link_path() {
-  src=$1
-  dest=$2
+  src="$1"
+  dest="$2"
+
   log "install: linking $src -> $dest"
+
   if [ -e "$dest" ] && [ ! -L "$dest" ]; then
     backup_path="$dest.backup.$(date +%Y%m%d%H%M%S)"
     log "install: backing up $dest to $backup_path"
     mv "$dest" "$backup_path"
   fi
-  ln -sfn "$src" "$dest" && log "install: successfully linked $dest" || log "install: failed to link $dest"
+
+  ln -sfn "$src" "$dest" && log "install: successfully linked $dest" ||
+    log "install: failed to link $dest"
 }
 
 log "install: creating directories..."
@@ -27,6 +30,7 @@ CONFIG_DIRS="
 alacritty
 ghostty
 nvim
+opencode
 tmux
 mise
 zimfw

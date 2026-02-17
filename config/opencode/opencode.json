@@ -1,0 +1,160 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "theme": "opencode",
+  "autoupdate": true,
+  "plugin": [
+    "opencode-gemini-auth@latest"
+  ],
+  "provider": {
+    "local-llamacpp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Llama.cpp (local)",
+      "options": {
+        "baseURL": "http://127.0.0.1:8001/v1"
+      },
+      "models": {
+        "unsloth/qwen3-coder-next": {
+          "name": "Qwen3 Coder Next (llamacpp)"
+        }
+      }
+    }
+  },
+  "mcp": {
+    "grep": {
+      "type": "remote",
+      "url": "https://mcp.grep.app"
+    },
+    "context7": {
+      "type": "local",
+      "command": [
+        "mise",
+        "x",
+        "node",
+        "--",
+        "npx",
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "environment": {
+        "DEFAULT_MINIMUM_TOKENS": ""
+      },
+      "enabled": true
+    },
+    "sequentialthinking": {
+      "type": "local",
+      "command": [
+        "mise",
+        "x",
+        "node",
+        "--",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": true
+    },
+    "memory": {
+      "type": "local",
+      "command": [
+        "mise",
+        "x",
+        "node",
+        "--",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "enabled": true
+    },
+    "ddg-search": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "duckduckgo-mcp-server"
+      ],
+      "enabled": true
+    },
+    "deepwiki-mcp": {
+      "type": "local",
+      "command": [
+        "mise",
+        "x",
+        "node",
+        "--",
+        "npx",
+        "-y",
+        "mcp-deepwiki@latest"
+      ]
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "@playwright/mcp@latest"
+      ],
+      "enabled": true
+    },
+    "zai-mcp-server": {
+      "type": "local",
+      "command": [
+        "mise",
+        "x",
+        "node@22",
+        "--",
+        "node",
+        "/home/rcorreia/.config/opencode/scripts/zai-mcp-launcher.mjs"
+      ],
+      "environment": {
+        "Z_AI_MODE": "ZAI"
+      },
+      "enabled": true
+    }
+  },
+  "keybinds": {
+    "app_exit": "ctrl+c,<leader>q"
+  },
+  "instructions": [
+    "~/.config/opencode/rules/*.md"
+  ],
+  "agent": {
+    "plan": {
+      "temperature": 0.1
+    },
+    "build": {
+      "temperature": 0.6
+    }
+  },
+  "lsp": {},
+  "command": {
+    "architect": {
+      "template": "{file:~/.config/opencode/commands/architect.md}",
+      "description": "Design system architecture with components and flows",
+      "subtask": true
+    },
+    "plan": {
+      "template": "{file:~/.config/opencode/commands/planner.md}",
+      "description": "Break complex task into parallel, self-contained tasks",
+      "subtask": true
+    },
+    "review": {
+      "template": "{file:~/.config/opencode/commands/code-review.md}",
+      "description": "Review diff for correctness, safety, maintainability",
+      "subtask": true
+    },
+    "commit": {
+      "template": "{file:~/.config/opencode/commands/commiter.md}",
+      "description": "Plan Conventional Commits",
+      "subtask": true
+    },
+    "docs": {
+      "template": "{file:~/.config/opencode/commands/documentation.md}",
+      "description": "Maintain documentation",
+      "subtask": true
+    },
+    "orchestrate": {
+      "template": "{file:~/.config/opencode/commands/orchestrator.md}",
+      "description": "Coordinate multi-agent workflows",
+      "subtask": true
+    }
+  }
+}

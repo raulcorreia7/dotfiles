@@ -120,9 +120,15 @@ detect_os() {
       echo "linux"
     fi
     ;;
-  darwin) echo "macos" ;;
-  mingw* | msys* | cygwin*) echo "windows" ;;
-  *) echo "unknown" ;;
+  darwin)
+    echo "macos"
+    ;;
+  mingw* | msys* | cygwin*)
+    echo "windows"
+    ;;
+  *)
+    echo "unknown"
+    ;;
   esac
 }
 
