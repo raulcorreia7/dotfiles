@@ -57,16 +57,33 @@ File format:
 ```markdown
 # [Goal Title]
 
-**Status**: Planning | In Progress | Complete
+**Status**: Planning | In Progress | Complete | Blocked
 **Created**: YYYY-MM-DD
 **Updated**: YYYY-MM-DD
 
 ## Summary
 [One-line goal]
 
+## Context
+- **Why**: Problem being solved
+- **Constraints**: Time, tech, scope limits
+- **Architecture**: Link if available
+- **Related**: Links to ADRs, PRDs, other plans
+
+## Key Files
+- `path/to/file.ext` — brief description
+
 ## Tasks
-[List from output above]
+- [ ] Task 1: Description
+  - Objective: what to achieve
+  - Files: affected files
+  - Done when: verifiable outcome
+- [ ] Task 2: ...
+
+## Decisions Log
+- YYYY-MM-DD: Decision and rationale
 
 ## Notes
-[Any relevant context or decisions]
+- Context for resuming work
+- Patterns to follow
 ```
