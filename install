@@ -127,20 +127,13 @@ run_mise_install() {
     return 0
   fi
 
-  if has_command mise; then
-    state_home=$(get_state_home)
-    marker_dir="$state_home/$STATE_DIR_NAME"
-    marker_file="$marker_dir/mise-installed"
-
-    if [ ! -f "$marker_file" ]; then
-      log "installing mise tools from config..."
-      run_as_user "mkdir -p \"$marker_dir\" && mise install && touch \"$marker_file\""
-    else
-      log "mise tools already installed from config, skipping"
-    fi
-  else
+  if ! has_command mise; then
     log "mise not found, skipping tool install"
+    return 0
   fi
+
+  log "installing mise tools from config..."
+  run_as_user "mise install"
 }
 
 run_zimfw_build() {
