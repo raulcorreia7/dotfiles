@@ -1,23 +1,7 @@
 #!/bin/sh
 # Optional environment overrides for dotfiles scripts (variables only).
 
-# -----------------------------------------------------------------------------
-# Examples
-# -----------------------------------------------------------------------------
-
-# FZFS_* variables override defaults (legacy DOT_FZF_* still works).
-# FZFS_EXCLUDES=".git node_modules .venv venv .cache .npm .yarn .pnpm-store dist build target .ssh .gnupg"
-# FZFS_PROJECT_ROOTS="$HOME"
-# FZFS_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/fzfs"
-
 export EDITOR=nvim
 export VISUAL=code
 
-# Plugin toggles (1=enabled, 0=disabled)
-DOTFILES_ENABLE_FZF=1
-DOTFILES_ENABLE_ZOXIDE=1
-DOTFILES_ENABLE_TMUX=1
-DOTFILES_ENABLE_OS_ARCH=1
-
-# OS-specific settings
-DOTFILES_ARCH_ASSUME_YES=1
+export DOTFILES_ARCH_ASSUME_YES=1

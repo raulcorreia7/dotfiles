@@ -1,10 +1,6 @@
 #!/bin/sh
-
 set -e
-
-# -----------------------------------------------------------------------------
-# Paths and config
-# -----------------------------------------------------------------------------
+# macOS package installer via Homebrew
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/lib.sh"
@@ -14,13 +10,11 @@ installed_count=0
 failed_count=0
 failed_categories=""
 
-# -----------------------------------------------------------------------------
-# Homebrew
-# -----------------------------------------------------------------------------
 check_brew() {
-  if ! command -v brew >/dev/null 2>&1; then
-    error "Homebrew is not installed"
-  fi
+  command -v brew >/dev/null 2>&1 || {
+    log_error "Homebrew is not installed"
+    exit 1
+  }
   log "Homebrew found: $(brew --version | head -n1)"
 }
 
@@ -28,12 +22,12 @@ install_category() {
   category="$1"
   file="$PKGS_MACOS/$category"
 
-  if [ ! -f "$file" ]; then
+  [ -f "$file" ] || {
     log "Skipping $category: file not found"
     return
-  fi
+  }
 
-  info "Installing $category..."
+  log_info "Installing $category..."
 
   if brew bundle --file="$file" --no-lock 2>&1; then
     log "✓ $category installed successfully"
@@ -41,17 +35,9 @@ install_category() {
   else
     log "✗ $category installation failed"
     failed_count=$((failed_count + 1))
-    if [ -z "$failed_categories" ]; then
-      failed_categories="$category"
-    else
-      failed_categories="$failed_categories, $category"
-    fi
+    failed_categories="${failed_categories:+$failed_categories, }$category"
   fi
 }
-
-# -----------------------------------------------------------------------------
-# Main
-# -----------------------------------------------------------------------------
 
 main() {
   log "=== macOS Package Installer ==="
@@ -68,9 +54,7 @@ main() {
   log "=== Summary ==="
   log "Installed: $installed_count"
   log "Failed: $failed_count"
-  if [ "$failed_count" -gt 0 ]; then
-    log "Failed categories: $failed_categories"
-  fi
+  [ "$failed_count" -gt 0 ] && log "Failed categories: $failed_categories"
 }
 
 main "$@"
