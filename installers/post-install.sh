@@ -2,7 +2,7 @@
 set -e
 # Post-install setup tasks (sane defaults).
 
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/lib.sh"
 . "$SCRIPT_DIR/config.sh"
 

@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # Runtime library - sourced by shell init
 # Provides: shell helpers, plugin loading, rdf command
 

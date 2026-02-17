@@ -3,7 +3,7 @@
 
 set -e
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 
 info() {
   printf '%s\n' "$*"

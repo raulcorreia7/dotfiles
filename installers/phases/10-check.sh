@@ -35,22 +35,22 @@ _check_os_support() {
   OS=$(detect_os)
 
   case "$OS" in
-    arch)
-      log_info "Arch-based system detected"
-      ;;
-    macos)
-      log_info "macOS detected"
-      ;;
-    debian | fedora)
-      log_warn "Limited support for $OS"
-      ;;
-    windows)
-      log_warn "Windows requires manual installation"
-      ;;
-    *)
-      log_error "unsupported OS: $OS"
-      return 1
-      ;;
+  arch)
+    log_info "Arch-based system detected"
+    ;;
+  macos)
+    log_info "macOS detected"
+    ;;
+  debian | fedora)
+    log_warn "Limited support for $OS"
+    ;;
+  windows)
+    log_warn "Windows requires manual installation"
+    ;;
+  *)
+    log_error "unsupported OS: $OS"
+    return 1
+    ;;
   esac
 
   return 0

@@ -55,7 +55,7 @@ log_error() {
 # =============================================================================
 
 script_dir() {
-  CDPATH= cd -- "$(dirname -- "$0")" && pwd
+  CDPATH='' cd -- "$(dirname -- "$0")" && pwd
 }
 
 ensure_dir() {

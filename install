@@ -26,7 +26,7 @@
 
 set -e
 
-DOTFILES_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+DOTFILES_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 INSTALL_DIR="$DOTFILES_DIR/installers"
 PHASES_DIR="$INSTALL_DIR/phases"
 
@@ -39,152 +39,170 @@ SKIP_PHASES=""
 ONLY_PHASES=""
 
 show_help() {
-  sed -n '/^#!/,/^$/p' "$0" | sed '1d;$d'
-  printf '\n'
-  printf 'Examples:\n'
-  printf '  ./install                    # Run all phases\n'
-  printf '  ./install setup              # Run only setup phase\n'
-  printf '  ./install --skip install     # Skip package installation\n'
-  printf '  ./install --only setup,tools # Run only setup and tools\n'
-  printf '  ./install -n                 # Dry run\n'
+	sed -n '/^#!/,/^$/p' "$0" | sed '1d;$d'
+	printf '\n'
+	printf 'Examples:\n'
+	printf '  ./install                    # Run all phases\n'
+	printf '  ./install setup              # Run only setup phase\n'
+	printf '  ./install --skip install     # Skip package installation\n'
+	printf '  ./install --only setup,tools # Run only setup and tools\n'
+	printf '  ./install -n                 # Dry run\n'
 }
 
 show_phases() {
-  printf 'Available phases (in order):\n\n'
-  for phase_file in "$PHASES_DIR"/*.sh; do
-    [ -f "$phase_file" ] || continue
-    phase_num=$(basename "$phase_file" | cut -d'-' -f1)
-    phase_name=$(basename "$phase_file" .sh | cut -d'-' -f2-)
-    printf '  %s\t%s\n' "$phase_num" "$phase_name"
-    desc=$(grep "^# Phase:" "$phase_file" | head -1 | sed 's/# Phase: //')
-    [ -n "$desc" ] && printf '      %s\n' "$desc"
-  done
+	printf 'Available phases (in order):\n\n'
+	for phase_file in "$PHASES_DIR"/*.sh; do
+		[ -f "$phase_file" ] || continue
+		phase_num=$(basename "$phase_file" | cut -d'-' -f1)
+		phase_name=$(basename "$phase_file" .sh | cut -d'-' -f2-)
+		printf '  %s\t%s\n' "$phase_num" "$phase_name"
+		desc=$(grep "^# Phase:" "$phase_file" | head -1 | sed 's/# Phase: //')
+		[ -n "$desc" ] && printf '      %s\n' "$desc"
+	done
 }
 
 parse_args() {
-  while [ $# -gt 0 ]; do
-    case "$1" in
-      -h|--help) show_help; exit 0 ;;
-      -l|--list) show_phases; exit 0 ;;
-      -v|--verbose) VERBOSE=1; shift ;;
-      -n|--dry-run) DRY_RUN=1; shift ;;
-      -s|--skip)
-        [ -n "${2:-}" ] && [ "${2#-}" = "$2" ] || { log_error "Option $1 requires an argument"; exit 1; }
-        SKIP_PHASES="$2"
-        shift 2
-        ;;
-      -o|--only)
-        [ -n "${2:-}" ] && [ "${2#-}" = "$2" ] || { log_error "Option $1 requires an argument"; exit 1; }
-        ONLY_PHASES="$2"
-        shift 2
-        ;;
-      -*)
-        log_error "Unknown option: $1"
-        exit 1
-        ;;
-      *)
-        ONLY_PHASES="${ONLY_PHASES:+$ONLY_PHASES,}$1"
-        shift
-        ;;
-    esac
-  done
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-h | --help)
+			show_help
+			exit 0
+			;;
+		-l | --list)
+			show_phases
+			exit 0
+			;;
+		-v | --verbose)
+			VERBOSE=1
+			shift
+			;;
+		-n | --dry-run)
+			DRY_RUN=1
+			shift
+			;;
+		-s | --skip)
+			[ -n "${2:-}" ] && [ "${2#-}" = "$2" ] || {
+				log_error "Option $1 requires an argument"
+				exit 1
+			}
+			SKIP_PHASES="$2"
+			shift 2
+			;;
+		-o | --only)
+			[ -n "${2:-}" ] && [ "${2#-}" = "$2" ] || {
+				log_error "Option $1 requires an argument"
+				exit 1
+			}
+			ONLY_PHASES="$2"
+			shift 2
+			;;
+		-*)
+			log_error "Unknown option: $1"
+			exit 1
+			;;
+		*)
+			ONLY_PHASES="${ONLY_PHASES:+$ONLY_PHASES,}$1"
+			shift
+			;;
+		esac
+	done
 }
 
 should_run_phase() {
-  phase_name="$1"
+	phase_name="$1"
 
-  [ -n "$ONLY_PHASES" ] && {
-    case ",$ONLY_PHASES," in
-      *,$phase_name,*) ;;
-      *) return 1 ;;
-    esac
-  }
+	[ -n "$ONLY_PHASES" ] && {
+		case ",$ONLY_PHASES," in
+		*,$phase_name,*) ;;
+		*) return 1 ;;
+		esac
+	}
 
-  [ -n "$SKIP_PHASES" ] && {
-    case ",$SKIP_PHASES," in
-      *,$phase_name,*) return 1 ;;
-    esac
-  }
+	[ -n "$SKIP_PHASES" ] && {
+		case ",$SKIP_PHASES," in
+		*,$phase_name,*) return 1 ;;
+		esac
+	}
 
-  return 0
+	return 0
 }
 
 run_phase_file() {
-  phase_file="$1"
-  phase_name=$(basename "$phase_file" .sh | cut -d'-' -f2-)
+	phase_file="$1"
+	phase_name=$(basename "$phase_file" .sh | cut -d'-' -f2-)
 
-  should_run_phase "$phase_name" || {
-    [ "$VERBOSE" -eq 1 ] && log "[skip] $phase_name"
-    return 0
-  }
+	should_run_phase "$phase_name" || {
+		[ "$VERBOSE" -eq 1 ] && log "[skip] $phase_name"
+		return 0
+	}
 
-  [ "$DRY_RUN" -eq 1 ] && {
-    log "[dry-run] would run: $phase_file"
-    return 0
-  }
+	[ "$DRY_RUN" -eq 1 ] && {
+		log "[dry-run] would run: $phase_file"
+		return 0
+	}
 
-  [ "$VERBOSE" -eq 1 ] && log "[exec] $phase_file"
+	[ "$VERBOSE" -eq 1 ] && log "[exec] $phase_file"
 
-  (
-    . "$phase_file"
-    type run_phase >/dev/null 2>&1 || {
-      log_error "Phase missing run_phase"
-      exit 1
-    }
-    run_phase
-  ) || return 1
+	(
+		. "$phase_file"
+		type run_phase >/dev/null 2>&1 || {
+			log_error "Phase missing run_phase"
+			exit 1
+		}
+		run_phase
+	) || return 1
 }
 
 main() {
-  parse_args "$@"
+	parse_args "$@"
 
-  [ "$DRY_RUN" -eq 1 ] && log "=== DRY RUN MODE ==="
+	[ "$DRY_RUN" -eq 1 ] && log "=== DRY RUN MODE ==="
 
-  OS=$(detect_os)
-  export OS
-  export INSTALL_DIR
-  export DOTFILES_ZIM_HOME
-  export DOTFILES_ZIM_CONFIG
-  export VERBOSE
+	OS=$(detect_os)
+	export OS
+	export INSTALL_DIR
+	export DOTFILES_ZIM_HOME
+	export DOTFILES_ZIM_CONFIG
+	export VERBOSE
 
-  log "Starting installation..."
-  [ -n "$ONLY_PHASES" ] && log "Only phases: $ONLY_PHASES"
-  [ -n "$SKIP_PHASES" ] && log "Skip phases: $SKIP_PHASES"
+	log "Starting installation..."
+	[ -n "$ONLY_PHASES" ] && log "Only phases: $ONLY_PHASES"
+	[ -n "$SKIP_PHASES" ] && log "Skip phases: $SKIP_PHASES"
 
-  cache_sudo
+	cache_sudo
 
-  failed=0
-  for phase_file in "$PHASES_DIR"/*.sh; do
-    [ -f "$phase_file" ] || continue
-    run_phase_file "$phase_file" || {
-      failed=1
-      log_error "Phase failed: $phase_file"
-      break
-    }
-  done
+	failed=0
+	for phase_file in "$PHASES_DIR"/*.sh; do
+		[ -f "$phase_file" ] || continue
+		run_phase_file "$phase_file" || {
+			failed=1
+			log_error "Phase failed: $phase_file"
+			break
+		}
+	done
 
-  [ -n "$_sudo_pid" ] && kill "$_sudo_pid" 2>/dev/null
+	[ -n "$_sudo_pid" ] && kill "$_sudo_pid" 2>/dev/null
 
-  [ "$failed" -eq 1 ] && {
-    log ""
-    log_error "Installation failed!"
-    exit 1
-  }
+	[ "$failed" -eq 1 ] && {
+		log ""
+		log_error "Installation failed!"
+		exit 1
+	}
 
-  log ""
-  log "Installation complete!"
-  log "Reload your shell: source ~/.zshrc or restart your terminal"
+	log ""
+	log "Installation complete!"
+	log "Reload your shell: source ~/.zshrc or restart your terminal"
 }
 
 cache_sudo() {
-  command -v sudo >/dev/null 2>&1 || return 0
-  sudo -v 2>/dev/null || return 0
+	command -v sudo >/dev/null 2>&1 || return 0
+	sudo -v 2>/dev/null || return 0
 
-  while true; do
-    sudo -v
-    sleep 55
-  done &
-  _sudo_pid=$!
+	while true; do
+		sudo -v
+		sleep 55
+	done &
+	_sudo_pid=$!
 }
 
 main "$@"

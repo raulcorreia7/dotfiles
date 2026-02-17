@@ -102,7 +102,7 @@
         "node@22",
         "--",
         "node",
-        "/home/rcorreia/.config/opencode/scripts/zai-mcp-launcher.mjs"
+        "{env:HOME}/.config/opencode/scripts/zai-mcp-launcher.mjs"
       ],
       "environment": {
         "Z_AI_MODE": "ZAI"
