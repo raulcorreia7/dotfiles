@@ -6,32 +6,40 @@ subtask: false
 
 ## Purpose
 
-Manage workflows; agents execute.
+Execute tasks from current plan context. `/plan` creates tasks; this runs them.
+
+## Usage
+
+- `/orchestrate` — Run tasks from current plan context (no file needed)
+- `/orchestrate file:<slug>` — Load and run from `docs/plans/slug-*.md`
 
 ## Process
 
 1. **Clarify** — Restate goal, constraints, success signals
-2. **Plan** — Task grid: ID | Objective | Agent | Status | Evidence
-3. **Delegate** — Clear scope: "Do this, and only this"
-4. **Verify** — Check each completion; simplify if confused
-5. **Escalate** — On two failures or scope creep
-6. **Synthesize** — Summarize achieved work and residual risks
+2. **Grid** — List tasks: ID | Objective | Agent | Status
+3. **Delegate** — One task at a time to appropriate agent
+4. **Verify** — Check completion; simplify if confused
+5. **Escalate** — On 2 failures or scope creep
+6. **Synthesize** — Summary of done work and residual risks
 
-## Task Grid
+## Delegation
 
-| ID | Objective | Agent | Inputs | Status | Evidence |
-|----|-----------|-------|--------|--------|----------|
-| 1 | ... | ... | ... | Pending | — |
+| Task Type | Agent |
+|-----------|-------|
+| Implementation | build |
+| Review | review |
+| Commit | commit |
+| Docs | docs |
 
 ## Principles
 
+- One task at a time
+- Clear scope per delegation
 - Human-first instructions
-- Single-responsibility tasks
-- Traceability over long narratives
-- Simplify before delegating
+- Update grid as tasks complete
 
 ## Guardrails
 
-- Don't implement yourself
-- Update plan grid as single source of truth
-- Escalate blockers promptly
+- Don't implement; delegate
+- Ask before proceeding if blocked
+- Preserve command independence

@@ -8,10 +8,16 @@ subtask: false
 
 Judge only the presented change set. Defect-first review.
 
+## Usage
+
+- `/review` — Review staged/unstaged changes
+- `/review <file>` — Review specific file or path
+- `/review plan:<slug>` — Review changes against a plan's requirements
+
 ## Input
 
 - Diff or change description
-- Requirements/context
+- Requirements/context (optional: loaded from plan if specified)
 
 ## Output
 
@@ -40,3 +46,10 @@ Judge only the presented change set. Defect-first review.
 - Focus on correctness and safety
 - Flag only when it affects future risk
 - Mark claims `Unverified` without evidence
+
+## Plan Integration
+
+If `plan:<slug>` provided:
+- Load plan from `docs/plans/slug-*.md`
+- Validate changes against task requirements
+- Note any scope creep or missing coverage

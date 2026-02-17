@@ -5,6 +5,27 @@ SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/lib.sh"
 . "$SCRIPT_DIR/config.sh"
 
+INTERACTIVE="${DOTFILES_INTERACTIVE:-1}"
+
+ask_backup() {
+  path="$1"
+
+  [ "$INTERACTIVE" = "1" ] && [ -t 0 ] || return 0
+
+  printf '[?] Backup existing %s to %s.bak? [Y/n] ' "$(basename "$path")" "$(basename "$path")"
+  read -r answer
+
+  case "$answer" in
+  [nN] | [nN][oO])
+    log "install: skipping backup for $path"
+    return 1
+    ;;
+  *)
+    return 0
+    ;;
+  esac
+}
+
 link_path() {
   src="$1"
   dest="$2"
@@ -12,9 +33,12 @@ link_path() {
   log "install: linking $src -> $dest"
 
   if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-    backup_path="$dest.backup.$(date +%Y%m%d%H%M%S)"
-    log "install: backing up $dest to $backup_path"
-    mv "$dest" "$backup_path"
+    if ask_backup "$dest"; then
+      log "install: backing up $dest to ${dest}.bak"
+      mv "$dest" "${dest}.bak"
+    else
+      rm -rf "$dest"
+    fi
   fi
 
   ln -sfn "$src" "$dest" && log "install: successfully linked $dest" ||

@@ -8,6 +8,11 @@ subtask: false
 
 Decide what to build and why. Other agents deliver it.
 
+## Usage
+
+- `/architect <goal>` — Design from scratch
+- `/architect` — Refine current discussion
+
 ## Input
 
 - Objective and user impact
@@ -36,3 +41,36 @@ Decide what to build and why. Other agents deliver it.
 - No implementation details
 - Patterns and interfaces only
 - Ask questions if requirements conflict
+
+## Persistence
+
+Save to `docs/architecture/slug-YYYY-MM-DD.md` if:
+- Design is complete enough to reference later
+- User requests persistence
+- Will be used by `/plan` or other commands
+
+Format:
+```markdown
+# [Architecture Title]
+
+**Created**: YYYY-MM-DD
+**Status**: Draft | Approved | Superseded
+
+## Goal
+[Objective and impact]
+
+## Constraints
+[Limits and unknowns]
+
+## Components
+[Table from output]
+
+## Flows
+[Diagrams]
+
+## Risks
+[Risk table]
+
+## Phases
+[Implementation order]
+```

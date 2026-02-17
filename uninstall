@@ -1,0 +1,140 @@
+#!/bin/sh
+# Dotfiles Uninstaller - Restore backed up configs
+# Usage: ./uninstall [OPTIONS]
+#
+# Options:
+#   -h, --help     Show this help message
+#   -l, --list     List available backups
+#   -a, --all      Restore all backups
+#   -n, --dry-run  Show what would be done without executing
+#
+# Environment:
+#   DOTFILES_INTERACTIVE=0  Skip confirmation prompts
+
+set -e
+
+DOTFILES_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+. "$DOTFILES_DIR/installers/lib.sh"
+. "$DOTFILES_DIR/installers/config.sh"
+
+INTERACTIVE="${DOTFILES_INTERACTIVE:-1}"
+DRY_RUN=0
+RESTORE_ALL=0
+
+show_help() {
+  sed -n '/^#!/,/^$/p' "$0" | sed '1d;$d'
+}
+
+list_backups() {
+  found=0
+  for f in "$XDG_CONFIG_HOME"/*.bak; do
+    [ -e "$f" ] || continue
+    basename "$f" .bak
+    found=1
+  done
+  [ "$found" = "0" ] && log_info "No backups found"
+}
+
+restore_backup() {
+  name="$1"
+  backup_path="$XDG_CONFIG_HOME/${name}.bak"
+  current_path="$XDG_CONFIG_HOME/$name"
+
+  [ -e "$backup_path" ] || {
+    log_error "Backup not found: $backup_path"
+    return 1
+  }
+
+  if [ -L "$current_path" ]; then
+    if [ "$DRY_RUN" = "1" ]; then
+      log "[dry-run] would remove symlink: $current_path"
+      log "[dry-run] would restore: $backup_path -> $current_path"
+    else
+      log "install: removing symlink $current_path"
+      rm "$current_path"
+      log "install: restoring $backup_path -> $current_path"
+      mv "$backup_path" "$current_path"
+    fi
+  elif [ -e "$current_path" ]; then
+    log_warn "$current_path exists and is not a symlink, skipping"
+    return 1
+  else
+    if [ "$DRY_RUN" = "1" ]; then
+      log "[dry-run] would restore: $backup_path -> $current_path"
+    else
+      log "install: restoring $backup_path -> $current_path"
+      mv "$backup_path" "$current_path"
+    fi
+  fi
+}
+
+confirm_restore() {
+  name="$1"
+
+  [ "$INTERACTIVE" = "1" ] && [ -t 0 ] || return 0
+
+  printf '[?] Restore %s from backup? [y/N] ' "$name"
+  read -r answer
+
+  case "$answer" in
+  [yY] | [yY][eE][sS])
+    return 0
+    ;;
+  *)
+    return 1
+    ;;
+  esac
+}
+
+parse_args() {
+  while [ $# -gt 0 ]; do
+    case "$1" in
+    -h | --help)
+      show_help
+      exit 0
+      ;;
+    -l | --list)
+      list_backups
+      exit 0
+      ;;
+    -a | --all)
+      RESTORE_ALL=1
+      shift
+      ;;
+    -n | --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    -*)
+      log_error "Unknown option: $1"
+      exit 1
+      ;;
+    *)
+      shift
+      ;;
+    esac
+  done
+}
+
+main() {
+  parse_args "$@"
+
+  [ "$DRY_RUN" = "1" ] && log "=== DRY RUN MODE ==="
+
+  found=0
+  for backup in "$XDG_CONFIG_HOME"/*.bak; do
+    [ -e "$backup" ] || continue
+    found=1
+    name=$(basename "$backup" .bak)
+
+    if [ "$RESTORE_ALL" = "1" ] || confirm_restore "$name"; then
+      restore_backup "$name"
+    fi
+  done
+
+  [ "$found" = "0" ] && log_info "No backups found"
+
+  log_info "Done"
+}
+
+main "$@"
