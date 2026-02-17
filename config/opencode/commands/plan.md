@@ -1,5 +1,7 @@
 ---
 description: Break complex task into parallel, self-contained tasks
+agent: plan
+subtask: false
 ---
 
 ## Purpose

@@ -1,5 +1,7 @@
 ---
 description: Design system architecture with components and flows
+agent: plan
+subtask: false
 ---
 
 ## Purpose

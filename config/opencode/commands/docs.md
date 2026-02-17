@@ -1,5 +1,7 @@
 ---
 description: Maintain human-first documentation
+agent: build
+subtask: true
 ---
 
 ## Purpose

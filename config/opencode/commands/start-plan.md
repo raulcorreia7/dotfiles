@@ -1,5 +1,7 @@
 ---
 description: Resume or execute an existing plan
+agent: plan
+subtask: false
 ---
 
 ## Purpose

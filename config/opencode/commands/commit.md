@@ -1,5 +1,7 @@
 ---
 description: Transform pending changes into clean Conventional Commit plan
+agent: plan
+subtask: false
 ---
 
 ## Purpose

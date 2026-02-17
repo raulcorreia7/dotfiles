@@ -1,5 +1,7 @@
 ---
 description: Coordinate multi-agent workflows
+agent: plan
+subtask: false
 ---
 
 ## Purpose

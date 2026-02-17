@@ -1,5 +1,7 @@
 ---
 description: Review diff for correctness, safety, maintainability
+agent: plan
+subtask: false
 ---
 
 ## Purpose
