@@ -44,6 +44,9 @@ rdf <command>
 .dotfiles/
 ├── install              # Installer entrypoint
 ├── init.sh              # Runtime entrypoint
+├── Makefile             # Build commands (fmt, lint, install)
+├── .shfmt               # Shell formatter config
+├── .shellcheckrc        # Shell linter config
 │
 ├── installers/          # INSTALLER LAYER
 │   ├── lib.sh           # log_*, detect_os, require_*

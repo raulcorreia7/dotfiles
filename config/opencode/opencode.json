@@ -20,16 +20,12 @@
     }
   },
   "mcp": {
-    "grep": {
-      "type": "remote",
-      "url": "https://mcp.grep.app"
-    },
     "context7": {
       "type": "local",
       "command": [
         "mise",
         "x",
-        "node",
+        "node@lts",
         "--",
         "npx",
         "-y",
@@ -40,25 +36,40 @@
       },
       "enabled": true
     },
-    "sequentialthinking": {
+    "ddg-search": {
       "type": "local",
       "command": [
         "mise",
         "x",
-        "node",
+        "uv",
+        "--",
+        "uvx",
+        "duckduckgo-mcp-server"
+      ],
+      "enabled": true
+    },
+    "deepwiki": {
+      "type": "local",
+      "command": [
+        "mise",
+        "x",
+        "node@lts",
         "--",
         "npx",
         "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ],
-      "enabled": true
+        "mcp-deepwiki@latest"
+      ]
+    },
+    "grep-app": {
+      "type": "remote",
+      "url": "https://mcp.grep.app"
     },
     "memory": {
       "type": "local",
       "command": [
         "mise",
         "x",
-        "node",
+        "node@lts",
         "--",
         "npx",
         "-y",
@@ -66,40 +77,38 @@
       ],
       "enabled": true
     },
-    "ddg-search": {
-      "type": "local",
-      "command": [
-        "uvx",
-        "duckduckgo-mcp-server"
-      ],
-      "enabled": true
-    },
-    "deepwiki-mcp": {
+    "playwright": {
       "type": "local",
       "command": [
         "mise",
         "x",
-        "node",
+        "node@lts",
         "--",
         "npx",
         "-y",
-        "mcp-deepwiki@latest"
-      ]
-    },
-    "playwright": {
-      "type": "local",
-      "command": [
-        "npx",
         "@playwright/mcp@latest"
       ],
       "enabled": true
     },
-    "zai-mcp-server": {
+    "sequential-thinking": {
       "type": "local",
       "command": [
         "mise",
         "x",
-        "node@22",
+        "node@lts",
+        "--",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": true
+    },
+    "zai-image": {
+      "type": "local",
+      "command": [
+        "mise",
+        "x",
+        "node@lts",
         "--",
         "node",
         "{env:HOME}/.config/opencode/scripts/zai-mcp-launcher.mjs"

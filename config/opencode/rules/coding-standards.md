@@ -6,6 +6,7 @@
 - Keep code intuitive and obvious: the next reader should grasp it instantly
 - Prefer clear code over clever code
 - Avoid complexity: simplify before extending
+- Pragmatism over dogma: rules serve clarity, not the other way around
 - Best judgment, no hardcoding
 
 ## Cognitive Load (Non-Negotiable)
@@ -125,7 +126,9 @@
 ## Comments and API Docs
 - Comment why, not what
 - Comment only non-obvious rationale, constraints, or side effects
-- Public APIs include brief contract docs (inputs, outputs, errors)
+- Public APIs: document inputs, outputs, errors, and invariants
+- Hot paths: document performance characteristics and trade-offs
+- Concise and clear over verbose noise: if it doesn't add value, delete it
 
 ## Anti-Patterns (Non-Negotiable)
 - God objects

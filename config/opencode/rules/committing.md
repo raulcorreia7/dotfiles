@@ -21,6 +21,11 @@ Optional body/footer.
 - Keep refactors separate from features
 - Keep config changes separate from logic
 
+## Context & History
+- Respect existing commit style if healthy and consistent
+- Match scope naming and type usage from project history
+- Group related commits by feature in logical sequence
+
 ## Amend vs New Commit
 - Amend only for immediate fixups of the last commit
 - Use a new commit for any new logical unit of work

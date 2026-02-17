@@ -31,6 +31,48 @@
 - Prefer `rg`, `fd`, `bat`, `sd`, `fzf`
 - Fallbacks: `grep -r`, `find`, `sed`, `cat`, `awk`
 
+## Bulk Operations
+- Prefer modern tools if available: `rg` over `grep`, `fd` over `find`, `sd` over `sed`
+- Dry-run destructive operations first (`sd --preview`, `git diff`)
+- Scope tightly: one logical change per command; split complex operations
+- Verify count before applying (`rg -c`, `fd | wc -l`, `grep -c`)
+- Ensure undo path: version control, backups, or reversible commands
+
+### Examples
+
+**Search & Replace**
+```bash
+# Modern
+sd 'foo' 'bar' **/*.ts --preview
+sd 'const (\w+) =' 'let $1 =' src/ -p
+
+# Traditional
+sed -i 's/foo/bar/g' **/*.ts
+find . -name "*.ts" -exec sed -i 's/foo/bar/g' {} +
+```
+
+**Find & Act**
+```bash
+# Modern
+fd -e log -x rm
+fd -e js -x prettier --write
+rg -c "TODO" --type js
+
+# Traditional
+find . -name "*.log" -delete
+find . -name "*.js" -exec prettier --write {} +
+grep -r "TODO" --include="*.js" | wc -l
+```
+
+**Rename Files**
+```bash
+# Modern
+fd -e test -e js | sd '\.test\.js' '.spec.js' | xargs -I {} mv {} {}
+
+# Traditional
+find . -name "*.test.js" | sed 's/\.test\.js$/.spec.js/' | xargs -I {} mv {} {}
+```
+
 ## Commits
 - Small, single-concern, Conventional Commits
 

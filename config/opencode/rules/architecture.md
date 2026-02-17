@@ -23,7 +23,7 @@
 
 ## Pattern Preferences
 - Composition over inheritance (pragmatic)
-- Value objects over primitives
+- Value objects over primitives (unless language perf requires otherwise)
 - Factory functions over complex constructors
 - Strategy over inheritance for varying behavior
 - Pure functions over side effects in core logic
