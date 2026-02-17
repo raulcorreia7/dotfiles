@@ -1,6 +1,6 @@
 {
   "last_played": {
-    "session.start": "sounds/PeonWhat3.wav",
+    "session.start": "sounds/PeonReady1.wav",
     "task.complete": "sounds/PeonYes3.wav"
   },
   "session_packs": {}

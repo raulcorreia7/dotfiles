@@ -1,6 +1,6 @@
 {
   "active_pack": "peon",
-  "volume": 0.5,
+  "volume": 0.3,
   "enabled": true,
   "categories": {
     "session.start": true,
