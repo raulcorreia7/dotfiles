@@ -4,13 +4,48 @@ Modular, XDG-first dotfiles with strict separation between installer and runtime
 
 ## Quickstart
 
+Minimum prerequisites:
+
+- `git`
+- `stow` (GNU Stow is required for setup phase)
+
+### Required Dependencies by OS
+
+Required for install/setup:
+
+- `git`, `stow`, and one supported shell (`bash` or `zsh`)
+
+Required for local quality checks (`make check`):
+
+- `shellcheck`, `shfmt`, `fd`/`fdfind`, `node` + `npx`
+
+Optional for local test execution:
+
+- `bats` (used by `make test-bats`; CI runs this regardless)
+
+Arch / EndeavourOS / CachyOS:
+
+```sh
+sudo pacman -S --needed git stow bash zsh shellcheck shfmt fd nodejs npm bats
+```
+
+macOS (Homebrew):
+
+```sh
+brew install git stow bash zsh shellcheck shfmt fd node bats-core
+```
+
 ```sh
 git clone https://github.com/YOUR_USER/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
 make install
+
+# Optional but recommended: install local git hooks
+make hooks-install
 ```
 
 Reload your shell:
+
 ```sh
 source ~/.zshrc
 ```
@@ -23,10 +58,19 @@ source ~/.zshrc
 make help      # Show available commands
 make fmt       # Format all shell scripts
 make lint      # Lint all shell scripts
+make markdown-lint # Lint README markdown
 make check     # Run lint (CI)
-make test      # Dry-run installer
+make test      # Dry-run installer + bats smoke tests
+make test-bats # Run bats smoke tests only
+make hooks-install # Install native pre-commit hook
+make hooks-run # Run native pre-commit checks
 make install   # Run full installation
 ```
+
+Required local tooling for `make check`: `shellcheck`, `shfmt`, `fd`/`fdfind`, and `npx` (Node.js).
+
+`make check` uses `npx` to fetch the latest `markdownlint-cli2` on each run.
+If `npx` is unavailable, install `markdownlint-cli2` globally as a fallback.
 
 ---
 
@@ -77,7 +121,8 @@ The `rdf` command is the main interface for dotfiles management.
 | `DOTFILES_ENABLE_MISE` | 1 | Install mise tools |
 | `DOTFILES_ENABLE_ZIMFW` | 1 | Build zimfw |
 | `DOTFILES_ENABLE_NVIM` | 1 | Install nvim plugins |
-| `DOTFILES_ARCH_ASSUME_YES` | 0 | Non-interactive pacman |
+| `DOTFILES_OS_ARCH_ASSUME_YES` | 0 | Non-interactive pacman |
+| `DOTFILES_MACOS_CATEGORIES` | `base cli development gui` | Homebrew category install order |
 
 ---
 
@@ -87,7 +132,6 @@ The `rdf` command is the main interface for dotfiles management.
 |--------|---------|
 | Arch / EndeavourOS / CachyOS | Full |
 | macOS | Via Homebrew |
-| Windows | Manual |
 
 ---
 

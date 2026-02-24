@@ -19,8 +19,13 @@ Execute one task in isolation. Reads plan, does task, updates plan.
 1. **Load Plan** — Read plan file, find task by ID
 2. **Gather Context** — Read key files listed in plan
 3. **Execute** — Implement the task objective
-4. **Verify** — Run tests/lint/build as appropriate
-5. **Update Plan** — Mark task `[x]` with commit hash or evidence
+4. **Verify** — MUST pass verification before marking complete:
+   - Run tests/lint/build (no new failures or warnings)
+   - Manual check: does the change work end-to-end?
+   - If tests don't exist, describe what was manually verified
+5. **Update Plan** — Mark task `[x]` only after verification passes, include:
+   - Commit hash (if committed)
+   - Evidence: what tests ran, what was manually verified
 
 ## Output
 
@@ -35,7 +40,8 @@ Execute one task in isolation. Reads plan, does task, updates plan.
 
 - One task only
 - Stay in scope
-- Update plan when done
+- **No assumed completion** — verify before marking done
+- Update plan when done (with evidence)
 - Report blockers clearly
 
 ## Guardrails

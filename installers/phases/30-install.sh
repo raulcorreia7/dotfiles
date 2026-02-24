@@ -19,20 +19,8 @@ run_phase() {
     log_info "installing macOS packages..."
     "$INSTALL_DIR/install-macos.sh" || return 1
     ;;
-  debian)
-    log_warn "Debian/Ubuntu: manual installation required"
-    log_info "Run: sudo apt update && sudo apt install -y \$(cat packages/debian/packages)"
-    ;;
-  fedora)
-    log_warn "Fedora: manual installation required"
-    log_info "Run: sudo dnf install -y \$(cat packages/fedora/packages)"
-    ;;
-  windows)
-    log_warn "Windows requires manual installation"
-    log_info "Run: pwsh -ExecutionPolicy Bypass -File installers/install-windows.ps1"
-    ;;
   *)
-    log_error "unsupported OS: $OS"
+    log_error "unsupported OS: $OS (supported: arch, macos)"
     return 1
     ;;
   esac

@@ -112,8 +112,6 @@ detect_os() {
       . /etc/os-release
       case "${ID_LIKE:-${ID:-}}" in
       *arch*) echo "arch" ;;
-      *debian* | *ubuntu*) echo "debian" ;;
-      *fedora*) echo "fedora" ;;
       *) echo "linux" ;;
       esac
     else
@@ -122,9 +120,6 @@ detect_os() {
     ;;
   darwin)
     echo "macos"
-    ;;
-  mingw* | msys* | cygwin*)
-    echo "windows"
     ;;
   *)
     echo "unknown"
@@ -138,9 +133,10 @@ detect_os() {
 
 run_phase_direct() {
   phase_name="$1"
+  phase_script="${phase_name##*/}"
   current_script="${0##*/}"
 
-  [ "$current_script" = "$phase_name" ] || return 0
+  [ "$current_script" = "$phase_script" ] || return 0
 
   SCRIPT_DIR=$(script_dir)
   . "$SCRIPT_DIR/../lib.sh"

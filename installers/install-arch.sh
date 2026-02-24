@@ -5,6 +5,8 @@ SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/lib.sh"
 . "$SCRIPT_DIR/config.sh"
 
+DOTFILES_OS_ARCH_ASSUME_YES="${DOTFILES_OS_ARCH_ASSUME_YES:-0}"
+
 if [ -n "${SUDO_USER:-}" ]; then
   ORIGINAL_HOME="/home/$SUDO_USER"
   XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$ORIGINAL_HOME/.config}"
@@ -68,9 +70,9 @@ get_pacman_repo_list_file() {
 
 get_conflicting_packages() {
   case "$1" in
-  tealdeer) printf '%s\n' "tldr" ;;
-  openai-codex-bin) printf '%s\n' "openai-codex-autoup-bin" ;;
-  *) return 1 ;;
+    tealdeer) printf '%s\n' "tldr" ;;
+    openai-codex-bin) printf '%s\n' "openai-codex-autoup-bin" ;;
+    *) return 1 ;;
   esac
 }
 
@@ -181,7 +183,7 @@ install_aur_packages() {
   packages_to_install=$(comm -23 "$aur_list_file" "$installed_list_file")
   if [ -n "$packages_to_install" ]; then
     log_info "Installing AUR packages ($(printf '%s\n' "$packages_to_install" | count_lines))"
-    if [ "${DOTFILES_ARCH_ASSUME_YES:-0}" = "1" ]; then
+    if [ "$DOTFILES_OS_ARCH_ASSUME_YES" = "1" ]; then
       paru -S --needed --noconfirm $packages_to_install 2>&1 || {
         log_info "Retrying without --noconfirm for interactive prompts..."
         paru -S --needed $packages_to_install

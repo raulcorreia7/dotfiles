@@ -7,7 +7,7 @@ dot_has tmux || return 0
 case "$-" in *i*) ;; *) return 0 ;; esac
 [ -z "${TMUX:-}" ] || return 0
 
-__dot_tmux_session_name() {
+dot_tmux_session_name() {
   awk -v pid="$$" -v r="${RANDOM:-0}" 'BEGIN{
     srand(systime() + pid + r)
     a="pixel neon brisk mellow nimble lucid tidy cozy sunny steady lively spicy crispy turbo sneaky chaotic legendary glitchy caffeinated"
@@ -17,4 +17,4 @@ __dot_tmux_session_name() {
   }'
 }
 
-tmux new-session -s "${DOTFILES_TMUX_SESSION:-$(__dot_tmux_session_name)}"
+tmux new-session -s "${DOTFILES_TMUX_SESSION:-$(dot_tmux_session_name)}"

@@ -9,6 +9,7 @@ SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 installed_count=0
 failed_count=0
 failed_categories=""
+CATEGORIES="${DOTFILES_MACOS_CATEGORIES:-base cli development gui}"
 
 check_brew() {
   command -v brew >/dev/null 2>&1 || {
@@ -30,10 +31,10 @@ install_category() {
   log_info "Installing $category..."
 
   if brew bundle --file="$file" --no-lock 2>&1; then
-    log "✓ $category installed successfully"
+    log "$category installed successfully"
     installed_count=$((installed_count + 1))
   else
-    log "✗ $category installation failed"
+    log_error "$category installation failed"
     failed_count=$((failed_count + 1))
     failed_categories="${failed_categories:+$failed_categories, }$category"
   fi
@@ -55,6 +56,10 @@ main() {
   log "Installed: $installed_count"
   log "Failed: $failed_count"
   [ "$failed_count" -gt 0 ] && log "Failed categories: $failed_categories"
+
+  if [ "$failed_count" -gt 0 ]; then
+    return 1
+  fi
 }
 
 main "$@"

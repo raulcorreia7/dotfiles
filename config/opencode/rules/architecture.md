@@ -42,36 +42,24 @@
 - Small, focused contracts
 - Fail fast with actionable errors
 
-## Domain Modeling
-- Use domain language in modules, types, and APIs
-- Make invariants explicit in code and tests
-- Translate transport/storage concerns at boundaries
+## State Management
+- State is a liability: minimize it
+- Mutable state must be explicit and localized
+- Complex state = state machine (no implicit state spread across flags)
+- Side effects live at boundaries; core logic stays pure
+- Prefer data transformation over state mutation
 
-## Evolution and Compatibility
-- Prefer backward-compatible interface changes
-- Breaking changes require migration notes and rollback options
-- Use staged rollout for high-risk changes when feasible
-
-## Decision Checklist
-- Is this required now or speculative?
-- Can we simplify and add later?
-- What is the cost of being wrong?
-- What is the fastest safe validation?
-
-## Preferred Patterns
-- Composition over inheritance
-- Explicit over implicit behavior
-- Idempotent operations where relevant
+## Coupling
+- Cohesion within; isolation between
+- Depend on abstractions; never on concretions
+- If changing A breaks B, they're too coupled
+- Shared utilities are either trivial or wrong
 
 ## Anti-Patterns
-1. Premature abstraction
-2. Distributed monolith without clear boundaries
-3. Over-engineered data models
-4. Optimizing edge cases before core path
-5. Hardcoded environment assumptions
-6. Hidden infrastructure in domain logic
-
-## Documentation
-- Document why decisions were made
-- Document responsibilities and data flow
-- Keep implementation details in code
+1. God objects
+2. Premature abstraction
+3. Distributed monolith without clear boundaries
+4. Over-engineered data models
+5. Optimizing edge cases before core path
+6. Hardcoded environment assumptions
+7. Hidden infrastructure in domain logic

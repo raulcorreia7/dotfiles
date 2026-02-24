@@ -86,11 +86,11 @@ aws-vault
 shellcheck
 shfmt
 watchexec
+bats-core
 # Uncomment if you need these:
 # golangci-lint    # Go linters
 # ruff             # Python linter
 # act              # Run GitHub Actions locally
-# pre-commit       # Pre-commit hooks framework
 
 # -----------------------------------------------------------------------------
 # DEV TOOLS

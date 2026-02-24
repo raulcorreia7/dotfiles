@@ -2,146 +2,96 @@
 
 ## Overview
 
-Modular dotfiles with strict separation between **installer** and **runtime**. Each layer is isolated with single responsibility.
+This repository is split into two explicit layers:
 
-## Public API
+- Installer layer: machine bootstrap and package/tool setup
+- Runtime layer: interactive shell behavior (`rdf`, aliases, plugin init)
 
-### RDF Command
+The installer never depends on runtime internals, and runtime never depends on
+installer internals.
 
-```
-rdf <command>
-```
+## Entrypoints
 
-| Command | Description |
-|---------|-------------|
-| `rdf reload` | Reload dotfiles |
-| `rdf edit` | Edit dotfiles |
-| `rdf doctor` | Check tool status |
-| `rdf cd` | Go to dotfiles |
-| `rdf update [--full]` | System update (Arch) |
-| `rdf orphans [--remove]` | Orphan packages (Arch) |
-| `rdf cache [--clean]` | Pacman cache (Arch) |
+- `install`: phased installer runner
+- `uninstall`: restore backups created during setup
+- `init.sh`: runtime entrypoint sourced by shell rc files
 
-### Public Functions
+## Layer Responsibilities
 
-| Function | Description |
-|----------|-------------|
-| `dot_has CMD` | Check if command exists |
-| `dot_shell_type` | Print shell type (zsh/bash/sh) |
-| `dot_eval_init CMD` | Initialize tool for current shell |
+### Installer Layer (`installers/`)
 
-### Alias
+- `lib.sh`: logging, guards, OS detection, phase helpers
+- `config.sh`: path and package-list configuration
+- `phases/10-check.sh`: readiness checks (OS/support, required tools)
+- `phases/20-setup.sh`: linking via GNU Stow
+- `phases/30-install.sh`: OS package installation dispatcher
+- `phases/40-tools.sh`: mise/zimfw/nvim post-package tooling
+- `phases/50-configure.sh`: post-install configuration trigger
+- `install-arch.sh` and `install-macos.sh`: OS-specific package installation
+- `link.sh`: symlink orchestration using GNU Stow
+- `post-install.sh`: shell, PATH, directories, and git defaults
 
-| Alias | Description |
-|-------|-------------|
-| `nvcfg` | Edit neovim config |
+### Runtime Layer (`init.sh`, `config/`)
 
----
+- `init.sh`: runtime bootstrap, env load, zimfw init, aliases, manifest
+- `config/runtime.sh`: public runtime API and `rdf` command
+- `config/manifest.sh`: plugin registration order
+- `config/plugins/*/init.sh`: isolated plugin integration points
 
-## Structure
+## Runtime Public API
 
-```
-.dotfiles/
-├── install              # Installer entrypoint
-├── init.sh              # Runtime entrypoint
-├── Makefile             # Build commands (fmt, lint, install)
-├── .shfmt               # Shell formatter config
-├── .shellcheckrc        # Shell linter config
-│
-├── installers/          # INSTALLER LAYER
-│   ├── lib.sh           # log_*, detect_os, require_*
-│   ├── config.sh        # Paths, URLs, constants
-│   ├── phases/          # Install phases
-│   │   ├── 10-check.sh
-│   │   ├── 20-setup.sh
-│   │   ├── 30-install.sh
-│   │   ├── 40-tools.sh
-│   │   └── 50-configure.sh
-│   ├── install-arch.sh
-│   ├── link.sh
-│   └── post-install.sh
-│
-├── config/              # RUNTIME LAYER
-│   ├── runtime.sh       # rdf, dot_*, __dot_*
-│   ├── manifest.sh      # Plugin loader
-│   ├── env              # Environment
-│   ├── aliases          # Aliases
-│   └── plugins/
-│       ├── mise/init.sh
-│       ├── fzf/init.sh
-│       ├── zoxide/init.sh
-│       ├── tmux/init.sh
-│       └── os/arch/init.sh
-│
-└── packages/arch/
-    ├── pacman
-    └── aur
+### Commands
+
+- `rdf reload`
+- `rdf edit`
+- `rdf doctor`
+- `rdf cd`
+- `rdf update [--full]` (Arch)
+- `rdf orphans [--remove]` (Arch)
+- `rdf cache [--clean]` (Arch)
+
+### Functions
+
+- `dot_has <cmd>`
+- `dot_shell_type`
+- `dot_eval_init <tool>`
+- `dot_load_plugin <plugin>`
+
+## Install Flow
+
+```text
+install
+  -> phases/10-check.sh
+  -> phases/20-setup.sh
+  -> phases/30-install.sh
+  -> phases/40-tools.sh
+  -> phases/50-configure.sh
 ```
 
----
+## Runtime Flow
 
-## Data Flow
-
-```
-INSTALL:
-./install → installers/lib.sh → phases/*.sh → packages/*
-
-RUNTIME:
-.zshrc → init.sh → runtime.sh → manifest.sh → plugins/*/
-                  → env
-                  → zimfw
-                  → aliases
+```text
+~/.zshrc or ~/.bashrc
+  -> ~/.dotfiles/init.sh
+  -> config/runtime.sh
+  -> config/env (optional)
+  -> zimfw init (zsh)
+  -> config/aliases
+  -> config/manifest.sh
+  -> config/plugins/*/init.sh
 ```
 
----
+## Tooling
 
-## Principles
+- Local checks: `make check`
+- Markdown lint in `make check`: `npx markdownlint-cli2` (latest by default)
+- Native git hook: `.githooks/pre-commit` (installed with `make hooks-install`)
+- CI: `.github/workflows/ci.yml` runs `make check` and bats smoke tests
+- Smoke tests: `tests/*.bats`
 
-### Layer Separation
-- `installers/` ≠ `config/`
-- No shared functions between layers
-- `log_*` for installer, `__dot_debug` for runtime
+## Design Invariants
 
-### Naming
-
-| Prefix | Scope | Example |
-|--------|-------|---------|
-| `rdf` | Public command | `rdf reload` |
-| `dot_` | Public function | `dot_has` |
-| `__dot_` | Private runtime | `__dot_load_plugin` |
-| `__rdf_` | Private rdf subcommand | `__rdf_doctor` |
-| `log_` | Installer | `log_info` |
-
----
-
-## Adding Packages
-
-```bash
-# pacman
-echo "ripgrep" >> packages/arch/pacman
-
-# aur
-echo "mise-bin" >> packages/arch/aur
-```
-
-## Adding Plugins
-
-1. Create `config/plugins/x/init.sh`:
-```sh
-#!/bin/sh
-dot_has x || return 0
-dot_eval_init x
-```
-
-2. Add to `config/manifest.sh`:
-```sh
-__dot_load_plugin "x"
-```
-
----
-
-## Sync
-
-```bash
-rsync -avz --delete ~/.dotfiles/ talos:~/.dotfiles/
-```
+- Keep installer and runtime concerns separate
+- Keep shell scripts POSIX-`sh` compatible
+- Keep plugin loading opt-in via `DOTFILES_ENABLE_*`
+- Prefer explicit failures with actionable messages

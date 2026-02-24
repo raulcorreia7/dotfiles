@@ -90,19 +90,7 @@
       ],
       "enabled": true
     },
-    "sequential-thinking": {
-      "type": "local",
-      "command": [
-        "mise",
-        "x",
-        "node@lts",
-        "--",
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ],
-      "enabled": true
-    },
+
     "zai-image": {
       "type": "local",
       "command": [

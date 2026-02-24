@@ -18,6 +18,8 @@ _check_shell() {
 _check_required_commands() {
   log_info "checking required commands..."
   require_command "git" "git is required for cloning repositories"
+  require_command "stow" "GNU Stow is required for setup phase"
+
   return 0
 }
 
@@ -41,14 +43,8 @@ _check_os_support() {
   macos)
     log_info "macOS detected"
     ;;
-  debian | fedora)
-    log_warn "Limited support for $OS"
-    ;;
-  windows)
-    log_warn "Windows requires manual installation"
-    ;;
   *)
-    log_error "unsupported OS: $OS"
+    log_error "unsupported OS: $OS (supported: arch, macos)"
     return 1
     ;;
   esac
@@ -70,9 +66,9 @@ _show_summary() {
 run_phase() {
   log_info "validating system..."
   _check_shell || return 1
+  _check_os_support || return 1
   _check_required_commands || return 1
   _check_dotfiles_structure || return 1
-  _check_os_support || return 1
   _show_summary
   log_info "check complete"
   return 0

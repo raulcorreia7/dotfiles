@@ -1,4 +1,9 @@
 #!/bin/sh
+# Link dotfiles configurations and binaries
+#
+# Creates symlinks from ~/.dotfiles/config/* to ~/.config/*
+# and from ~/.dotfiles/bin/* to ~/.local/bin/*
+
 set -e
 
 SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -10,47 +15,52 @@ INTERACTIVE="${DOTFILES_INTERACTIVE:-1}"
 ask_backup() {
   path="$1"
 
-  [ "$INTERACTIVE" = "1" ] && [ -t 0 ] || return 0
+  [ "$INTERACTIVE" = "1" ] && [ -t 0 ] || return 1
 
   printf '[?] Backup existing %s to %s.bak? [Y/n] ' "$(basename "$path")" "$(basename "$path")"
   read -r answer
 
   case "$answer" in
-  [nN] | [nN][oO])
-    log "install: skipping backup for $path"
-    return 1
-    ;;
-  *)
-    return 0
-    ;;
+    [nN] | [nN][oO])
+      log "Skipping backup for $path"
+      return 1
+      ;;
+    *)
+      return 0
+      ;;
   esac
 }
 
-link_path() {
-  src="$1"
-  dest="$2"
+prepare_destination() {
+  dest="$1"
 
-  log "install: linking $src -> $dest"
+  if [ -L "$dest" ]; then
+    rm -f "$dest"
+    return 0
+  fi
 
   if [ -e "$dest" ] && [ ! -L "$dest" ]; then
     if ask_backup "$dest"; then
-      log "install: backing up $dest to ${dest}.bak"
+      log "Backing up $dest to ${dest}.bak"
       mv "$dest" "${dest}.bak"
     else
+      log "Removing existing $dest"
       rm -rf "$dest"
     fi
   fi
-
-  ln -sfn "$src" "$dest" && log "install: successfully linked $dest" ||
-    log "install: failed to link $dest"
 }
 
-log "install: creating directories..."
-ensure_dir "$XDG_CONFIG_HOME" && log "install: created $XDG_CONFIG_HOME"
-ensure_dir "$BIN_TARGET" && log "install: created $BIN_TARGET"
-ensure_dir "$REPO_DIR/bin" && log "install: created $REPO_DIR/bin"
+stow_path() {
+  stow_dir="$1"
+  target_dir="$2"
+  package_name="$3"
 
-CONFIG_DIRS="
+  log "Stowing $package_name into $target_dir"
+  stow --dir="$stow_dir" --target="$target_dir" --restow "$package_name"
+}
+
+link_config_dirs() {
+  config_dirs="
 alacritty
 ghostty
 nvim
@@ -60,41 +70,72 @@ mise
 zimfw
 "
 
-log "install: linking app config directories..."
-for name in $CONFIG_DIRS; do
-  src="$REPO_DIR/config/$name"
-  [ -e "$src" ] || continue
-  link_path "$src" "$XDG_CONFIG_HOME/$name"
-done
+  log ""
+  log "Linking configuration directories..."
 
-log "install: linking bin files..."
-for f in "$REPO_DIR"/bin/*; do
-  [ -f "$f" ] || continue
-  target="$BIN_TARGET/$(basename "$f")"
-  link_path "$f" "$target"
-done
+  for name in $config_dirs; do
+    src="$REPO_DIR/config/$name"
+    [ -e "$src" ] || continue
+    prepare_destination "$XDG_CONFIG_HOME/$name"
+    stow_path "$REPO_DIR/config" "$XDG_CONFIG_HOME" "$name" || return 1
+  done
+}
+
+link_bin_files() {
+  log ""
+  log "Linking binaries..."
+
+  has_bins=0
+  for f in "$REPO_DIR"/bin/*; do
+    [ -f "$f" ] || continue
+    has_bins=1
+    prepare_destination "$BIN_TARGET/$(basename "$f")"
+  done
+
+  [ "$has_bins" = "1" ] || return 0
+  stow_path "$REPO_DIR" "$BIN_TARGET" "bin" || return 1
+}
+
+main() {
+  require_command "stow" "GNU Stow is required for linking"
+
+  log "Creating directories..."
+  ensure_dir "$XDG_CONFIG_HOME" && log "  $XDG_CONFIG_HOME"
+  ensure_dir "$BIN_TARGET" && log "  $BIN_TARGET"
+  ensure_dir "$REPO_DIR/bin" && log "  $REPO_DIR/bin"
+
+  log "Using GNU Stow for linking"
+
+  link_config_dirs || return 1
+  link_bin_files || return 1
+
+  setup_shell_rc "$SHELL_ZSHRC"
+  setup_shell_rc "$SHELL_BASHRC"
+
+  log ""
+  log "Linking complete"
+}
 
 setup_shell_rc() {
   shell_rc=$1
 
   if [ ! -r "$shell_rc" ]; then
-    log "install: creating $shell_rc"
+    log "Creating $shell_rc"
     touch "$shell_rc"
   fi
 
   if grep -Fq "$REPO_DIR/init.sh" "$shell_rc"; then
-    log "install: dotfiles already sourced in $shell_rc"
+    log "Dotfiles already sourced in $shell_rc"
     return 0
   fi
 
-  log "install: adding dotfiles source to $shell_rc"
+  log "Adding dotfiles source to $shell_rc"
   {
-    echo ""
-    echo "# Source dotfiles"
-    echo "[ -r \"$REPO_DIR/init.sh\" ] && . \"$REPO_DIR/init.sh\""
+    printf '\n'
+    printf '%s\n' "# Source dotfiles"
+    printf '%s\n' "[ -r \"$REPO_DIR/init.sh\" ] && . \"$REPO_DIR/init.sh\""
   } >>"$shell_rc"
-  log "install: successfully updated $shell_rc"
+  log "Updated $shell_rc"
 }
 
-setup_shell_rc "$SHELL_ZSHRC"
-setup_shell_rc "$SHELL_BASHRC"
+main "$@"

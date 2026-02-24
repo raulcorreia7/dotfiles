@@ -11,10 +11,12 @@ _DOTFILES_RUNTIME_LIB=1
 # SHELL HELPERS
 # =============================================================================
 
+# Check if a command exists
 dot_has() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# Get current shell type (zsh/bash/sh)
 dot_shell_type() {
   if [ -n "${ZSH_VERSION:-}" ]; then
     echo "zsh"
@@ -25,12 +27,13 @@ dot_shell_type() {
   fi
 }
 
+# Run tool's init command for current shell (e.g., 'mise init zsh')
 dot_eval_init() {
   dot_has "$1" || return 1
   eval "$($1 init "$(dot_shell_type)" 2>/dev/null)"
 }
 
-__dot_debug() {
+dot_debug() {
   [ "${DOTFILES_DEBUG:-0}" = "1" ] && printf '[DEBUG] %s\n' "$*" >&2
 }
 
@@ -38,70 +41,94 @@ __dot_debug() {
 # PLUGIN LOADING
 # =============================================================================
 
-__dot_plugin_key() {
+dot_plugin_key() {
   printf '%s' "$1" | tr '[:lower:]/-' '[:upper:]__' | tr -c 'A-Z0-9_' '_'
 }
 
-__dot_plugin_enabled() {
-  plugin_key=$(__dot_plugin_key "$1")
-  eval "enabled=\${DOTFILES_ENABLE_${plugin_key}:-1}"
-  [ "$enabled" != "0" ]
+dot_plugin_enabled() {
+  dot_plugin_env_key=$(dot_plugin_key "$1")
+  eval "dot_plugin_enabled_flag=\${DOTFILES_ENABLE_${dot_plugin_env_key}:-1}"
+  [ "$dot_plugin_enabled_flag" != "0" ]
 }
 
-__dot_load_plugin() {
-  plugin="$1"
-  plugin_init="${DOTFILES_PLUGINS_DIR:-$DOTFILES_DIR/config/plugins}/$plugin/init.sh"
-  [ -r "$plugin_init" ] || return 0
-  __dot_plugin_enabled "$plugin" || return 0
-  __dot_debug "plugin: $plugin"
-  . "$plugin_init"
+dot_load_plugin() {
+  dot_plugin_name="$1"
+  dot_plugin_init="${DOTFILES_PLUGINS_DIR:-$DOTFILES_DIR/config/plugins}/$dot_plugin_name/init.sh"
+  [ -r "$dot_plugin_init" ] || return 0
+  dot_plugin_enabled "$dot_plugin_name" || return 0
+  dot_debug "plugin: $dot_plugin_name"
+  . "$dot_plugin_init"
 }
 
 # =============================================================================
-# RDF COMMAND
+# RDF COMMAND (raul dotfiles)
 # =============================================================================
 
-__rdf_doctor() {
-  for label in "fzf:fzf" "git:git" "rg:rg" "fd:fd" "bat:bat" "eza:eza,exa"; do
-    name="${label%%:*}"
-    cmds="${label#*:}"
-    found=""
-    alts=""
+dot_doctor() {
+  for dot_tool_label in "fzf:fzf" "git:git" "rg:rg" "fd:fd" "bat:bat" "eza:eza,exa"; do
+    dot_tool_name="${dot_tool_label%%:*}"
+    dot_tool_cmds="${dot_tool_label#*:}"
+    dot_tool_found=""
+    dot_tool_alternatives=""
 
-    for cmd in ${cmds//,/ }; do
-      if dot_has "$cmd"; then
-        [ -z "$found" ] && found="$cmd" || alts="$alts $cmd"
+    for dot_tool_cmd in ${dot_tool_cmds//,/ }; do
+      if dot_has "$dot_tool_cmd"; then
+        [ -z "$dot_tool_found" ] && dot_tool_found="$dot_tool_cmd" || dot_tool_alternatives="$dot_tool_alternatives $dot_tool_cmd"
       fi
     done
 
-    if [ -n "$found" ]; then
-      if [ -n "$alts" ]; then
-        printf '%s: ok (%s; alt:%s)\n' "$name" "$found" "$alts"
+    if [ -n "$dot_tool_found" ]; then
+      if [ -n "$dot_tool_alternatives" ]; then
+        printf '%s: ok (%s; alt:%s)\n' "$dot_tool_name" "$dot_tool_found" "$dot_tool_alternatives"
       else
-        printf '%s: ok (%s)\n' "$name" "$found"
+        printf '%s: ok (%s)\n' "$dot_tool_name" "$dot_tool_found"
       fi
     else
-      printf '%s: missing (try: %s)\n' "$name" "${cmds//,/ or }"
+      printf '%s: missing (try: %s)\n' "$dot_tool_name" "${dot_tool_cmds//,/ or }"
     fi
   done
 }
 
-__rdf_help() {
+dot_help() {
   cat <<'EOF'
-Usage: rdf <command>
+Usage: rdf <command> [options]
 
-Commands:
-  reload    Reload dotfiles
-  edit      Edit dotfiles
-  doctor    Check tools
-  cd        Go to dotfiles
-  update    System update (Arch)
-  orphans   List/remove orphans (Arch)
-  cache     Show/clean cache (Arch)
+rdf (raul dotfiles) - Dotfiles management and system maintenance
+
+Core Commands:
+  reload          Reload dotfiles configuration
+  edit            Open dotfiles in $EDITOR (default: nvim)
+  doctor          Check if required tools are installed
+  cd              Change to dotfiles directory
+
+Arch Linux Maintenance (requires pacman):
+  update          Update system packages with pacman/paru
+                  Use --full to also remove orphans and clean cache
+  orphans         List orphaned packages
+                  Use --remove to uninstall them
+  cache           Show cache size
+                  Use --clean to remove cached packages
+
+Examples:
+  rdf doctor                    # Check tool installation status
+  rdf update                    # Standard update (packages only)
+  rdf update --full             # Full maintenance (packages + cleanup)
+  rdf orphans                   # List orphaned packages
+  rdf orphans --remove          # Remove orphaned packages
+  rdf cache                     # Show cache size
+  rdf cache --clean             # Clean package cache
+
+Environment Variables:
+  DOTFILES_DIR                  # Dotfiles location (default: ~/.dotfiles)
+  DOTFILES_OS_ARCH_ASSUME_YES   # Skip all prompts (set to 1)
+  EDITOR                        # Editor for 'rdf edit' (default: nvim)
+
 EOF
 }
 
 rdf() {
+  dot_rdf_command="${1:-}"
+
   case "${1:-}" in
   reload)
     . "${DOTFILES_DIR:-$HOME/.dotfiles}/init.sh" && echo "Reloaded"
@@ -110,26 +137,27 @@ rdf() {
     ${EDITOR:-nvim} "${DOTFILES_DIR:-$HOME/.dotfiles}"
     ;;
   doctor)
-    __rdf_doctor
+    dot_doctor
     ;;
   cd)
     cd "${DOTFILES_DIR:-$HOME/.dotfiles}" || return 1
     ;;
   update | orphans | cache)
-    sub="__rdf_arch_$1"
+    dot_rdf_subcommand="dot_arch_$dot_rdf_command"
     shift
-    if type "$sub" >/dev/null 2>&1; then
-      "$sub" "$@"
+    if type "$dot_rdf_subcommand" >/dev/null 2>&1; then
+      "$dot_rdf_subcommand" "$@"
     else
-      echo "rdf $1: not available on this system"
+      echo "rdf $dot_rdf_command: not available on this system (requires pacman)" >&2
       return 1
     fi
     ;;
   help | --help | -h | "")
-    __rdf_help
+    dot_help
     ;;
   *)
     echo "rdf: unknown command '$1'" >&2
+    echo "Run 'rdf help' for usage information" >&2
     return 1
     ;;
   esac

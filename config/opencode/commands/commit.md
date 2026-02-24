@@ -1,46 +1,86 @@
 ---
-description: Transform pending changes into clean Conventional Commit plan
-agent: plan
+description: Plan commits, confirm, then execute
+agent: build
 subtask: false
 ---
 
 ## Purpose
 
-Craft human-first commit history.
+Craft human-first commit history and execute it.
 
-## Input
+## Process
+
+### 1. Analyze Changes
 
 - Staged and unstaged changes
 - Current git status
+- Branch name (extract issue reference if present)
 
-## Output
+### 2. Detect Issue Reference
 
-For each cohesive cluster:
+Parse branch name for issue number:
+- `feat/123-add-foo` → `(#123)`
+- `fix/ABC-456-bug` → `(ABC-456)`
+- `main`, `develop`, no pattern → no reference
+
+Apply to all commits in the plan.
+
+### 3. Plan Commits
+
+For each cohesive cluster, show **full message preview**:
 ```
-[Commit N] Title
-<type(scope): imperative summary>
+[Commit N/Total]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+type(scope): imperative summary (#issue)
 
-Changes:
-- git add <files>
+Optional body line 1
+Optional body line 2
 
-Coverage: tests/docs included or N/A
+Files:
+  src/foo/bar.ts
+  tests/foo/bar.test.ts
+
+Coverage: tests included | docs included | N/A
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-## Principles
-
+**Principles:**
 - Group by single responsibility
 - Keep logic and tests together
 - Flag generated/noisy changes
 - Conventional Commits: feat, fix, refactor, chore, test, docs
 
-## Ordering
-
+**Ordering:**
 1. Config/chores
 2. Refactors
 3. Features/fixes
 4. Tests
 5. Docs
 
-## Closing
+### 4. Confirm Per Commit
 
-State: "Run these git add + git commit commands in order."
+For each planned commit, ask:
+```
+Proceed with Commit N? [y/n/e/skip]
+  y     - proceed
+  n     - abort all
+  e     - edit message before committing
+  skip  - skip this commit, continue to next
+```
+
+### 5. Execute
+
+Run `git add` + `git commit` for confirmed commits.
+
+Handle pre-commit hooks:
+- If hook passes: continue
+- If hook fails: show error, ask "Retry after fix?" before re-attempting
+
+### 6. Push Prompt
+
+After all commits:
+```
+Push to remote? [y/n]
+```
+
+If yes, run `git push` (or `git push -u origin <branch>` if tracking not set).

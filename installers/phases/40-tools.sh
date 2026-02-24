@@ -71,8 +71,8 @@ _run_nvim() {
   }
 
   log_info "syncing neovim plugins..."
-  nvim --headless -c 'Lazy! sync' -c 'qa' >/dev/null 2>&1 && log_info "neovim plugins synced" ||
-    log_warn "neovim plugin sync may have failed"
+  nvim --headless -c 'Lazy! sync' -c 'qa' >/dev/null 2>&1 && log_info "neovim plugins synced" \
+    || log_warn "neovim plugin sync may have failed"
 
   return 0
 }

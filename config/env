@@ -4,4 +4,4 @@
 export EDITOR=nvim
 export VISUAL=code
 
-export DOTFILES_ARCH_ASSUME_YES=1
+export DOTFILES_OS_ARCH_ASSUME_YES=1

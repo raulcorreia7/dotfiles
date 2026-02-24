@@ -1,7 +1,7 @@
 {
   "last_played": {
-    "session.start": "sounds/PeonReady1.wav",
-    "task.complete": "sounds/PeonYes3.wav"
+    "task.complete": "sounds/PeonYesAttack3.wav",
+    "input.required": "sounds/PeonWhat3.wav"
   },
   "session_packs": {}
 }

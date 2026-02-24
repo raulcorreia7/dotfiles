@@ -1,4 +1,4 @@
-# Script Rules
+# Scripting
 
 ## Philosophy
 - Self-contained: scripts run independently with minimal external setup
@@ -12,6 +12,7 @@
   - Complex logic or data manipulation is required
   - Better libraries exist for the task
   - Error handling, testing, or maintainability benefit significantly
+- For TypeScript/JavaScript projects, consider [zx](https://github.com/google/zx) for shell scripting
 - Prefer the language already used in similar scripts in the codebase
 
 ## Dependencies
@@ -67,45 +68,3 @@
 - Script header explains: what, why, how to run
 - Inline comments for non-obvious logic only
 - Keep help text and docs in sync with implementation
-
-## Examples
-
-**Good script header:**
-```bash
-#!/usr/bin/env bash
-# sync-backup.sh - Sync local data to backup server
-#
-# Usage: sync-backup.sh [OPTIONS]
-#   -d, --dry-run    Show what would be synced
-#   -v, --verbose    Enable verbose output
-#   -h, --help       Show this help
-#
-# Requirements: rsync, ssh
-#
-# Environment:
-#   BACKUP_HOST   (required) Backup server hostname
-#   BACKUP_PATH   (optional) Remote path (default: /backup)
-```
-
-**Good Python script pattern:**
-```python
-#!/usr/bin/env python3
-"""
-Process data files and generate reports.
-
-Usage: process.py <input_dir> [options]
-"""
-
-import argparse
-import sys
-from pathlib import Path
-
-def main():
-    args = parse_args()
-    if not validate(args):
-        sys.exit(1)
-    # ... logic ...
-
-if __name__ == "__main__":
-    main()
-```

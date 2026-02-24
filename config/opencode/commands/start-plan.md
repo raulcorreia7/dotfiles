@@ -1,6 +1,6 @@
 ---
 description: Resume or execute an existing plan
-agent: plan
+agent: build
 subtask: false
 ---
 
@@ -27,7 +27,11 @@ Execute an existing plan. Does NOT create plans — use `/plan` first.
 
 3. **Execute Loop**
    - Pick next pending task
-   - Delegate to appropriate agent
+    - **Spawn subagent using Task tool** with `/task-do <slug> <task-id>` for isolated execution
+   - **Verify completion** — do NOT mark done without evidence:
+     - Subagent must report what tests ran and passed
+     - If no tests, subagent must describe manual verification
+     - Reject "task done" claims without verification details
    - Update plan file after each task
    - Repeat until complete or blocked
 
@@ -35,19 +39,24 @@ Execute an existing plan. Does NOT create plans — use `/plan` first.
    - Update `**Updated**` date in plan
    - Mark tasks `[x]` with evidence (commit hash)
 
-## Delegation
+## Subagent Delegation
 
-| Task Type | Delegate To |
-|-----------|-------------|
-| Implementation | `build` agent |
-| Review | `/review` |
-| Commit | `/commit` |
-| Docs | `/docs` |
+All tasks execute as subagents for isolation and fresh context:
+
+| Task Type      | Command                     |
+| -------------- | --------------------------- |
+| Implementation | Task tool: `/task-do <slug> <task-id>` |
+| Review         | `/review` (subagent)        |
+| Commit         | `/commit` (subagent)        |
+| Docs           | `/docs` (subagent)          |
+
+Use Task tool for parallel execution only if explicitly planned.
 
 ## Principles
 
 - Plan file is source of truth
 - One task at a time
+- **Verify before complete** — no assumed completion without evidence
 - Commands stay independent; this coordinates
 - Escalate on 2 consecutive failures
 
