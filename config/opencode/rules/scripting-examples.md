@@ -56,3 +56,44 @@ await $`tar czf backup-$(date +%Y%m%d).tar.gz backups/`
 
 echo('Backup complete')
 ```
+
+## POSIX Argument Parsing (Bash)
+
+```bash
+#!/usr/bin/env bash
+# deploy.sh - Deploy application to environment
+#
+# Usage: deploy.sh [OPTIONS] <environment>
+#   -c, --config FILE    Config file path (default: config.yaml)
+#   -o, --output DIR     Output directory (default: ./dist)
+#   -v, --verbose        Enable verbose output
+#   -q, --quiet          Suppress non-error output
+#   -h, --help           Show this help
+
+set -euo pipefail
+
+config="config.yaml"
+output="./dist"
+verbose=false
+quiet=false
+
+usage() {
+    sed -n 's/^# //p' "$0" | head -n 12
+    exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -c|--config)  config="$2"; shift 2 ;;
+        -o|--output)  output="$2"; shift 2 ;;
+        -v|--verbose) verbose=true; shift ;;
+        -q|--quiet)   quiet=true; shift ;;
+        -h|--help)    usage ;;
+        --)           shift; break ;;
+        *)            break ;;
+    esac
+done
+
+environment="${1:-}"
+[[ -z "$environment" ]] && { echo "error: environment required" >&2; exit 1; }
+```

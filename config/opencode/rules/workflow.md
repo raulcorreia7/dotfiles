@@ -6,6 +6,7 @@
 - Acceptance criteria defined and documented
 - Task scope clear and bounded
 - Risks identified with mitigation strategies
+- Migrations define idempotent re-run behavior and rollback before implementation
 
 ### Build → Verify
 - Code compiles/builds successfully
@@ -18,6 +19,7 @@
 - End-to-end tests pass (for user-facing changes)
 - Code review approved
 - Documentation updated (if behavior changed)
+- Migrations verified as no-op when already applied and safe on partial state
 
 ## Progressive Enhancement
 - Start with minimal working solution

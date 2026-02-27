@@ -14,6 +14,7 @@ Use a test pyramid: many unit tests, some integration tests, few e2e tests
 ## Integration Testing
 - Test module/adaptor interactions and boundary contracts (DB/HTTP/queue/files)
 - Prefer real collaborators in integration tests; mock only true externals
+- For hybrid ownership systems, test source/owner transitions (local/cache, manager-installed, remote fallback, startup restore)
 
 ## E2E Testing
 - Test highest-value user/business flows and critical failure paths

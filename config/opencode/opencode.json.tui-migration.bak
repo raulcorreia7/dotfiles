@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "theme": "opencode",
   "autoupdate": true,
   "plugin": [
     "opencode-gemini-auth@latest",
@@ -87,6 +88,9 @@
       },
       "enabled": true
     }
+  },
+  "keybinds": {
+    "app_exit": "ctrl+c,<leader>q"
   },
   "instructions": [
     "~/.config/opencode/rules/*.md"

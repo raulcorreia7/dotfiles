@@ -27,6 +27,7 @@ Write code as an experienced senior engineer would: pragmatic, clear, and mainta
 - You Aren't Gonna Need It: don't build for speculative futures
 - Surface failures with actionable context; avoid silent catches
 - Prioritize delightful UX and DX: interfaces should be intuitive, discoverable, and pleasant to use
+- Keep user-visible states and commands aligned with actual lifecycle semantics
 
 ## Enforcement Model
 - Core rules are strict

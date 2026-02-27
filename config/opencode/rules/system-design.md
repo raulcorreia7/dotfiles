@@ -14,6 +14,11 @@
 - Use staged rollout for high-risk changes when feasible
 - Document why decisions were made
 
+### Ownership and Runtime Contracts
+- Assign a single owner for each lifecycle concern (install, update, lock, cleanup, restore)
+- Avoid split ownership between app and external manager unless handoff is explicit and testable
+- If startup timing can break correctness, persist a startup contract (spec/state/file) instead of relying on late initialization
+
 ## Domain Modeling
 
 - Use domain language in modules, types, and APIs

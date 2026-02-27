@@ -20,6 +20,11 @@
 - Inline literals only when obvious and local (`0`, `1`, `""`, `true`)
 - Validate config once at startup and pass explicitly through boundaries
 
+## Cache Semantics
+- Treat cache as disposable by default; cache must not be the only recoverable source
+- If cache is a runtime source, define freshness checks, retention policy, and rehydration path
+- Cleanup rules must protect active/required artifacts or provide deterministic recovery
+
 ## TODO/HACK Hygiene
 - No orphan TODO/HACK markers
 - Every TODO/HACK includes owner or issue reference
@@ -40,3 +45,35 @@
 - Keep lines readable (about 80-100 chars when practical)
 - Keep indentation, spacing, imports, and quote/bracket style consistent
 - Avoid style-only churn in behavior-focused changes
+
+### Switch/Case Style
+When the language supports switch/case statements:
+- Wrap each case body in braces `{}`
+- Include explicit `break` after the closing brace
+- Prevents fallthrough bugs and scopes case-local variables
+
+```cpp
+switch (fmt) {
+    case Format::png:
+    {
+        ok = stbi_write_png_to_func(write_callback, &ctx, img.width, img.height, 4,
+                                    img.pixels.data(), img.width * 4);
+        name = "PNG";
+    }
+    break;
+    case Format::tga:
+    {
+        ok = stbi_write_tga_to_func(write_callback, &ctx, img.width, img.height, 4,
+                                    img.pixels.data());
+        name = "TGA";
+    }
+    break;
+    case Format::bmp:
+    {
+        ok = stbi_write_bmp_to_func(write_callback, &ctx, img.width, img.height, 4,
+                                    img.pixels.data());
+        name = "BMP";
+    }
+    break;
+}
+```

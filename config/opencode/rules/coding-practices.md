@@ -20,6 +20,7 @@
 - Delete before add: remove dead paths and stale abstractions when touching code
 - Avoid utility sprawl; keep helpers scoped to a domain/module concern
 - Treat heavy test mocking as a design smell; simplify boundaries
+- Respect user-configured policy/modes; avoid hidden force flags except explicit, documented recovery paths
 - Readability gate: if a reviewer cannot explain the change in one pass, refactor
 
 ## Naming

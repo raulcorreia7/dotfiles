@@ -29,6 +29,14 @@
 - Main: clear entry point; guard clauses for early exits
 - Exit codes: 0 for success, non-zero for specific failures
 
+## Arguments
+- Use POSIX-style flags: short (`-f`) and long (`--file`) forms
+- Prefer generic, conventional names: `-c`/`--config`, `-o`/`--output`, `-v`/`--verbose`, `-h`/`--help`, `-q`/`--quiet`
+- Required arguments: fail with clear error if missing; show usage
+- Optional arguments: provide sensible defaults; document in help
+- Positional args for primary input (e.g., file paths); flags for options
+- Group short flags: `-av` equivalent to `-a -v`
+
 ## Help (Required for User-Facing Scripts)
 - All user-facing scripts MUST provide help via `-h`/`--help`
 - Help must include: brief description, usage syntax, options/flags, examples

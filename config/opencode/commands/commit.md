@@ -68,19 +68,16 @@ Proceed with Commit N? [y/n/e/skip]
   skip  - skip this commit, continue to next
 ```
 
-### 5. Execute
+### 5. Output Commands
 
-Run `git add` + `git commit` for confirmed commits.
+For each confirmed commit, output the exact commands for the user to run manually:
 
-Handle pre-commit hooks:
-- If hook passes: continue
-- If hook fails: show error, ask "Retry after fix?" before re-attempting
-
-### 6. Push Prompt
-
-After all commits:
 ```
-Push to remote? [y/n]
+git add <file1> <file2> ...
+git commit -m "type(scope): imperative summary (#issue)
+
+Optional body line 1
+Optional body line 2"
 ```
 
-If yes, run `git push` (or `git push -u origin <branch>` if tracking not set).
+**Do not execute any git commands.** The user must manually run these.

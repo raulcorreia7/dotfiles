@@ -36,6 +36,11 @@
 - Side effects live at boundaries (adapters/infrastructure)
 - Validate config once at startup and pass it explicitly
 
+## Source Resolution
+- When multiple runtime sources exist, define one precedence order and reuse it everywhere
+- Centralize source resolution; callers should not duplicate ordering logic
+- Changes to precedence require migration and rollback notes
+
 ## Component Rules
 - Single responsibility
 - Explicit dependencies
