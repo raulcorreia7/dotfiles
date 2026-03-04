@@ -1,3 +1,4 @@
+
 [env]
 TERM = "xterm-256color"
 WINIT_X11_SCALE_FACTOR = "1"
@@ -5,7 +6,7 @@ WINIT_X11_SCALE_FACTOR = "1"
 [window]
 dynamic_padding = true
 decorations = "full"
-title = "Alacritty@CachyOS"
+title = "Alacritty"
 opacity = 1.0
 decorations_theme_variant = "Dark"
 
@@ -20,33 +21,6 @@ general = "Alacritty"
 [scrolling]
 history = 10000
 multiplier = 3
-
-[colors]
-draw_bold_text_with_bright_colors = true
-
-[colors.primary]
-background = "0x2E3440"
-foreground = "0xD8DEE9"
-
-[colors.normal]
-black = "0x3B4252"
-red = "0xBF616A"
-green = "0xA3BE8C"
-yellow = "0xEBCB8B"
-blue = "0x81A1C1"
-magenta = "0xB48EAD"
-cyan = "0x88C0D0"
-white = "0xE5E9F0"
-
-[colors.bright]
-black = "0x4C566A"
-red = "0xBF616A"
-green = "0xA3BE8C"
-yellow = "0xEBCB8B"
-blue = "0x81A1C1"
-magenta = "0xB48EAD"
-cyan = "0x8FBCBB"
-white = "0xECEFF4"
 
 [font]
 size = 12
@@ -159,6 +133,18 @@ key = "Key0"
 mods = "Control"
 action = "ResetFontSize"
 
+[hints]
+[[hints.enabled]]
+command = "xdg-open"
+hyperlinks = true
+post_processing = true
+persist = false
+mouse.enabled = true
+mouse.mods = "Control"
+binding = { key = "U", mods = "Control|Shift" }
+regex = '(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https?://|news:|file:|git://|ssh:|ftp://)[^\u0000-\u001F\u007F-\u009F<>"\s{-}\^⟨⟩`]+'
+
 [general]
 live_config_reload = true
 working_directory = "None"
+import = ["~/.config/alacritty/themes/themes/one_dark.toml"]
