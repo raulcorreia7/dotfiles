@@ -1,6 +1,7 @@
 return {
   {
-    dir = "/home/rcorreia/projects/theme-browser-monorepo/theme-browser.nvim",
+    -- dir = "/home/rcorreia/projects/theme-browser-monorepo/theme-browser.nvim",
+    "raulcorreia7/theme-browser.nvim",
     name = "theme-browser.nvim",
     cmd = {
       "ThemeBrowser",
@@ -17,7 +18,7 @@ return {
       "rktjmp/lush.nvim",
     },
     opts = {
-      registry_path = "/home/rcorreia/projects/theme-browser-monorepo/theme-browser-registry/themes.json",
+      -- registry_path = "/home/rcorreia/projects/theme-browser-monorepo/theme-browser-registry/themes.json",
       auto_load = false,
       startup = {
         enabled = true,
