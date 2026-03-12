@@ -23,9 +23,18 @@ setup() {
 }
 
 @test "mise plugin adds shims path when sourced" {
-  run bash -c 'DOTFILES_DIR="$1"; export DOTFILES_DIR; . "$1/config/runtime.sh"; . "$1/config/plugins/mise/init.sh"; command -v node; command -v npm; command -v pnpm' -- "$REPO_ROOT"
+  fake_data_home="$BATS_TEST_TMPDIR/mise-data"
+  fake_shims_dir="$fake_data_home/mise/shims"
+  mkdir -p "$fake_shims_dir"
+
+  for tool in node npm pnpm; do
+    printf '#!/bin/sh\nexit 0\n' >"$fake_shims_dir/$tool"
+    chmod +x "$fake_shims_dir/$tool"
+  done
+
+  run bash -c 'DOTFILES_DIR="$1"; XDG_DATA_HOME="$2"; PATH="/usr/bin:/bin"; export DOTFILES_DIR XDG_DATA_HOME PATH; . "$1/config/runtime.sh"; . "$1/config/plugins/mise/init.sh"; command -v node; command -v npm; command -v pnpm' -- "$REPO_ROOT" "$fake_data_home"
   [ "$status" -eq 0 ]
-  [[ "$output" == *".local/share/mise/shims/node"* ]]
-  [[ "$output" == *".local/share/mise/shims/npm"* ]]
-  [[ "$output" == *".local/share/mise/shims/pnpm"* ]]
+  [[ "$output" == *"$fake_shims_dir/node"* ]]
+  [[ "$output" == *"$fake_shims_dir/npm"* ]]
+  [[ "$output" == *"$fake_shims_dir/pnpm"* ]]
 }
