@@ -27,7 +27,7 @@ dot_shell_type() {
   fi
 }
 
-# Run tool's init command for current shell (e.g., 'mise init zsh')
+# Run tool's init command for current shell (e.g., 'zoxide init zsh')
 dot_eval_init() {
   dot_has "$1" || return 1
   eval "$($1 init "$(dot_shell_type)" 2>/dev/null)"

@@ -21,3 +21,11 @@ setup() {
   [[ "$output" == *"Usage: rdf <command>"* ]]
   [[ "$output" == *"raul dotfiles"* ]]
 }
+
+@test "mise plugin adds shims path when sourced" {
+  run bash -c 'DOTFILES_DIR="$1"; export DOTFILES_DIR; . "$1/config/runtime.sh"; . "$1/config/plugins/mise/init.sh"; command -v node; command -v npm; command -v pnpm' -- "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *".local/share/mise/shims/node"* ]]
+  [[ "$output" == *".local/share/mise/shims/npm"* ]]
+  [[ "$output" == *".local/share/mise/shims/pnpm"* ]]
+}
