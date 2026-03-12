@@ -56,7 +56,41 @@ stow_path() {
   package_name="$3"
 
   log "Stowing $package_name into $target_dir"
+  ensure_dir "$target_dir"
   stow --dir="$stow_dir" --target="$target_dir" --restow "$package_name"
+}
+
+resolve_link_target() {
+  link_path="$1"
+  link_target=$(readlink "$link_path") || return 1
+
+  case "$link_target" in
+    /*)
+      printf '%s\n' "$link_target"
+      ;;
+    *)
+      link_dir=$(CDPATH='' cd -- "$(dirname -- "$link_path")" && pwd)
+      target_dir=$(CDPATH='' cd -- "$link_dir/$(dirname -- "$link_target")" && pwd) || return 1
+      printf '%s/%s\n' "$target_dir" "$(basename -- "$link_target")"
+      ;;
+  esac
+}
+
+cleanup_legacy_config_links() {
+  package_name="$1"
+  package_root="$REPO_DIR/config/$package_name"
+
+  for legacy in "$XDG_CONFIG_HOME"/* "$XDG_CONFIG_HOME"/.[!.]* "$XDG_CONFIG_HOME"/..?*; do
+    [ -L "$legacy" ] || continue
+
+    resolved_target=$(resolve_link_target "$legacy") || continue
+    case "$resolved_target" in
+      "$package_root"/*)
+        log "Removing legacy top-level link $legacy"
+        rm -rf "$legacy"
+        ;;
+    esac
+  done
 }
 
 link_config_dirs() {
@@ -77,7 +111,8 @@ zimfw
     src="$REPO_DIR/config/$name"
     [ -e "$src" ] || continue
     prepare_destination "$XDG_CONFIG_HOME/$name"
-    stow_path "$REPO_DIR/config" "$XDG_CONFIG_HOME" "$name" || return 1
+    cleanup_legacy_config_links "$name"
+    stow_path "$REPO_DIR/config" "$XDG_CONFIG_HOME/$name" "$name" || return 1
   done
 }
 

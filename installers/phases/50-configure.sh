@@ -1,7 +1,11 @@
 #!/bin/sh
 # Phase: Configure - Run post-install configuration
 
-run_phase_direct "$0"
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+INSTALL_DIR="${INSTALL_DIR:-$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)}"
+
+. "$INSTALL_DIR/lib.sh"
+. "$INSTALL_DIR/config.sh"
 
 DOTFILES_ENABLE_CONFIGURE="${DOTFILES_ENABLE_CONFIGURE:-1}"
 
@@ -22,3 +26,5 @@ run_phase() {
   log_info "configure complete"
   return 0
 }
+
+run_phase_direct "$0"

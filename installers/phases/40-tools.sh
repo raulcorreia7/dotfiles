@@ -1,7 +1,11 @@
 #!/bin/sh
 # Phase: Tools - Install mise tools, zimfw modules, and neovim plugins
 
-run_phase_direct "$0"
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+INSTALL_DIR="${INSTALL_DIR:-$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)}"
+
+. "$INSTALL_DIR/lib.sh"
+. "$INSTALL_DIR/config.sh"
 
 DOTFILES_ENABLE_MISE="${DOTFILES_ENABLE_MISE:-1}"
 DOTFILES_ENABLE_ZIMFW="${DOTFILES_ENABLE_ZIMFW:-1}"
@@ -85,3 +89,5 @@ run_phase() {
   log_info "tools complete"
   return 0
 }
+
+run_phase_direct "$0"

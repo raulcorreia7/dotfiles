@@ -1,8 +1,16 @@
 #!/bin/sh
 # Shared configuration for all install scripts
 
-DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
-REPO_DIR="$DOTFILES_DIR"
+if [ -n "${DOTFILES_DIR:-}" ]; then
+  REPO_DIR="$DOTFILES_DIR"
+elif [ -n "${INSTALL_DIR:-}" ]; then
+  DOTFILES_DIR=$(CDPATH='' cd -- "$INSTALL_DIR/.." && pwd)
+  REPO_DIR="$DOTFILES_DIR"
+else
+  DOTFILES_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+  REPO_DIR="$DOTFILES_DIR"
+fi
+
 PACKAGES_DIR="$REPO_DIR/packages"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 CONFIG_TARGET="$XDG_CONFIG_HOME/.dotfiles"

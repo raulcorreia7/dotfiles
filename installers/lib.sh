@@ -132,15 +132,22 @@ detect_os() {
 # =============================================================================
 
 run_phase_direct() {
-  phase_name="$1"
-  phase_script="${phase_name##*/}"
-  current_script="${0##*/}"
+  script_path="$1"
 
-  [ "$current_script" = "$phase_script" ] || return 0
+  case "$script_path" in
+  */installers/phases/*.sh | ./installers/phases/*.sh | installers/phases/*.sh)
+    ;;
+  *)
+    return 0
+    ;;
+  esac
 
-  SCRIPT_DIR=$(script_dir)
-  . "$SCRIPT_DIR/../lib.sh"
-  . "$SCRIPT_DIR/../config.sh"
+  SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$script_path")" && pwd)
+  INSTALL_DIR="${INSTALL_DIR:-$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)}"
+  DOTFILES_DIR="${DOTFILES_DIR:-$(CDPATH='' cd -- "$INSTALL_DIR/.." && pwd)}"
+
+  . "$INSTALL_DIR/lib.sh"
+  . "$INSTALL_DIR/config.sh"
 
   if type run_phase >/dev/null 2>&1; then
     run_phase

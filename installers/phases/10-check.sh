@@ -1,7 +1,11 @@
 #!/bin/sh
 # Phase: Check - Validate system readiness before installation
 
-run_phase_direct "$0"
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+INSTALL_DIR="${INSTALL_DIR:-$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)}"
+
+. "$INSTALL_DIR/lib.sh"
+. "$INSTALL_DIR/config.sh"
 
 _check_shell() {
   log_info "checking shell availability..."
@@ -73,3 +77,5 @@ run_phase() {
   log_info "check complete"
   return 0
 }
+
+run_phase_direct "$0"
