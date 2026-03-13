@@ -108,6 +108,31 @@ dot_doctor() {
   dot_doctor_check "eza" "eza" "exa"
 }
 
+dot_reload() {
+  dot_reload_init="${DOTFILES_DIR:-$HOME/.dotfiles}/init.sh"
+  [ -r "$dot_reload_init" ] || {
+    echo "rdf reload: init.sh not found at $dot_reload_init" >&2
+    return 1
+  }
+  . "$dot_reload_init" && echo "Reloaded"
+}
+
+dot_edit() {
+  ${EDITOR:-nvim} "${DOTFILES_DIR:-$HOME/.dotfiles}"
+}
+
+dot_run_os_command() {
+  dot_os_cmd="$1"
+  shift
+  dot_os_fn="dot_arch_$dot_os_cmd"
+  if type "$dot_os_fn" >/dev/null 2>&1; then
+    "$dot_os_fn" "$@"
+  else
+    echo "rdf $dot_os_cmd: not available on this system" >&2
+    return 1
+  fi
+}
+
 dot_sync() {
   dot_sync_dir="${DOTFILES_DIR:-$HOME/.dotfiles}"
   dot_sync_install="$dot_sync_dir/install"
@@ -161,56 +186,76 @@ dot_help() {
   cat <<'EOF'
 Usage: rdf <command> [options]
 
-rdf (raul dotfiles) - Dotfiles management and system maintenance
+Dotfiles management and system maintenance.
 
-Core Commands:
-  sync            Pull and apply dotfiles changes (auto-stashes local changes)
-                  Use --abort to cancel a failed sync
-  reload          Reload dotfiles configuration
+Commands:
+  sync [--abort]   Pull and apply changes (auto-stashes locals)
+  reload           Reload dotfiles in current shell
+  edit             Open dotfiles in $EDITOR
+  doctor           Check required tools
+  cd               Change to dotfiles directory
+
+Arch (requires pacman):
+  update [--full]  Update packages (+ orphans/cache with --full)
+  orphans [-r]     List orphaned packages (-r to remove)
+  cache [-c]       Show cache size (-c to clean)
+
+Run 'rdf help' for full documentation.
+EOF
+}
+
+dot_help_full() {
+  cat <<'EOF'
+Usage: rdf <command> [options]
+
+rdf - Dotfiles management and system maintenance.
+
+Commands:
+  sync [--abort]   Pull and apply dotfiles changes
+                  Local changes are auto-stashed and restored.
+                  Use --abort to cancel a failed sync.
+
+  reload          Reload dotfiles in current shell
   edit            Open dotfiles in $EDITOR (default: nvim)
   doctor          Check if required tools are installed
   cd              Change to dotfiles directory
 
-Arch Linux Maintenance (requires pacman):
-  update          Update system packages with pacman/paru
-                  Use --full to also remove orphans and clean cache
-  orphans         List orphaned packages
-                  Use --remove to uninstall them
-  cache           Show cache size
-                  Use --clean to remove cached packages
+Arch Linux (requires pacman):
+  update [--full] Update system packages with pacman/paru
+                  --full also removes orphans and cleans cache
+
+  orphans [-r]    List orphaned packages
+                  -r prompts to remove them
+
+  cache [-c]      Show pacman cache size
+                  -c prompts to clean cache
 
 Examples:
-  rdf sync                      # Pull and apply latest dotfiles changes
-  rdf sync --abort              # Cancel a failed sync in progress
-  rdf doctor                    # Check tool installation status
-  rdf update                    # Standard update (packages only)
-  rdf update --full             # Full maintenance (packages + cleanup)
-  rdf orphans                   # List orphaned packages
-  rdf orphans --remove          # Remove orphaned packages
-  rdf cache                     # Show cache size
-  rdf cache --clean             # Clean package cache
+  rdf sync                  # Pull latest changes
+  rdf sync --abort          # Cancel failed sync
+  rdf update                # Update packages
+  rdf update --full         # Full system maintenance
+  rdf orphans -r            # Remove orphaned packages
 
-Environment Variables:
-  DOTFILES_DIR                  # Dotfiles location (default: ~/.dotfiles)
-  DOTFILES_OS_ARCH_ASSUME_YES   # Skip all prompts (set to 1)
-  EDITOR                        # Editor for 'rdf edit' (default: nvim)
+Environment:
+  DOTFILES_DIR              Dotfiles location (default: ~/.dotfiles)
+  DOTFILES_OS_ARCH_ASSUME_YES  Skip prompts (set to 1)
+  EDITOR                    Editor for 'rdf edit'
 
 EOF
 }
 
 rdf() {
-  dot_rdf_command="${1:-}"
-
   case "${1:-}" in
   sync)
     shift
     dot_sync "$@"
     ;;
   reload)
-    . "${DOTFILES_DIR:-$HOME/.dotfiles}/init.sh" && echo "Reloaded"
+    dot_reload
     ;;
   edit)
-    ${EDITOR:-nvim} "${DOTFILES_DIR:-$HOME/.dotfiles}"
+    dot_edit
     ;;
   doctor)
     dot_doctor
@@ -219,21 +264,19 @@ rdf() {
     cd "${DOTFILES_DIR:-$HOME/.dotfiles}" || return 1
     ;;
   update | orphans | cache)
-    dot_rdf_subcommand="dot_arch_$dot_rdf_command"
+    dot_cmd="$1"
     shift
-    if type "$dot_rdf_subcommand" >/dev/null 2>&1; then
-      "$dot_rdf_subcommand" "$@"
-    else
-      echo "rdf $dot_rdf_command: not available on this system (requires pacman)" >&2
-      return 1
-    fi
+    dot_run_os_command "$dot_cmd" "$@"
     ;;
   help | --help | -h | "")
     dot_help
     ;;
+  --full-help)
+    dot_help_full
+    ;;
   *)
     echo "rdf: unknown command '$1'" >&2
-    echo "Run 'rdf help' for usage information" >&2
+    echo "Run 'rdf help' for usage" >&2
     return 1
     ;;
   esac
