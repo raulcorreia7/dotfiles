@@ -196,16 +196,26 @@ dot_health() {
 }
 
 dot_reload() {
-  dot_reload_init="${DOTFILES_DIR:-$HOME/.dotfiles}/init.sh"
-  [ -r "$dot_reload_init" ] || {
-    echo "rdf reload: init.sh not found at $dot_reload_init" >&2
+  dot_r_init="${DOTFILES_DIR:-$HOME/.dotfiles}/init.sh"
+  [ -r "$dot_r_init" ] || {
+    echo "rdf reload: init.sh not found" >&2
     return 1
   }
-  . "$dot_reload_init" && echo "Reloaded"
+  . "$dot_r_init" && echo "Reloaded"
 }
 
-dot_edit() {
-  ${EDITOR:-nvim} "${DOTFILES_DIR:-$HOME/.dotfiles}"
+dot_refresh() {
+  dot_rf_dir="${DOTFILES_DIR:-$HOME/.dotfiles}"
+  dot_rf_install="$dot_rf_dir/install"
+
+  [ -x "$dot_rf_install" ] || {
+    echo "rdf refresh: install script not found" >&2
+    return 1
+  }
+
+  echo "Refreshing dotfiles..."
+  "$dot_rf_install" --only setup || return 1
+  dot_reload
 }
 
 dot_run_os_command() {
@@ -221,28 +231,21 @@ dot_run_os_command() {
 }
 
 dot_sync() {
-  dot_sync_dir="${DOTFILES_DIR:-$HOME/.dotfiles}"
-  dot_sync_install="$dot_sync_dir/install"
-  dot_sync_init="$dot_sync_dir/init.sh"
+  dot_s_dir="${DOTFILES_DIR:-$HOME/.dotfiles}"
 
   dot_has git || {
     echo "rdf sync: git is required" >&2
     return 1
   }
 
-  [ -d "$dot_sync_dir/.git" ] || {
-    echo "rdf sync: $dot_sync_dir is not a git repository" >&2
-    return 1
-  }
-
-  [ -x "$dot_sync_install" ] || {
-    echo "rdf sync: install script not found at $dot_sync_install" >&2
+  [ -d "$dot_s_dir/.git" ] || {
+    echo "rdf sync: not a git repository" >&2
     return 1
   }
 
   if [ "${1:-}" = "--abort" ]; then
     echo "Aborting sync..."
-    git -C "$dot_sync_dir" rebase --abort 2>/dev/null || {
+    git -C "$dot_s_dir" rebase --abort 2>/dev/null || {
       echo "No rebase in progress" >&2
       return 1
     }
@@ -250,44 +253,33 @@ dot_sync() {
     return 0
   fi
 
-  echo "Syncing dotfiles..."
-  if ! git -C "$dot_sync_dir" pull --rebase --autostash 2>&1; then
+  echo "Syncing..."
+  if ! git -C "$dot_s_dir" pull --rebase --autostash 2>&1; then
     echo ""
-    echo "Sync failed. Options:"
-    echo "  rdf sync --abort    Abort and return to previous state"
-    echo "  cd \$DOTFILES_DIR && git status    Inspect conflicts"
+    echo "Sync failed. Run: rdf sync --abort"
     return 1
   fi
 
-  echo "Applying setup..."
-  "$dot_sync_install" --only setup || return 1
-
-  if [ -r "$dot_sync_init" ]; then
-    . "$dot_sync_init" || return 1
-  fi
-
-  echo "Dotfiles synced"
+  dot_refresh
 }
 
 dot_help() {
   cat <<'EOF'
 Usage: rdf <command> [options]
 
-Dotfiles management and system maintenance.
+Dotfiles management.
 
 Commands:
-  sync [--abort]   Pull and apply changes (auto-stashes locals)
-  reload           Reload dotfiles in current shell
+  sync [--abort]   Pull remote changes (git pull + refresh)
+  refresh          Apply local changes (stow + reload)
+  reload           Re-source shell only (aliases/functions)
+  health [scope]   Check status (tools|dirs|links|git|all)
   edit             Open dotfiles in $EDITOR
-  health [scope]   Check system health (tools|dirs|links|git|all)
-  cd               Change to dotfiles directory
 
 Arch (requires pacman):
-  update [--full]  Update packages (+ orphans/cache with --full)
-  orphans [-r]     List orphaned packages (-r to remove)
-  cache [-c]       Show cache size (-c to clean)
-
-Run 'rdf help' for full documentation.
+  update [--full]  Update packages
+  orphans [-r]     List/remove orphaned packages
+  cache [-c]       Show/clean package cache
 EOF
 }
 
@@ -295,38 +287,40 @@ dot_help_full() {
   cat <<'EOF'
 Usage: rdf <command> [options]
 
-rdf - Dotfiles management and system maintenance.
+rdf - Dotfiles management.
 
 Commands:
-  sync [--abort]   Pull and apply dotfiles changes
-                  Local changes are auto-stashed and restored.
-                  Use --abort to cancel a failed sync.
+  sync [--abort]   Pull remote changes from git
+                  Auto-stashes local changes.
+                  --abort cancels a failed sync.
 
-  reload          Reload dotfiles in current shell
-  edit            Open dotfiles in $EDITOR (default: nvim)
-  cd              Change to dotfiles directory
+  refresh          Apply local changes
+                  Re-stows symlinks and reloads shell.
 
-  health [scope]  Check system health
-                  Scopes: tools, dirs, links, git, all (default: all)
-                  Shows status of tools, directories, symlinks, and git repo.
+  reload           Re-source shell only
+                  Use after changing aliases/functions.
+
+  health [scope]   Check system status
+                  Scopes: tools, dirs, links, git, all
+
+  edit             Open dotfiles in $EDITOR (default: nvim)
 
 Arch Linux (requires pacman):
-  update [--full] Update system packages with pacman/paru
+  update [--full]  Update packages with pacman/paru
                   --full also removes orphans and cleans cache
 
-  orphans [-r]    List orphaned packages
+  orphans [-r]     List orphaned packages
                   -r prompts to remove them
 
-  cache [-c]      Show pacman cache size
+  cache [-c]       Show pacman cache size
                   -c prompts to clean cache
 
 Examples:
-  rdf sync                  # Pull latest changes
-  rdf health                # Full health check
-  rdf health tools          # Check tools only
-  rdf health git            # Check git status
-  rdf update                # Update packages
-  rdf update --full         # Full system maintenance
+  rdf sync              # Get latest from remote
+  rdf refresh           # Apply my local changes
+  rdf reload            # Re-source after alias change
+  rdf health            # Full health check
+  rdf update --full     # Full system maintenance
 
 Environment:
   DOTFILES_DIR              Dotfiles location (default: ~/.dotfiles)
@@ -342,18 +336,19 @@ rdf() {
     shift
     dot_sync "$@"
     ;;
+  refresh)
+    dot_refresh
+    ;;
   reload)
     dot_reload
     ;;
   edit)
-    dot_edit
+    shift
+    ${EDITOR:-nvim} "${DOTFILES_DIR:-$HOME/.dotfiles}" "$@"
     ;;
   health)
     shift
     dot_health "${1:-all}"
-    ;;
-  cd)
-    cd "${DOTFILES_DIR:-$HOME/.dotfiles}" || return 1
     ;;
   update | orphans | cache)
     dot_cmd="$1"
