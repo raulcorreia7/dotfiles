@@ -64,48 +64,145 @@ dot_load_plugin() {
 # RDF COMMAND (raul dotfiles)
 # =============================================================================
 
-dot_doctor_check() {
-  dot_tool_name="$1"
+# =============================================================================
+# HEALTH CHECKS
+# =============================================================================
+
+dot_health_ok() {
+  printf '  %-16s ok\n' "$1:"
+}
+
+dot_health_ok_val() {
+  printf '  %-16s ok (%s)\n' "$1:" "$2"
+}
+
+dot_health_missing() {
+  printf '  %-16s missing\n' "$1:"
+}
+
+dot_health_warn() {
+  printf '  %-16s warn (%s)\n' "$1:" "$2"
+}
+
+dot_health_check_tool() {
+  dot_h_name="$1"
   shift
-
-  dot_tool_found=""
-  dot_tool_alternatives=""
-  dot_tool_try=""
-
-  for dot_tool_cmd in "$@"; do
-    if [ -n "$dot_tool_try" ]; then
-      dot_tool_try="$dot_tool_try or $dot_tool_cmd"
-    else
-      dot_tool_try="$dot_tool_cmd"
-    fi
-
-    if dot_has "$dot_tool_cmd"; then
-      if [ -z "$dot_tool_found" ]; then
-        dot_tool_found="$dot_tool_cmd"
-      else
-        dot_tool_alternatives="$dot_tool_alternatives $dot_tool_cmd"
-      fi
+  for dot_h_cmd in "$@"; do
+    if dot_has "$dot_h_cmd"; then
+      dot_health_ok_val "$dot_h_name" "$dot_h_cmd"
+      return 0
     fi
   done
+  dot_health_missing "$dot_h_name"
+  return 1
+}
 
-  if [ -n "$dot_tool_found" ]; then
-    if [ -n "$dot_tool_alternatives" ]; then
-      printf '%s: ok (%s; alt:%s)\n' "$dot_tool_name" "$dot_tool_found" "$dot_tool_alternatives"
+dot_health_tools() {
+  echo "tools:"
+  dot_health_check_tool "fzf" "fzf"
+  dot_health_check_tool "git" "git"
+  dot_health_check_tool "rg" "rg"
+  dot_health_check_tool "fd" "fd" "fdfind"
+  dot_health_check_tool "bat" "bat"
+  dot_health_check_tool "eza" "eza" "exa"
+  dot_health_check_tool "stow" "stow"
+}
+
+dot_health_dirs() {
+  dot_h_home="${HOME:-$(pwd)}"
+  dot_h_xdg="${XDG_CONFIG_HOME:-$dot_h_home/.config}"
+  dot_h_bin="${XDG_BIN_HOME:-$dot_h_home/.local/bin}"
+  dot_h_dotfiles="${DOTFILES_DIR:-$dot_h_home/.dotfiles}"
+
+  echo "dirs:"
+  [ -d "$dot_h_dotfiles" ] && dot_health_ok_val "dotfiles" "$dot_h_dotfiles" || dot_health_missing "dotfiles"
+  [ -d "$dot_h_xdg" ] && dot_health_ok_val "config" "$dot_h_xdg" || dot_health_missing "config"
+  [ -d "$dot_h_bin" ] && dot_health_ok_val "bin" "$dot_h_bin" || dot_health_missing "bin"
+  [ -d "$dot_h_dotfiles/.git" ] && dot_health_ok "git-repo" || dot_health_missing "git-repo"
+}
+
+dot_health_links() {
+  dot_h_home="${HOME:-$(pwd)}"
+  dot_h_xdg="${XDG_CONFIG_HOME:-$dot_h_home/.config}"
+  dot_h_dotfiles="${DOTFILES_DIR:-$dot_h_home/.dotfiles}"
+
+  echo "links:"
+  for dot_h_link in nvim tmux alacritty ghostty mise zimfw; do
+    dot_h_path="$dot_h_xdg/$dot_h_link"
+    dot_h_src="$dot_h_dotfiles/config/$dot_h_link"
+
+    [ -d "$dot_h_src" ] || continue
+
+    if [ -L "$dot_h_path" ]; then
+      dot_h_target=$(readlink -f "$dot_h_path" 2>/dev/null || readlink "$dot_h_path")
+      if [ -d "$dot_h_target" ]; then
+        dot_health_ok "$dot_h_link"
+      else
+        dot_health_warn "$dot_h_link" "broken"
+      fi
+    elif [ -d "$dot_h_path" ]; then
+      dot_h_linked=$(find "$dot_h_path" -maxdepth 1 -type l 2>/dev/null | head -1)
+      if [ -n "$dot_h_linked" ]; then
+        dot_health_ok "$dot_h_link"
+      else
+        dot_health_warn "$dot_h_link" "not linked"
+      fi
     else
-      printf '%s: ok (%s)\n' "$dot_tool_name" "$dot_tool_found"
+      dot_health_missing "$dot_h_link"
     fi
+  done
+}
+
+dot_health_git() {
+  dot_h_dir="${DOTFILES_DIR:-$HOME/.dotfiles}"
+
+  echo "git:"
+  if [ ! -d "$dot_h_dir/.git" ]; then
+    dot_health_missing "repo"
+    return 0
+  fi
+
+  dot_h_branch=$(git -C "$dot_h_dir" branch --show-current 2>/dev/null)
+  [ -n "$dot_h_branch" ] && dot_health_ok_val "branch" "$dot_h_branch" || dot_health_warn "branch" "detached?"
+
+  dot_h_status=$(git -C "$dot_h_dir" status --porcelain 2>/dev/null)
+  dot_h_ahead=$(git -C "$dot_h_dir" rev-list --count '@{upstream}..HEAD' 2>/dev/null || echo "0")
+  dot_h_behind=$(git -C "$dot_h_dir" rev-list --count 'HEAD..@{upstream}' 2>/dev/null || echo "0")
+
+  if [ -z "$dot_h_status" ] && [ "$dot_h_ahead" = "0" ] && [ "$dot_h_behind" = "0" ]; then
+    dot_health_ok "status"
   else
-    printf '%s: missing (try: %s)\n' "$dot_tool_name" "$dot_tool_try"
+    dot_h_msgs=""
+    [ -n "$dot_h_status" ] && dot_h_msgs="dirty"
+    [ "$dot_h_ahead" != "0" ] && dot_h_msgs="$dot_h_msgs, $dot_h_ahead ahead"
+    [ "$dot_h_behind" != "0" ] && dot_h_msgs="$dot_h_msgs, $dot_h_behind behind"
+    dot_h_msgs=$(echo "$dot_h_msgs" | sed 's/^, //')
+    dot_health_warn "status" "$dot_h_msgs"
   fi
 }
 
-dot_doctor() {
-  dot_doctor_check "fzf" "fzf"
-  dot_doctor_check "git" "git"
-  dot_doctor_check "rg" "rg"
-  dot_doctor_check "fd" "fd"
-  dot_doctor_check "bat" "bat"
-  dot_doctor_check "eza" "eza" "exa"
+dot_health() {
+  dot_h_scope="${1:-all}"
+
+  case "$dot_h_scope" in
+  tools) dot_health_tools ;;
+  dirs) dot_health_dirs ;;
+  links) dot_health_links ;;
+  git) dot_health_git ;;
+  all | "")
+    dot_health_tools
+    echo ""
+    dot_health_dirs
+    echo ""
+    dot_health_links
+    echo ""
+    dot_health_git
+    ;;
+  *)
+    echo "Usage: rdf health [tools|dirs|links|git|all]" >&2
+    return 1
+    ;;
+  esac
 }
 
 dot_reload() {
@@ -192,7 +289,7 @@ Commands:
   sync [--abort]   Pull and apply changes (auto-stashes locals)
   reload           Reload dotfiles in current shell
   edit             Open dotfiles in $EDITOR
-  doctor           Check required tools
+  health [scope]   Check system health (tools|dirs|links|git|all)
   cd               Change to dotfiles directory
 
 Arch (requires pacman):
@@ -217,8 +314,11 @@ Commands:
 
   reload          Reload dotfiles in current shell
   edit            Open dotfiles in $EDITOR (default: nvim)
-  doctor          Check if required tools are installed
   cd              Change to dotfiles directory
+
+  health [scope]  Check system health
+                  Scopes: tools, dirs, links, git, all (default: all)
+                  Shows status of tools, directories, symlinks, and git repo.
 
 Arch Linux (requires pacman):
   update [--full] Update system packages with pacman/paru
@@ -232,10 +332,11 @@ Arch Linux (requires pacman):
 
 Examples:
   rdf sync                  # Pull latest changes
-  rdf sync --abort          # Cancel failed sync
+  rdf health                # Full health check
+  rdf health tools          # Check tools only
+  rdf health git            # Check git status
   rdf update                # Update packages
   rdf update --full         # Full system maintenance
-  rdf orphans -r            # Remove orphaned packages
 
 Environment:
   DOTFILES_DIR              Dotfiles location (default: ~/.dotfiles)
@@ -257,8 +358,9 @@ rdf() {
   edit)
     dot_edit
     ;;
-  doctor)
-    dot_doctor
+  health)
+    shift
+    dot_health "${1:-all}"
     ;;
   cd)
     cd "${DOTFILES_DIR:-$HOME/.dotfiles}" || return 1
