@@ -12,18 +12,33 @@ SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/config.sh"
 
 INTERACTIVE="${DOTFILES_INTERACTIVE:-1}"
+BACKUP_ALL=0
+BACKUP_NONE=0
 
 ask_backup() {
   path="$1"
 
   [ "$INTERACTIVE" = "1" ] && [ -t 0 ] || return 1
 
-  printf '[?] Backup existing %s to %s.bak? [Y/n] ' "$(basename "$path")" "$(basename "$path")"
+  [ "$BACKUP_ALL" = "1" ] && return 0
+  [ "$BACKUP_NONE" = "1" ] && return 1
+
+  printf '[?] Backup existing %s to %s.bak? [Y/n/a/s] ' "$(basename "$path")" "$(basename "$path")"
   read -r answer
 
   case "$answer" in
   [nN] | [nN][oO])
     log "Skipping backup for $path"
+    return 1
+    ;;
+  [aA] | [aA][lL][lL])
+    log "Backing up all remaining files"
+    BACKUP_ALL=1
+    return 0
+    ;;
+  [sS] | [sS][kK][iI][pP] | [nN][oO][nN][eE])
+    log "Skipping all remaining backups"
+    BACKUP_NONE=1
     return 1
     ;;
   *)
