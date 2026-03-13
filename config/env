@@ -5,3 +5,6 @@ export EDITOR=nvim
 export VISUAL=code
 
 export DOTFILES_OS_ARCH_ASSUME_YES=1
+
+# Disable LightPanda telemetry
+export LIGHTPANDA_DISABLE_TELEMETRY=true
