@@ -1,0 +1,6 @@
+#!/bin/sh
+exec dmenu_run \
+  -nb '#1C1B1A' \
+  -nf '#F4E3C1' \
+  -sb '#9280E8' \
+  -sf '#1C1B1A'
