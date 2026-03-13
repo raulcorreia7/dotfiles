@@ -128,14 +128,29 @@ dot_sync() {
     return 1
   }
 
+  if [ "${1:-}" = "--abort" ]; then
+    echo "Aborting sync..."
+    git -C "$dot_sync_dir" rebase --abort 2>/dev/null || {
+      echo "No rebase in progress" >&2
+      return 1
+    }
+    echo "Sync aborted"
+    return 0
+  fi
+
   echo "Syncing dotfiles..."
-  git -C "$dot_sync_dir" pull --rebase || return 1
+  if ! git -C "$dot_sync_dir" pull --rebase --autostash 2>&1; then
+    echo ""
+    echo "Sync failed. Options:"
+    echo "  rdf sync --abort    Abort and return to previous state"
+    echo "  cd \$DOTFILES_DIR && git status    Inspect conflicts"
+    return 1
+  fi
 
   echo "Applying setup..."
   "$dot_sync_install" --only setup || return 1
 
   if [ -r "$dot_sync_init" ]; then
-    # Re-source runtime so the current shell sees any prompt/plugin changes.
     . "$dot_sync_init" || return 1
   fi
 
@@ -149,7 +164,8 @@ Usage: rdf <command> [options]
 rdf (raul dotfiles) - Dotfiles management and system maintenance
 
 Core Commands:
-  sync            Pull and apply dotfiles changes
+  sync            Pull and apply dotfiles changes (auto-stashes local changes)
+                  Use --abort to cancel a failed sync
   reload          Reload dotfiles configuration
   edit            Open dotfiles in $EDITOR (default: nvim)
   doctor          Check if required tools are installed
@@ -165,6 +181,7 @@ Arch Linux Maintenance (requires pacman):
 
 Examples:
   rdf sync                      # Pull and apply latest dotfiles changes
+  rdf sync --abort              # Cancel a failed sync in progress
   rdf doctor                    # Check tool installation status
   rdf update                    # Standard update (packages only)
   rdf update --full             # Full maintenance (packages + cleanup)
@@ -187,11 +204,7 @@ rdf() {
   case "${1:-}" in
   sync)
     shift
-    [ $# -eq 0 ] || {
-      echo "Usage: rdf sync" >&2
-      return 1
-    }
-    dot_sync
+    dot_sync "$@"
     ;;
   reload)
     . "${DOTFILES_DIR:-$HOME/.dotfiles}/init.sh" && echo "Reloaded"
