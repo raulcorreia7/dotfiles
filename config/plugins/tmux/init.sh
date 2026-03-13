@@ -6,6 +6,7 @@ dot_has tmux || return 0
 [ "${DOTFILES_TMUX_AUTOSTART:-1}" = "1" ] || return 0
 case "$-" in *i*) ;; *) return 0 ;; esac
 [ -z "${TMUX:-}" ] || return 0
+[ -z "${SSH_CONNECTION:-}${SSH_TTY:-}" ] || return 0
 
 dot_tmux_session_name() {
   awk -v pid="$$" -v r="${RANDOM:-0}" 'BEGIN{
