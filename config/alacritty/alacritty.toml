@@ -147,4 +147,4 @@ regex = '(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https?://|news:|file:|
 [general]
 live_config_reload = true
 working_directory = "None"
-import = ["~/.config/alacritty/themes/themes/one_dark.toml"]
+import = ["~/.config/alacritty/themes/themes/nord.toml"]
