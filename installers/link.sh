@@ -23,10 +23,13 @@ ask_backup() {
   [ "$BACKUP_ALL" = "1" ] && return 0
   [ "$BACKUP_NONE" = "1" ] && return 1
 
-  printf '[?] Backup existing %s to %s.bak? [Y/n/a/s] ' "$(basename "$path")" "$(basename "$path")"
+  printf '[?] Backup existing %s to %s.bak? [Yes/No/All/Skip] ' "$(basename "$path")" "$(basename "$path")"
   read -r answer
 
   case "$answer" in
+  [yY] | [yY][eE][sS])
+    return 0
+    ;;
   [nN] | [nN][oO])
     log "Skipping backup for $path"
     return 1
@@ -36,7 +39,7 @@ ask_backup() {
     BACKUP_ALL=1
     return 0
     ;;
-  [sS] | [sS][kK][iI][pP] | [nN][oO][nN][eE])
+  [sS] | [sS][kK][iI][pP])
     log "Skipping all remaining backups"
     BACKUP_NONE=1
     return 1
