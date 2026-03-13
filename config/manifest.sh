@@ -6,6 +6,7 @@
 dot_load_plugin "mise"   # Runtime version manager
 dot_load_plugin "fzf"    # Fuzzy finder
 dot_load_plugin "zoxide" # Smarter cd command
+dot_load_plugin "prompt" # Local prompt overrides after zimfw themes load
 dot_load_plugin "tmux"   # Terminal multiplexer autostart
 
 # OS-specific plugins (loaded conditionally based on detected OS)
