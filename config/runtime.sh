@@ -122,33 +122,23 @@ dot_health_dirs() {
 }
 
 dot_health_links() {
-  dot_h_home="${HOME:-$(pwd)}"
-  dot_h_xdg="${XDG_CONFIG_HOME:-$dot_h_home/.config}"
-  dot_h_dotfiles="${DOTFILES_DIR:-$dot_h_home/.dotfiles}"
+  dot_h_dotfiles="${DOTFILES_DIR:-$HOME/.dotfiles}"
+  dot_h_xdg="${XDG_CONFIG_HOME:-$HOME/.config}"
 
   echo "links:"
-  for dot_h_link in nvim tmux alacritty ghostty mise zimfw; do
-    dot_h_path="$dot_h_xdg/$dot_h_link"
-    dot_h_src="$dot_h_dotfiles/config/$dot_h_link"
-
+  for dot_h_pkg in nvim tmux alacritty ghostty mise zimfw; do
+    dot_h_src="$dot_h_dotfiles/config/$dot_h_pkg"
     [ -d "$dot_h_src" ] || continue
 
-    if [ -L "$dot_h_path" ]; then
-      dot_h_target=$(readlink -f "$dot_h_path" 2>/dev/null || readlink "$dot_h_path")
-      if [ -d "$dot_h_target" ]; then
-        dot_health_ok "$dot_h_link"
-      else
-        dot_health_warn "$dot_h_link" "broken"
-      fi
-    elif [ -d "$dot_h_path" ]; then
-      dot_h_linked=$(find "$dot_h_path" -maxdepth 1 -type l 2>/dev/null | head -1)
-      if [ -n "$dot_h_linked" ]; then
-        dot_health_ok "$dot_h_link"
-      else
-        dot_health_warn "$dot_h_link" "not linked"
-      fi
+    dot_h_out=$(stow --simulate --restow --verbose --dir="$dot_h_dotfiles/config" --target="$dot_h_xdg/$dot_h_pkg" "$dot_h_pkg" 2>&1)
+    dot_h_rc=$?
+
+    if [ $dot_h_rc -ne 0 ]; then
+      dot_health_warn "$dot_h_pkg" "stow error"
+    elif echo "$dot_h_out" | grep "^LINK:" | grep -qv "reverts previous action"; then
+      dot_health_warn "$dot_h_pkg" "needs restow"
     else
-      dot_health_missing "$dot_h_link"
+      dot_health_ok "$dot_h_pkg"
     fi
   done
 }
