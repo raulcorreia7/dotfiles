@@ -303,7 +303,7 @@ Commands:
   health [scope]   Check system status
                   Scopes: tools, dirs, links, git, all
 
-  edit             Open dotfiles in $EDITOR (default: nvim)
+  edit             Open dotfiles in $EDITOR (CWD set to DOTFILES_DIR)
 
 Arch Linux (requires pacman):
   update [--full]  Update packages with pacman/paru
@@ -344,7 +344,7 @@ rdf() {
     ;;
   edit)
     shift
-    ${EDITOR:-nvim} "${DOTFILES_DIR:-$HOME/.dotfiles}" "$@"
+    (cd "${DOTFILES_DIR:-$HOME/.dotfiles}" && ${EDITOR:-nvim} "$@")
     ;;
   health)
     shift
