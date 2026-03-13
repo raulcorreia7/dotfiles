@@ -35,6 +35,24 @@ _arch_confirm() {
   esac
 }
 
+# Remove pacman's temporary download directories before cache cleanup.
+# These can be left behind after interrupted operations and break pacman -Sc.
+_arch_remove_stale_download_dirs() {
+  sudo find /var/cache/pacman/pkg/ -mindepth 1 -maxdepth 1 -type d -name 'download-*' -exec rm -rf -- {} +
+}
+
+# Clean package cache safely.
+# Prefer paccache because it is purpose-built for cache pruning.
+_arch_clean_cache() {
+  _arch_remove_stale_download_dirs
+
+  if dot_has paccache; then
+    sudo paccache -r
+  else
+    sudo pacman -Sc $(_arch_noconfirm_flag force)
+  fi
+}
+
 # List or remove orphaned packages
 # Usage: rdf orphans [--remove|-r]
 dot_arch_orphans() {
@@ -81,7 +99,7 @@ dot_arch_cache() {
       arch_cache_size=$(du -sh /var/cache/pacman/pkg/ 2>/dev/null | cut -f1)
       echo "Cache size: $arch_cache_size"
       if _arch_confirm "Clean package cache?"; then
-        sudo pacman -Sc $(_arch_noconfirm_flag force)
+        _arch_clean_cache
         echo "Cache cleaned"
       else
         echo "Cancelled"
@@ -131,7 +149,7 @@ dot_arch_update() {
       # Clean cache (automatic in full mode, no prompt)
       arch_cache_size=$(du -sh /var/cache/pacman/pkg/ 2>/dev/null | cut -f1)
       echo "Cleaning cache ($arch_cache_size)..."
-      sudo pacman -Sc $(_arch_noconfirm_flag force)
+      _arch_clean_cache
       echo ""
 
       # Update packages

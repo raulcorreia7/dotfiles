@@ -1,0 +1,8 @@
+# Machine-local lock files
+**/lazy-lock.json
+**/package-lock.json
+**/pnpm-lock.yaml
+**/yarn.lock
+**/bun.lock
+**/Cargo.lock
+**/poetry.lock

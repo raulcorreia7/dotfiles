@@ -85,6 +85,7 @@ The `rdf` command is the main interface for dotfiles management.
 | `rdf doctor` | Check tool status |
 | `rdf cd` | Go to dotfiles directory |
 | `rdf update` | System update (Arch) |
+| `rdf sync` | Alias for system update (Arch) |
 | `rdf update --full` | Full maintenance (Arch) |
 | `rdf orphans` | List orphan packages (Arch) |
 | `rdf orphans --remove` | Remove orphan packages (Arch) |
@@ -123,6 +124,36 @@ The `rdf` command is the main interface for dotfiles management.
 | `DOTFILES_ENABLE_NVIM` | 1 | Install nvim plugins |
 | `DOTFILES_OS_ARCH_ASSUME_YES` | 0 | Non-interactive pacman |
 | `DOTFILES_MACOS_CATEGORIES` | `base cli development gui` | Homebrew category install order |
+
+---
+
+## Neovim Theme Browser
+
+`theme-browser.nvim` is configured in two layers:
+
+- [config/nvim/lua/plugins/theme-browser.lua](/home/rcorreia/.dotfiles/config/nvim/lua/plugins/theme-browser.lua): minimal `lazy.nvim` spec
+- [config/nvim/lua/config/theme-browser.lua](/home/rcorreia/.dotfiles/config/nvim/lua/config/theme-browser.lua): runtime options and local dev toggle
+
+Default behavior uses the published plugin:
+
+```sh
+unset THEME_BROWSER_DEV
+```
+
+Local plugin development is enabled explicitly:
+
+```sh
+export THEME_BROWSER_DEV=1
+```
+
+When dev mode is enabled, the dotfiles config:
+
+- loads the plugin from `~/projects/theme-browser-monorepo/packages/plugin` if present
+- passes a `development` block to `theme-browser.nvim`
+- points registry development at `~/projects/theme-browser-monorepo/packages/registry/artifacts/themes.json`
+- prefers local theme repos from `~/projects`
+
+This keeps the checked-in default portable while still making local plugin work fast.
 
 ---
 

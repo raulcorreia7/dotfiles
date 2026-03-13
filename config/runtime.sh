@@ -64,29 +64,48 @@ dot_load_plugin() {
 # RDF COMMAND (raul dotfiles)
 # =============================================================================
 
-dot_doctor() {
-  for dot_tool_label in "fzf:fzf" "git:git" "rg:rg" "fd:fd" "bat:bat" "eza:eza,exa"; do
-    dot_tool_name="${dot_tool_label%%:*}"
-    dot_tool_cmds="${dot_tool_label#*:}"
-    dot_tool_found=""
-    dot_tool_alternatives=""
+dot_doctor_check() {
+  dot_tool_name="$1"
+  shift
 
-    for dot_tool_cmd in ${dot_tool_cmds//,/ }; do
-      if dot_has "$dot_tool_cmd"; then
-        [ -z "$dot_tool_found" ] && dot_tool_found="$dot_tool_cmd" || dot_tool_alternatives="$dot_tool_alternatives $dot_tool_cmd"
-      fi
-    done
+  dot_tool_found=""
+  dot_tool_alternatives=""
+  dot_tool_try=""
 
-    if [ -n "$dot_tool_found" ]; then
-      if [ -n "$dot_tool_alternatives" ]; then
-        printf '%s: ok (%s; alt:%s)\n' "$dot_tool_name" "$dot_tool_found" "$dot_tool_alternatives"
-      else
-        printf '%s: ok (%s)\n' "$dot_tool_name" "$dot_tool_found"
-      fi
+  for dot_tool_cmd in "$@"; do
+    if [ -n "$dot_tool_try" ]; then
+      dot_tool_try="$dot_tool_try or $dot_tool_cmd"
     else
-      printf '%s: missing (try: %s)\n' "$dot_tool_name" "${dot_tool_cmds//,/ or }"
+      dot_tool_try="$dot_tool_cmd"
+    fi
+
+    if dot_has "$dot_tool_cmd"; then
+      if [ -z "$dot_tool_found" ]; then
+        dot_tool_found="$dot_tool_cmd"
+      else
+        dot_tool_alternatives="$dot_tool_alternatives $dot_tool_cmd"
+      fi
     fi
   done
+
+  if [ -n "$dot_tool_found" ]; then
+    if [ -n "$dot_tool_alternatives" ]; then
+      printf '%s: ok (%s; alt:%s)\n' "$dot_tool_name" "$dot_tool_found" "$dot_tool_alternatives"
+    else
+      printf '%s: ok (%s)\n' "$dot_tool_name" "$dot_tool_found"
+    fi
+  else
+    printf '%s: missing (try: %s)\n' "$dot_tool_name" "$dot_tool_try"
+  fi
+}
+
+dot_doctor() {
+  dot_doctor_check "fzf" "fzf"
+  dot_doctor_check "git" "git"
+  dot_doctor_check "rg" "rg"
+  dot_doctor_check "fd" "fd"
+  dot_doctor_check "bat" "bat"
+  dot_doctor_check "eza" "eza" "exa"
 }
 
 dot_help() {
@@ -104,6 +123,8 @@ Core Commands:
 Arch Linux Maintenance (requires pacman):
   update          Update system packages with pacman/paru
                   Use --full to also remove orphans and clean cache
+  sync            Alias for update
+                  Use --full to also remove orphans and clean cache
   orphans         List orphaned packages
                   Use --remove to uninstall them
   cache           Show cache size
@@ -112,6 +133,7 @@ Arch Linux Maintenance (requires pacman):
 Examples:
   rdf doctor                    # Check tool installation status
   rdf update                    # Standard update (packages only)
+  rdf sync                      # Alias for standard update
   rdf update --full             # Full maintenance (packages + cleanup)
   rdf orphans                   # List orphaned packages
   rdf orphans --remove          # Remove orphaned packages
@@ -142,8 +164,12 @@ rdf() {
   cd)
     cd "${DOTFILES_DIR:-$HOME/.dotfiles}" || return 1
     ;;
-  update | orphans | cache)
-    dot_rdf_subcommand="dot_arch_$dot_rdf_command"
+  update | sync | orphans | cache)
+    if [ "$dot_rdf_command" = "sync" ]; then
+      dot_rdf_subcommand="dot_arch_update"
+    else
+      dot_rdf_subcommand="dot_arch_$dot_rdf_command"
+    fi
     shift
     if type "$dot_rdf_subcommand" >/dev/null 2>&1; then
       "$dot_rdf_subcommand" "$@"

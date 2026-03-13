@@ -22,6 +22,22 @@ setup() {
   [[ "$output" == *"raul dotfiles"* ]]
 }
 
+@test "rdf doctor detects exa fallback in zsh" {
+  command -v zsh >/dev/null 2>&1 || skip "zsh not installed"
+
+  fake_bin="$BATS_TEST_TMPDIR/fake-bin"
+  mkdir -p "$fake_bin"
+
+  for tool in fzf git rg fd bat exa; do
+    printf '#!/bin/sh\nexit 0\n' >"$fake_bin/$tool"
+    chmod +x "$fake_bin/$tool"
+  done
+
+  run zsh -c 'PATH="$1"; export PATH; . "$2/config/runtime.sh"; rdf doctor' -- "$fake_bin" "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"eza: ok (exa)"* ]]
+}
+
 @test "mise plugin adds shims path when sourced" {
   fake_data_home="$BATS_TEST_TMPDIR/mise-data"
   fake_shims_dir="$fake_data_home/mise/shims"

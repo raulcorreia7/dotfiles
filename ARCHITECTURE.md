@@ -37,6 +37,8 @@ installer internals.
 - `config/runtime.sh`: public runtime API and `rdf` command
 - `config/manifest.sh`: plugin registration order
 - `config/plugins/*/init.sh`: isolated plugin integration points
+- `config/nvim/lua/plugins/theme-browser.lua`: minimal `lazy.nvim` plugin spec
+- `config/nvim/lua/config/theme-browser.lua`: theme-browser runtime config and local dev toggle
 
 ## Runtime Public API
 
@@ -47,6 +49,7 @@ installer internals.
 - `rdf doctor`
 - `rdf cd`
 - `rdf update [--full]` (Arch)
+- `rdf sync [--full]` (Arch alias)
 - `rdf orphans [--remove]` (Arch)
 - `rdf cache [--clean]` (Arch)
 
@@ -95,3 +98,4 @@ install
 - Keep shell scripts POSIX-`sh` compatible
 - Keep plugin loading opt-in via `DOTFILES_ENABLE_*`
 - Prefer explicit failures with actionable messages
+- Keep Neovim plugin specs declarative; put local dev/runtime behavior in adjacent config modules
