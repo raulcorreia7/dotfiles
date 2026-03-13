@@ -135,8 +135,7 @@ run_phase_direct() {
   script_path="$1"
 
   case "$script_path" in
-  */installers/phases/*.sh | ./installers/phases/*.sh | installers/phases/*.sh)
-    ;;
+  */installers/phases/*.sh | installers/phases/*.sh) ;;
   *)
     return 0
     ;;

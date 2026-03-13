@@ -22,13 +22,13 @@ ask_backup() {
   read -r answer
 
   case "$answer" in
-    [nN] | [nN][oO])
-      log "Skipping backup for $path"
-      return 1
-      ;;
-    *)
-      return 0
-      ;;
+  [nN] | [nN][oO])
+    log "Skipping backup for $path"
+    return 1
+    ;;
+  *)
+    return 0
+    ;;
   esac
 }
 
@@ -75,14 +75,14 @@ resolve_link_target() {
   link_target=$(readlink "$link_path") || return 1
 
   case "$link_target" in
-    /*)
-      printf '%s\n' "$link_target"
-      ;;
-    *)
-      link_dir=$(CDPATH='' cd -- "$(dirname -- "$link_path")" && pwd)
-      target_dir=$(CDPATH='' cd -- "$link_dir/$(dirname -- "$link_target")" && pwd) || return 1
-      printf '%s/%s\n' "$target_dir" "$(basename -- "$link_target")"
-      ;;
+  /*)
+    printf '%s\n' "$link_target"
+    ;;
+  *)
+    link_dir=$(CDPATH='' cd -- "$(dirname -- "$link_path")" && pwd)
+    target_dir=$(CDPATH='' cd -- "$link_dir/$(dirname -- "$link_target")" && pwd) || return 1
+    printf '%s/%s\n' "$target_dir" "$(basename -- "$link_target")"
+    ;;
   esac
 }
 
@@ -95,12 +95,24 @@ cleanup_legacy_config_links() {
 
     resolved_target=$(resolve_link_target "$legacy") || continue
     case "$resolved_target" in
-      "$package_root"/*)
-        log "Removing legacy top-level link $legacy"
-        rm -rf "$legacy"
-        ;;
+    "$package_root"/*)
+      log "Removing legacy top-level link $legacy"
+      rm -rf "$legacy"
+      ;;
     esac
   done
+}
+
+clone_alacritty_themes() {
+  themes_dir="$REPO_DIR/config/alacritty/themes"
+
+  if [ -d "$themes_dir" ]; then
+    log "alacritty themes already present"
+    return 0
+  fi
+
+  log "cloning alacritty themes..."
+  git clone https://github.com/alacritty/alacritty-theme "$themes_dir"
 }
 
 link_config_dirs() {
@@ -165,6 +177,7 @@ main() {
 
   log "Using GNU Stow for linking"
 
+  clone_alacritty_themes || return 1
   link_config_dirs || return 1
   link_codex_files || return 1
   link_bin_files || return 1
