@@ -39,6 +39,11 @@ Execute an existing plan. Does NOT create plans — use `/plan` first.
    - Update `**Updated**` date in plan
    - Mark tasks `[x]` with evidence (commit hash)
 
+5. **Finalize**
+   - When all tasks complete and status is `Complete`:
+     - Rename file: `slug-YYYY-MM-DD.md` → `slug-YYYY-MM-DD.completed.md`
+     - Use: `mv docs/plans/slug-YYYY-MM-DD.md docs/plans/slug-YYYY-MM-DD.completed.md`
+
 ## Subagent Delegation
 
 All tasks execute as subagents for isolation and fresh context:

@@ -19,6 +19,7 @@ Craft human-first commit history and execute it.
 ### 2. Detect Issue Reference
 
 Parse branch name for issue number:
+
 - `feat/123-add-foo` → `(#123)`
 - `fix/ABC-456-bug` → `(ABC-456)`
 - `main`, `develop`, no pattern → no reference
@@ -28,6 +29,7 @@ Apply to all commits in the plan.
 ### 3. Plan Commits
 
 For each cohesive cluster, show **full message preview**:
+
 ```
 [Commit N/Total]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -45,12 +47,14 @@ Coverage: tests included | docs included | N/A
 ```
 
 **Principles:**
+
 - Group by single responsibility
 - Keep logic and tests together
 - Flag generated/noisy changes
 - Conventional Commits: feat, fix, refactor, chore, test, docs
 
 **Ordering:**
+
 1. Config/chores
 2. Refactors
 3. Features/fixes
@@ -60,6 +64,7 @@ Coverage: tests included | docs included | N/A
 ### 4. Confirm Per Commit
 
 For each planned commit, ask:
+
 ```
 Proceed with Commit N? [y/n/e/skip]
   y     - proceed
@@ -80,4 +85,4 @@ Optional body line 1
 Optional body line 2"
 ```
 
-**Do not execute any git commands.** The user must manually run these.
+**Do not execute any git commands unless ordered to.**

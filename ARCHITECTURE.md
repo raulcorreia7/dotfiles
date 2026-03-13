@@ -28,7 +28,7 @@ installer internals.
 - `phases/40-tools.sh`: mise/zimfw/nvim post-package tooling
 - `phases/50-configure.sh`: post-install configuration trigger
 - `install-arch.sh` and `install-macos.sh`: OS-specific package installation
-- `link.sh`: symlink orchestration using GNU Stow
+- `link.sh`: symlink orchestration using GNU Stow plus bridges for Codex-managed files
 - `post-install.sh`: shell, PATH, directories, and git defaults
 
 ### Runtime Layer (`init.sh`, `config/`)
@@ -37,6 +37,8 @@ installer internals.
 - `config/runtime.sh`: public runtime API and `rdf` command
 - `config/manifest.sh`: plugin registration order
 - `config/plugins/*/init.sh`: isolated plugin integration points
+- `config/agents/`: shared agent guidance consumed by both OpenCode and Codex
+- `config/codex/`: managed minimal Codex configuration linked into `~/.codex`
 - `config/nvim/lua/plugins/theme-browser.lua`: minimal `lazy.nvim` plugin spec
 - `config/nvim/lua/config/theme-browser.lua`: theme-browser runtime config and local dev toggle
 

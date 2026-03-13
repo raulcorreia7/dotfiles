@@ -18,6 +18,7 @@ Decompose into tasks that agents can complete in parallel.
 1. **Summary** — Goal in one sentence
 2. **Domains** — Components touched
 3. **Tasks** — For each:
+
    ```
    [n] Title
    - Objective: ...
@@ -25,6 +26,7 @@ Decompose into tasks that agents can complete in parallel.
    - Done when: ...
    - Commit hint: type(scope): description
    ```
+
 4. **Table** — Task | Component | Depends On
 
 ## Principles
@@ -48,14 +50,18 @@ End with: "These [N] tasks can be implemented in parallel. Each is self-containe
 
 After planning, write the plan to a file:
 
+- Note: If you are in plan mode and cannot write to a file directly, use a cli command to append/write/dump the file.
+
 1. Check if `docs/plans/` exists; create if needed
 2. Look for an existing plan matching this goal (similar name/topic)
 3. If found, update it in place
 4. If not, create new file: `docs/plans/slug-YYYY-MM-DD.md`
    - Use today's date
    - Slug = 2-4 words from the goal (kebab-case)
+5. On full completion (via `/start-plan`), file is renamed to `slug-YYYY-MM-DD.completed.md`
 
 File format:
+
 ```markdown
 # [Goal Title]
 
@@ -64,18 +70,22 @@ File format:
 **Updated**: YYYY-MM-DD
 
 ## Summary
+
 [One-line goal]
 
 ## Context
+
 - **Why**: Problem being solved
 - **Constraints**: Time, tech, scope limits
 - **Architecture**: Link if available
 - **Related**: Links to ADRs, PRDs, other plans
 
 ## Key Files
+
 - `path/to/file.ext` — brief description
 
 ## Tasks
+
 - [ ] Task 1: Description
   - Objective: what to achieve
   - Files: affected files
@@ -83,9 +93,11 @@ File format:
 - [ ] Task 2: ...
 
 ## Decisions Log
+
 - YYYY-MM-DD: Decision and rationale
 
 ## Notes
+
 - Context for resuming work
 - Patterns to follow
 ```

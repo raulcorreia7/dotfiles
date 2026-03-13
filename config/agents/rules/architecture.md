@@ -6,6 +6,7 @@
 3. Optimize for deletability
 4. Prefer interfaces/contracts over implementations
 5. Keep designs readable and pragmatic
+6. Use interfaces at seams; keep internals concrete by default
 
 ## Code Aesthetics
 - Flat over nested: guard clauses, early returns
@@ -35,6 +36,20 @@
 - Application orchestrates workflows; domain owns business rules
 - Side effects live at boundaries (adapters/infrastructure)
 - Validate config once at startup and pass it explicitly
+
+## Diagram Alignment
+- Diagrams must reflect real dependency direction and boundary ownership
+- If architecture boundaries or flow change, update diagrams in the same change
+- Prefer boundary-focused diagrams over implementation-detail diagrams
+- Keep diagrams reviewable in one pass; split when density hides intent
+
+## Interface Placement (Pragmatic)
+- Put interfaces at boundaries between layers and external systems
+- Keep module-internal logic concrete when behavior is local and stable
+- Introduce an interface early for domain risk or boundary isolation
+- Otherwise start concrete and extract when repetition or real variability appears
+- Prefer small consumer-owned contracts over broad producer-owned abstractions
+- Do not add interface layers that only rename a concrete implementation without seam or variation benefit
 
 ## Source Resolution
 - When multiple runtime sources exist, define one precedence order and reuse it everywhere

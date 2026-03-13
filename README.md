@@ -1,6 +1,8 @@
 # dotfiles
 
 Modular, XDG-first dotfiles with strict separation between installer and runtime.
+Shared agent guidance lives in `config/agents`, with OpenCode and Codex
+consuming the same `AGENTS.md`.
 
 ## Quickstart
 
@@ -111,6 +113,14 @@ The `rdf` command is the main interface for dotfiles management.
 | `install` | Install OS packages |
 | `tools` | Install mise, zimfw, nvim plugins |
 | `configure` | Post-install configuration |
+
+---
+
+## Agent Guidance
+
+- `config/agents` is the single source of truth for shared agent instructions.
+- OpenCode consumes `~/.config/opencode/AGENTS.md` and `~/.config/agents/rules/*.md`.
+- Codex consumes `~/.codex/AGENTS.md` and `~/.codex/config.toml`, both linked from dotfiles-managed sources.
 
 ---
 

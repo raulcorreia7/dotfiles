@@ -22,6 +22,44 @@
 - Code examples over prose
 - Tables for commands/options
 - Link to detailed docs, don't inline everything
+- Human-first narrative: explain what users can do before how internals work
+- Strong visual rhythm: short sections, intentional whitespace, predictable heading hierarchy
+- High-signal formatting only: emphasize key actions/results, avoid noisy decoration
+- Keep docs aesthetically clean and pleasant to read without sacrificing clarity
+
+**Quickstart and Examples (Required)**:
+- Put Quick Start near the top with copy-pasteable commands
+- Include one minimal end-to-end example that works out of the box
+- Include one realistic example for common usage in production-like conditions
+- Keep README examples high-signal and short; move extended tutorials/reference to dedicated docs
+- Link from each example to deeper docs when advanced configuration is needed
+- Ensure examples are formatted for copy/paste with minimal edits
+
+---
+
+## Architecture Diagrams
+
+**Purpose**: Make architecture and flow decisions obvious in one pass.
+
+**Formats**:
+- Prefer Mermaid for versioned repository docs and long-lived diagrams
+- Use ASCII diagrams for fast inline discussion (PRs, issues, ADR notes)
+
+**Required Views (when system complexity warrants it)**:
+- Context view: system, actors, external dependencies, trust boundaries
+- Container/layer view: services/modules, ownership, boundary lines
+- Runtime flow view: critical request/job/event path including failure path
+- Data/state view: stores, ownership, lifecycle/state transitions
+
+**Granularity Rules**:
+- Label diagram level explicitly (L0, L1, L2)
+- One core message per diagram; split dense diagrams
+- Show boundary and flow direction; hide low-value implementation noise
+
+**Hygiene**:
+- Keep diagrams near relevant docs (`README`, ADR, or design doc)
+- Update diagrams in the same change when behavior/boundaries change
+- Remove stale diagrams immediately
 
 ---
 

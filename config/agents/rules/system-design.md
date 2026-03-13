@@ -19,6 +19,14 @@
 - Avoid split ownership between app and external manager unless handoff is explicit and testable
 - If startup timing can break correctness, persist a startup contract (spec/state/file) instead of relying on late initialization
 
+### Architecture Views and Granularity (High Signal)
+- Keep diagrams high signal: one core message per diagram, minimal notation, no decorative detail
+- Use multiple perspectives when relevant: context, container/layer, runtime flow/sequence, and data/state view
+- Keep granularity explicit: L0 system context, L1 subsystem boundaries, L2 critical component interactions
+- Prefer several small diagrams over one dense diagram
+- Include boundaries, ownership, and data/control flow direction in each architecture diagram
+- Include at least one failure-path or degraded-mode flow for high-risk systems
+
 ## Domain Modeling
 
 - Use domain language in modules, types, and APIs

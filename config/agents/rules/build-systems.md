@@ -6,6 +6,10 @@
 - Promote complexity to scripts; keep build layer thin
 - Be idiomatic: follow conventions of the language/ecosystem
 
+## Language Overlays
+- Use this file for common build-system structure and quality gates
+- Use language-specific project conventions for concrete toolchain defaults and module/runtime behavior
+
 ## Standard Targets
 
 Every project with a build system MUST provide these targets (or equivalents idiomatic to the ecosystem):
@@ -13,17 +17,23 @@ Every project with a build system MUST provide these targets (or equivalents idi
 | Target | Purpose |
 |--------|---------|
 | `lint` | Static analysis and code quality checks |
-| `format` | Auto-format code (or `format:check` for CI) |
+| `fmt` (or `format`) | Auto-format code (or `fmt:check`/`format:check` for CI) |
 | `test` | Run all tests |
 | `build` | Compile/build artifacts |
 | `clean` | Remove generated files and artifacts |
-| `all` | Full pipeline (typically: lint + test + build) |
+| `all` | Single-command full project build entrypoint from repo root |
+
+`all` requirements:
+- Must run from repository root with one command
+- Must include every buildable module/package in the repository
+- Must be non-interactive and CI-safe
+- Should run full verification by default (`fmt:check`/`format:check`, `lint`, `test`, `build`)
 
 Ecosystem-specific equivalents:
-- **Node/npm**: `lint`, `format`, `test`, `build`, `clean` (use `npm-run-all` for `all`)
+- **Node/npm**: `lint`, `fmt`/`format`, `test`, `build`, `clean` (use `npm-run-all` for `all`)
 - **Rust/Cargo**: `check`, `fmt`, `test`, `build`, `clippy` (Cargo has built-in `clean`)
 - **Go**: Use Makefile with `lint`, `fmt`, `test`, `build`, `clean`
-- **Python**: Use Makefile or `pyproject.toml` scripts with `lint` (ruff), `format` (ruff format), `test`, `clean`
+- **Python**: Use Makefile or `pyproject.toml` scripts with `lint`, `fmt`/`format`, `test`, `clean`
 
 ## Linting & Formatting Configuration
 
@@ -93,6 +103,9 @@ Extract to external script when:
 - Group related scripts with colons: `test:unit`, `test:e2e`, `test:coverage`
 
 ### Makefile
+- In non-Make-idiomatic ecosystems, Makefile is an optional convenience wrapper, not the primary build system
+- Keep ecosystem-native tooling as source of truth (npm/pnpm, cargo, go, pytest/tox/nox, etc.)
+- Make targets should delegate to native commands/scripts; do not re-implement dependency/build logic in Make
 - Targets should call scripts, not embed logic
 - Use `.PHONY` for non-file targets
 - Variables for paths and flags; avoid hardcoding

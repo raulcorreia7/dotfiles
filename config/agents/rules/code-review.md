@@ -14,7 +14,7 @@
 - Naming and boundaries are clear
 - Error handling is explicit and actionable
 - Edge cases and failure paths are covered
-- No dead code, debug prints, or commented-out blocks
+- No dead code, stray debug logging/prints, or commented-out blocks
 
 ## Security Baseline (Required)
 - Validate untrusted input at boundaries (API/CLI/files/events)
@@ -26,8 +26,12 @@
 - Complexity is reduced or contained
 - Domain invariants are explicit in code and tests
 - Module/API contracts are clear; compatibility is considered
+- Interface additions are justified by boundaries or real variability (not speculative wrappers)
+- No unexplained magic literals in changed code (numbers/strings/sentinels)
 - Boundary concerns are handled where relevant (timeouts/retries/idempotency)
 - Logs and errors help debugging and operations
+- Logging is high-signal, structured where practical, and free of secrets/sensitive data
+- Debug/trace logging is gated behind config/flags and disabled by default
 - Risky changes include migration and rollback notes
 
 ## Nitpicks (Fix If Cheap)

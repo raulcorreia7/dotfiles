@@ -29,6 +29,12 @@
 - Main: clear entry point; guard clauses for early exits
 - Exit codes: 0 for success, non-zero for specific failures
 
+## Script Naming
+- Prefer explicit language extensions for scripts when it improves clarity and matches repo conventions
+- Use script names that make runtime obvious (`.sh`, `.py`, `.mjs`) using the repository's established examples
+- Use shebangs so scripts are still directly executable
+- Keep naming consistent inside each project; avoid mixed conventions without a reason
+
 ## Arguments
 - Use POSIX-style flags: short (`-f`) and long (`--file`) forms
 - Prefer generic, conventional names: `-c`/`--config`, `-o`/`--output`, `-v`/`--verbose`, `-h`/`--help`, `-q`/`--quiet`
@@ -59,6 +65,13 @@
 - Use appropriate exit codes
 - Log or print errors to stderr
 - Handle missing dependencies gracefully with install hints
+
+## Logging Output
+- Design script/application logging for shell composability: stdout/stderr must be pipe and redirect friendly
+- Keep primary data output on stdout and diagnostics/logging on stderr
+- Support easy file logging through shell redirection/pipes (for example with `tee`)
+- For long-running or operational scripts, optional explicit log-file output is acceptable in addition to stderr
+- Keep log format stable and parseable when logs are expected to feed downstream tools
 
 ## Portability
 - Prefer POSIX-compatible constructs for shell scripts

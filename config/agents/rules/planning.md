@@ -32,10 +32,10 @@ Each task defines:
 
 ## Definition of Done
 - Acceptance criteria met and scope respected
-- Tests, lint, and build pass with no new warnings
-- Behavior/contract changes include tests and docs
+- Meets project quality and phase gates (build/test/lint, review, and docs/migration checks as applicable)
 - Medium/high-risk changes include rollback notes
 - No orphan TODO/HACK markers
+- Plan file renamed to `*.completed.md` when fully implemented
 
 ## Estimation
 - Use ranges, not single-point estimates

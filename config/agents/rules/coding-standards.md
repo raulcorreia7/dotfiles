@@ -14,10 +14,19 @@
 - Verify version and maintenance status via official docs/registries/release notes and MCP research tools when needed
 - If not using latest stable, document the pragmatic reason
 
+## Language-Specific Overlays
+- Apply this file as the default baseline for all languages
+- When a language-specific rule exists, follow it for syntax/toolchain details
+- Keep cross-language quality gates unchanged (tests/lint/build)
+- See language-specific project conventions
+
 ## Config vs Constants
 - Config: environment-specific, secret, deploy-varying, and tunable values
 - Constants: stable domain/protocol invariants
 - Inline literals only when obvious and local (`0`, `1`, `""`, `true`)
+- Avoid magic values in business/domain logic; extract named constants, enums, or value objects
+- Name operational thresholds explicitly (timeouts, retries, limits, intervals, sizes)
+- Keep protocol/domain constants close to their owning module; avoid global constant dumping grounds
 - Validate config once at startup and pass explicitly through boundaries
 
 ## Cache Semantics
@@ -34,6 +43,7 @@
 ## Anti-Patterns (Non-Negotiable)
 - Deep nesting
 - Magic numbers
+- Magic strings/sentinel literals with hidden meaning
 - Hidden dependencies
 - Hardcoded environment assumptions/values
 - Premature abstraction
@@ -44,6 +54,13 @@
 - Prefer explicit names and readable multi-line code
 - Keep lines readable (about 80-100 chars when practical)
 - Keep indentation, spacing, imports, and quote/bracket style consistent
+- Optimize for scanability: short visual blocks, clear phase separation, intentional whitespace
+- Prefer one idea per line/chunk; split dense expressions and long chains into named steps
+- Break method chains onto separate lines (one method per line) when the chain exceeds a single short statement; improves readability and diff clarity
+- Keep branch depth shallow; when nesting grows, extract or flatten with guard clauses
+- Use formatter-driven alignment and consistency; avoid fragile manual column alignment
+- Keep JSON files human-readable by default (prettified/indented, not minified) unless size/perf constraints require otherwise
+- Prefer stable JSON formatting conventions project-wide (indentation, trailing newline, deterministic key ordering when tooling supports it)
 - Avoid style-only churn in behavior-focused changes
 
 ### Switch/Case Style

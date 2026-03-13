@@ -9,6 +9,7 @@ Write code as an experienced senior engineer would: pragmatic, clear, and mainta
 - Keep code intuitive and obvious: the next reader should grasp it instantly
 - Prefer clear code over clever code
 - Avoid complexity: simplify before extending
+- Low cognitive load is a feature: code should feel calm and pleasant to scan
 - Pragmatism over dogma: rules serve clarity, not the other way around
 
 ## Cognitive Load (Non-Negotiable)

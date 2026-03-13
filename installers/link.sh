@@ -2,7 +2,8 @@
 # Link dotfiles configurations and binaries
 #
 # Creates symlinks from ~/.dotfiles/config/* to ~/.config/*
-# and from ~/.dotfiles/bin/* to ~/.local/bin/*
+# and bridges shared agent guidance plus Codex-managed files into their
+# runtime locations.
 
 set -e
 
@@ -60,6 +61,15 @@ stow_path() {
   stow --dir="$stow_dir" --target="$target_dir" --restow "$package_name"
 }
 
+link_file() {
+  source_path="$1"
+  target_path="$2"
+
+  ensure_dir "$(dirname -- "$target_path")"
+  prepare_destination "$target_path"
+  ln -s "$source_path" "$target_path"
+}
+
 resolve_link_target() {
   link_path="$1"
   link_target=$(readlink "$link_path") || return 1
@@ -96,6 +106,8 @@ cleanup_legacy_config_links() {
 link_config_dirs() {
   config_dirs="
 alacritty
+agents
+codex
 ghostty
 nvim
 opencode
@@ -114,6 +126,18 @@ zimfw
     cleanup_legacy_config_links "$name"
     stow_path "$REPO_DIR/config" "$XDG_CONFIG_HOME/$name" "$name" || return 1
   done
+}
+
+link_codex_files() {
+  codex_home="${CODEX_HOME:-$HOME/.codex}"
+
+  log ""
+  log "Linking Codex-managed files..."
+
+  ensure_dir "$codex_home"
+
+  link_file "$XDG_CONFIG_HOME/agents/AGENTS.md" "$codex_home/AGENTS.md"
+  link_file "$XDG_CONFIG_HOME/codex/config.toml" "$codex_home/config.toml"
 }
 
 link_bin_files() {
@@ -142,6 +166,7 @@ main() {
   log "Using GNU Stow for linking"
 
   link_config_dirs || return 1
+  link_codex_files || return 1
   link_bin_files || return 1
 
   setup_shell_rc "$SHELL_ZSHRC"
