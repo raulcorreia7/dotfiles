@@ -2,3 +2,9 @@ model = "gpt-5.4"
 model_reasoning_effort = "high"
 personality = "pragmatic"
 project_doc_fallback_filenames = [".agents.md"]
+
+[projects."/home/rcorreia/.dotfiles"]
+trust_level = "trusted"
+
+[projects."/home/rcorreia"]
+trust_level = "trusted"
