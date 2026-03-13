@@ -108,6 +108,40 @@ dot_doctor() {
   dot_doctor_check "eza" "eza" "exa"
 }
 
+dot_sync() {
+  dot_sync_dir="${DOTFILES_DIR:-$HOME/.dotfiles}"
+  dot_sync_install="$dot_sync_dir/install"
+  dot_sync_init="$dot_sync_dir/init.sh"
+
+  dot_has git || {
+    echo "rdf sync: git is required" >&2
+    return 1
+  }
+
+  [ -d "$dot_sync_dir/.git" ] || {
+    echo "rdf sync: $dot_sync_dir is not a git repository" >&2
+    return 1
+  }
+
+  [ -x "$dot_sync_install" ] || {
+    echo "rdf sync: install script not found at $dot_sync_install" >&2
+    return 1
+  }
+
+  echo "Syncing dotfiles..."
+  git -C "$dot_sync_dir" pull --rebase || return 1
+
+  echo "Applying setup..."
+  "$dot_sync_install" --only setup || return 1
+
+  if [ -r "$dot_sync_init" ]; then
+    # Re-source runtime so the current shell sees any prompt/plugin changes.
+    . "$dot_sync_init" || return 1
+  fi
+
+  echo "Dotfiles synced"
+}
+
 dot_help() {
   cat <<'EOF'
 Usage: rdf <command> [options]
@@ -115,6 +149,7 @@ Usage: rdf <command> [options]
 rdf (raul dotfiles) - Dotfiles management and system maintenance
 
 Core Commands:
+  sync            Pull and apply dotfiles changes
   reload          Reload dotfiles configuration
   edit            Open dotfiles in $EDITOR (default: nvim)
   doctor          Check if required tools are installed
@@ -123,17 +158,15 @@ Core Commands:
 Arch Linux Maintenance (requires pacman):
   update          Update system packages with pacman/paru
                   Use --full to also remove orphans and clean cache
-  sync            Alias for update
-                  Use --full to also remove orphans and clean cache
   orphans         List orphaned packages
                   Use --remove to uninstall them
   cache           Show cache size
                   Use --clean to remove cached packages
 
 Examples:
+  rdf sync                      # Pull and apply latest dotfiles changes
   rdf doctor                    # Check tool installation status
   rdf update                    # Standard update (packages only)
-  rdf sync                      # Alias for standard update
   rdf update --full             # Full maintenance (packages + cleanup)
   rdf orphans                   # List orphaned packages
   rdf orphans --remove          # Remove orphaned packages
@@ -152,6 +185,14 @@ rdf() {
   dot_rdf_command="${1:-}"
 
   case "${1:-}" in
+  sync)
+    shift
+    [ $# -eq 0 ] || {
+      echo "Usage: rdf sync" >&2
+      return 1
+    }
+    dot_sync
+    ;;
   reload)
     . "${DOTFILES_DIR:-$HOME/.dotfiles}/init.sh" && echo "Reloaded"
     ;;
@@ -164,12 +205,8 @@ rdf() {
   cd)
     cd "${DOTFILES_DIR:-$HOME/.dotfiles}" || return 1
     ;;
-  update | sync | orphans | cache)
-    if [ "$dot_rdf_command" = "sync" ]; then
-      dot_rdf_subcommand="dot_arch_update"
-    else
-      dot_rdf_subcommand="dot_arch_$dot_rdf_command"
-    fi
+  update | orphans | cache)
+    dot_rdf_subcommand="dot_arch_$dot_rdf_command"
     shift
     if type "$dot_rdf_subcommand" >/dev/null 2>&1; then
       "$dot_rdf_subcommand" "$@"

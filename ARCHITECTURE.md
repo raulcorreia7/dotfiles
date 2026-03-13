@@ -50,8 +50,8 @@ installer internals.
 - `rdf edit`
 - `rdf doctor`
 - `rdf cd`
+- `rdf sync`
 - `rdf update [--full]` (Arch)
-- `rdf sync [--full]` (Arch alias)
 - `rdf orphans [--remove]` (Arch)
 - `rdf cache [--clean]` (Arch)
 

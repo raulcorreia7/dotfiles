@@ -82,12 +82,12 @@ The `rdf` command is the main interface for dotfiles management.
 
 | Command | Description |
 |---------|-------------|
+| `rdf sync` | Pull and apply latest dotfiles changes |
 | `rdf reload` | Reload dotfiles configuration |
 | `rdf edit` | Edit dotfiles in `$EDITOR` |
 | `rdf doctor` | Check tool status |
 | `rdf cd` | Go to dotfiles directory |
 | `rdf update` | System update (Arch) |
-| `rdf sync` | Alias for system update (Arch) |
 | `rdf update --full` | Full maintenance (Arch) |
 | `rdf orphans` | List orphan packages (Arch) |
 | `rdf orphans --remove` | Remove orphan packages (Arch) |

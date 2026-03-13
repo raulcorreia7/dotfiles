@@ -20,6 +20,39 @@ setup() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"Usage: rdf <command>"* ]]
   [[ "$output" == *"raul dotfiles"* ]]
+  [[ "$output" == *"rdf sync"* ]]
+}
+
+@test "rdf sync pulls and applies dotfiles setup" {
+  fake_repo="$BATS_TEST_TMPDIR/dotfiles"
+  fake_bin="$BATS_TEST_TMPDIR/bin"
+  mkdir -p "$fake_repo/.git" "$fake_bin"
+
+  cat >"$fake_repo/install" <<'EOF'
+#!/bin/sh
+printf 'install:%s\n' "$*"
+EOF
+  chmod +x "$fake_repo/install"
+
+  cat >"$fake_repo/init.sh" <<'EOF'
+#!/bin/sh
+:
+EOF
+  chmod +x "$fake_repo/init.sh"
+
+  cat >"$fake_bin/git" <<'EOF'
+#!/bin/sh
+printf 'git:%s\n' "$*"
+EOF
+  chmod +x "$fake_bin/git"
+
+  run bash -c 'PATH="$1"; DOTFILES_DIR="$2"; export PATH DOTFILES_DIR; . "$3/config/runtime.sh"; rdf sync' -- "$fake_bin" "$fake_repo" "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Syncing dotfiles..."* ]]
+  [[ "$output" == *"git:-C $fake_repo pull --rebase"* ]]
+  [[ "$output" == *"Applying setup..."* ]]
+  [[ "$output" == *"install:--only setup"* ]]
+  [[ "$output" == *"Dotfiles synced"* ]]
 }
 
 @test "rdf doctor detects exa fallback in zsh" {
