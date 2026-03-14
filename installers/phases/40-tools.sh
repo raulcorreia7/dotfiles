@@ -10,6 +10,7 @@ INSTALL_DIR="${INSTALL_DIR:-$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)}"
 DOTFILES_ENABLE_MISE="${DOTFILES_ENABLE_MISE:-1}"
 DOTFILES_ENABLE_ZIMFW="${DOTFILES_ENABLE_ZIMFW:-1}"
 DOTFILES_ENABLE_NVIM="${DOTFILES_ENABLE_NVIM:-1}"
+DOTFILES_ENABLE_RTK="${DOTFILES_ENABLE_RTK:-1}"
 
 _run_mise() {
   [ "$DOTFILES_ENABLE_MISE" = "1" ] || {
@@ -75,8 +76,28 @@ _run_nvim() {
   }
 
   log_info "syncing neovim plugins..."
-  nvim --headless -c 'Lazy! sync' -c 'qa' >/dev/null 2>&1 && log_info "neovim plugins synced" \
-    || log_warn "neovim plugin sync may have failed"
+  nvim --headless -c 'Lazy! sync' -c 'qa' >/dev/null 2>&1 && log_info "neovim plugins synced" ||
+    log_warn "neovim plugin sync may have failed"
+
+  return 0
+}
+
+_run_rtk() {
+  [ "$DOTFILES_ENABLE_RTK" = "1" ] || {
+    log_info "rtk disabled"
+    return 0
+  }
+  command -v rtk >/dev/null 2>&1 || {
+    log_info "rtk not found, skipping"
+    return 0
+  }
+
+  log_info "configuring rtk opencode plugin..."
+  if rtk init -g --opencode --auto-patch >/dev/null 2>&1; then
+    log_info "rtk opencode plugin configured"
+  else
+    log_warn "rtk init failed (may already be configured)"
+  fi
 
   return 0
 }
@@ -86,6 +107,7 @@ run_phase() {
   _run_mise || return 1
   _run_zimfw || return 1
   _run_nvim || return 1
+  _run_rtk || return 1
   log_info "tools complete"
   return 0
 }
