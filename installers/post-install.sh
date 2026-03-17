@@ -89,6 +89,13 @@ setup_git_defaults() {
   elif command -v difft >/dev/null 2>&1; then
     git config --global diff.external difft
   fi
+
+  if command -v difft >/dev/null 2>&1; then
+    git config --global alias.dft "-c diff.external=difft diff"
+    git config --global alias.dshow "-c diff.external=difft show --ext-diff"
+    git config --global alias.dlog "-c diff.external=difft log -p --ext-diff"
+    git config --global alias.dst "-c diff.external=difft stash show --ext-diff -p"
+  fi
 }
 
 main() {
