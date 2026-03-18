@@ -37,6 +37,15 @@ dot_debug() {
   [ "${DOTFILES_DEBUG:-0}" = "1" ] && printf '[DEBUG] %s\n' "$*" >&2
 }
 
+# SSH + tmux attach helper
+sta() {
+  if [ -z "${1:-}" ]; then
+    echo "Usage: sta <host>" >&2
+    return 1
+  fi
+  ssh -t "$1" "tmux attach -d 2>/dev/null || tmux new-session -s main"
+}
+
 # =============================================================================
 # PLUGIN LOADING
 # =============================================================================
