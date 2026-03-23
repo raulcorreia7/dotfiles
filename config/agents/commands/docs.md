@@ -17,15 +17,16 @@ Keep product knowledge current, linked, and actionable.
 
 1. **Survey** — Inventory docs; note freshness and drift
 2. **Prioritize** — Rank by user impact
-3. **Revise** — Update, link, remove stale content
+3. **Revise** — Update and link docs; ask before deleting or consolidating content with possible historical value
 4. **Plan** — Cadence for keeping docs aligned
 
 ## Principles
 
 - Prioritize freshness over completeness
-- Remove redundant/stale content
+- Remove redundant or clearly replaced current-state content
 - Optimize for humans and LLMs
 - Minimal footprint: smallest viable doc set
+- Preserve historical records unless the user confirms removal
 
 ## Output
 

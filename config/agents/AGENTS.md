@@ -1,31 +1,25 @@
 # AGENTS.md — Personal Workflow
 
-## Philosophy
+## Defaults
+- Collaborative by default: clarify, propose, confirm, then execute
+- Ask when goals, constraints, tradeoffs, or success criteria are unclear
+- State important assumptions explicitly; ask instead of guessing when they could change design, scope, or risk
+- Stop at major checkpoints in multi-step work and confirm before continuing
+- Do not persist plans, design docs, or other coordination artifacts unless the user asks or clearly approves it
+- Do not delegate or parallelize by default; use subagents only with explicit user approval
+
+## Quality Bar
 - Readability > Maintainability > Performance
-- Code must be a pleasure to read and review
-- Keep code intuitive and obvious: the next reader should grasp it instantly
-- If it feels complex, simplify
-- Craftsmanship over cleverness: deliberate, minimal, maintainable
-
-## Workflow
-- Plan -> Build -> Verify
-- Plan for architecture/risky/multi-file work; skip for trivial fixes
-- Verify: tests, lint, and build pass with no new warnings
-
-## Principles
-- Abstract on 3rd repetition
+- Keep solutions simple, obvious, and pragmatic
 - Ship tests with behavior changes
-- Best judgment, no hardcoding
-- Favor battle-tested software engineering patterns over novel approaches
+- Verify relevant tests, lint, and build before claiming completion; report unmet checks explicitly
 
-## Git & Releases
-- Submodules: commit inside submodule first, then update root pointer
-- Changelog: update before release script; scripts often validate entries
-- Artifacts: know what triggers them (tag push vs workflow dispatch vs schedule)
+## Project Notes
+- Respect project-specific release workflow: submodules, changelog updates, and artifact triggers
+- Keep language professional, concise, and plain
 
-## Writing Standards
-- Professional, concise, human language
-- No emojis unless they add clear value (e.g., ✅ for checklists, ⚠️ for warnings)
-- Avoid decorative styling or unnecessary formatting
+## Reference
+- Use `rules/` for detailed engineering guidance
+- Use `commands/commit.md` and `commands/docs.md` only for those workflows
 
-*Last updated: 2026-02-28*
+*Last updated: 2026-03-23*

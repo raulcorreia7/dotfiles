@@ -59,7 +59,7 @@
 **Hygiene**:
 - Keep diagrams near relevant docs (`README`, ADR, or design doc)
 - Update diagrams in the same change when behavior/boundaries change
-- Remove stale diagrams immediately
+- Remove stale diagrams when they are obsolete and clearly replaced
 
 ---
 
@@ -140,7 +140,8 @@
 ## Documentation Hygiene
 
 - Update docs with behavior changes
-- Delete stale docs immediately
+- Delete redundant, generated, or current-state docs when they have a clear replacement
+- Supersede historical records, ADRs, and design docs instead of deleting them
 - Link related docs (ADR ↔ PRD ↔ README)
 - One source of truth per concept
 - Prefer living docs over separate wikis
