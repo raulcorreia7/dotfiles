@@ -18,8 +18,14 @@
           "reasoning": true,
           "tool_call": true,
           "modalities": {
-            "input": ["text", "image", "video"],
-            "output": ["text"]
+            "input": [
+              "text",
+              "image",
+              "video"
+            ],
+            "output": [
+              "text"
+            ]
           },
           "limit": {
             "context": 1000000,
@@ -34,8 +40,12 @@
           "name": "Qwen3 Max",
           "tool_call": true,
           "modalities": {
-            "input": ["text"],
-            "output": ["text"]
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
           },
           "limit": {
             "context": 262144,
@@ -50,8 +60,12 @@
           "name": "Qwen3 Coder Next",
           "tool_call": true,
           "modalities": {
-            "input": ["text"],
-            "output": ["text"]
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
           },
           "limit": {
             "context": 262144,
@@ -66,8 +80,12 @@
           "name": "Qwen3 Coder Plus",
           "tool_call": true,
           "modalities": {
-            "input": ["text"],
-            "output": ["text"]
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
           },
           "limit": {
             "context": 1048576,
@@ -83,8 +101,12 @@
           "reasoning": true,
           "tool_call": true,
           "modalities": {
-            "input": ["text"],
-            "output": ["text"]
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
           },
           "limit": {
             "context": 202752,
@@ -100,8 +122,12 @@
           "reasoning": true,
           "tool_call": true,
           "modalities": {
-            "input": ["text"],
-            "output": ["text"]
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
           },
           "limit": {
             "context": 202752,
@@ -117,8 +143,12 @@
           "reasoning": true,
           "tool_call": true,
           "modalities": {
-            "input": ["text"],
-            "output": ["text"]
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
           },
           "limit": {
             "context": 1048576,
@@ -134,8 +164,14 @@
           "reasoning": true,
           "tool_call": true,
           "modalities": {
-            "input": ["text", "image", "video"],
-            "output": ["text"]
+            "input": [
+              "text",
+              "image",
+              "video"
+            ],
+            "output": [
+              "text"
+            ]
           },
           "limit": {
             "context": 262144,
@@ -212,7 +248,7 @@
         "-y",
         "@playwright/mcp@latest"
       ],
-      "enabled": true
+      "enabled": false
     },
     "zai-image": {
       "type": "local",
@@ -227,6 +263,25 @@
       "environment": {
         "Z_AI_MODE": "ZAI"
       },
+      "enabled": true
+    },
+    "firefox-devtools": {
+      "type": "local",
+      "command": [
+        "mise",
+        "x",
+        "node@lts",
+        "--",
+        "npx",
+        "-y",
+        "firefox-devtools-mcp@latest",
+        "--profile-path",
+        "/home/rcorreia/.mozilla/firefox/traderie-profile",
+        "--pref",
+        "dom.webdriver.enabled=false",
+        "--pref",
+        "general.useragent.override=Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0"
+      ],
       "enabled": true
     }
   },

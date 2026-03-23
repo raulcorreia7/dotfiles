@@ -2,3 +2,5 @@
 # Aliases for common tasks.
 
 alias nvcfg='${EDITOR:-nvim} ~/.config/nvim'
+
+command -v eza >/dev/null && alias ls='eza'
