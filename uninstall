@@ -32,7 +32,74 @@ list_backups() {
 		basename "$f" .bak
 		found=1
 	done
+	for f in "$HOME/.agents.bak" "$HOME"/.agents.bak.*; do
+		[ -e "$f" ] || [ -L "$f" ] || continue
+		printf '%s\n' "$(basename "$f")"
+		found=1
+	done
 	[ "$found" = "0" ] && log_info "No backups found"
+}
+
+latest_agents_backup() {
+	latest=""
+	latest_index=-1
+
+	for backup in "$HOME/.agents.bak" "$HOME"/.agents.bak.*; do
+		[ -e "$backup" ] || [ -L "$backup" ] || continue
+
+		case "$backup" in
+		"$HOME/.agents.bak")
+			index=0
+			;;
+		"$HOME/.agents.bak."*)
+			index=${backup##*.}
+			case "$index" in
+			*[!0-9]* | "") continue ;;
+			esac
+			;;
+		esac
+
+		if [ "$index" -gt "$latest_index" ]; then
+			latest="$backup"
+			latest_index="$index"
+		fi
+	done
+
+	[ -n "$latest" ] && printf '%s\n' "$latest"
+}
+
+restore_agents_home() {
+	current_path="$HOME/.agents"
+	managed_target="$XDG_CONFIG_HOME/agents"
+	backup_path=$(latest_agents_backup || true)
+
+	if [ -L "$current_path" ]; then
+		if [ "$(readlink "$current_path")" != "$managed_target" ]; then
+			log_warn "$current_path is not managed by these dotfiles, skipping"
+			return 1
+		fi
+
+		if [ "$DRY_RUN" = "1" ]; then
+			log "[dry-run] would remove symlink: $current_path"
+		else
+			log "removing symlink $current_path"
+			rm "$current_path"
+		fi
+	elif [ -e "$current_path" ]; then
+		log_warn "$current_path exists and is not a symlink, skipping"
+		return 1
+	else
+		[ -n "$backup_path" ] || return 0
+	fi
+
+	[ -n "$backup_path" ] || return 0
+
+	if [ "$DRY_RUN" = "1" ]; then
+		log "[dry-run] would restore: $backup_path -> $current_path"
+	else
+		log "restoring $backup_path -> $current_path"
+		mv "$backup_path" "$current_path"
+	fi
 }
 
 restore_backup() {
@@ -131,6 +198,13 @@ main() {
 			restore_backup "$name"
 		fi
 	done
+
+	if [ -L "$HOME/.agents" ] || [ -e "$HOME/.agents" ] || latest_agents_backup >/dev/null; then
+		found=1
+		if [ "$RESTORE_ALL" = "1" ] || confirm_restore ".agents"; then
+			restore_agents_home
+		fi
+	fi
 
 	[ "$found" = "0" ] && log_info "No backups found"
 

@@ -88,6 +88,53 @@ link_file() {
   ln -s "$source_path" "$target_path"
 }
 
+next_backup_path() {
+  path="$1"
+  backup_path="${path}.bak"
+  backup_index=0
+
+  while [ -e "$backup_path" ] || [ -L "$backup_path" ]; do
+    backup_index=$((backup_index + 1))
+    backup_path="${path}.bak.${backup_index}"
+  done
+
+  printf '%s\n' "$backup_path"
+}
+
+link_agents_home() {
+  source_path="$XDG_CONFIG_HOME/agents"
+  target_path="$HOME/.agents"
+  backup_path=""
+
+  log ""
+  log "Linking shared agent configuration..."
+
+  if [ -L "$target_path" ]; then
+    if ! rm -f "$target_path"; then
+      log_error "Cannot replace $target_path; check whether it is read-only or mounted"
+      return 1
+    fi
+  elif [ -e "$target_path" ]; then
+    backup_path=$(next_backup_path "$target_path")
+    log "Backing up $target_path to $backup_path"
+    if ! mv "$target_path" "$backup_path"; then
+      log_error "Cannot move $target_path; check whether it is read-only or mounted"
+      return 1
+    fi
+  fi
+
+  if ln -s "$source_path" "$target_path"; then
+    return 0
+  fi
+
+  log_error "Failed to link $target_path -> $source_path"
+  if [ -n "$backup_path" ] && [ ! -e "$target_path" ] && [ ! -L "$target_path" ]; then
+    log "Restoring $backup_path to $target_path"
+    mv "$backup_path" "$target_path" || log_error "Failed to restore $target_path from $backup_path"
+  fi
+  return 1
+}
+
 resolve_link_target() {
   link_path="$1"
   link_target=$(readlink "$link_path") || return 1
@@ -197,6 +244,7 @@ main() {
 
   clone_alacritty_themes || return 1
   link_config_dirs || return 1
+  link_agents_home || return 1
   link_codex_files || return 1
   link_bin_files || return 1
 

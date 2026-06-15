@@ -93,6 +93,20 @@ dot_health_warn() {
   printf '  %-16s warn (%s)\n' "$1:" "$2"
 }
 
+dot_health_link() {
+  dot_h_name="$1"
+  dot_h_path="$2"
+  dot_h_expected="$3"
+
+  if [ ! -L "$dot_h_path" ]; then
+    dot_health_missing "$dot_h_name"
+  elif [ "$(readlink "$dot_h_path")" = "$dot_h_expected" ]; then
+    dot_health_ok "$dot_h_name"
+  else
+    dot_health_warn "$dot_h_name" "points to $(readlink "$dot_h_path")"
+  fi
+}
+
 dot_health_check_tool() {
   dot_h_name="$1"
   shift
@@ -133,9 +147,10 @@ dot_health_dirs() {
 dot_health_links() {
   dot_h_dotfiles="${DOTFILES_DIR:-$HOME/.dotfiles}"
   dot_h_xdg="${XDG_CONFIG_HOME:-$HOME/.config}"
+  dot_h_codex="${CODEX_HOME:-$HOME/.codex}"
 
   echo "links:"
-  for dot_h_pkg in nvim tmux alacritty ghostty mise zimfw; do
+  for dot_h_pkg in agents codex opencode nvim tmux alacritty ghostty mise zimfw; do
     dot_h_src="$dot_h_dotfiles/config/$dot_h_pkg"
     [ -d "$dot_h_src" ] || continue
 
@@ -150,6 +165,10 @@ dot_health_links() {
       dot_health_ok "$dot_h_pkg"
     fi
   done
+
+  dot_health_link ".agents" "$HOME/.agents" "$dot_h_xdg/agents"
+  dot_health_link "codex-agents" "$dot_h_codex/AGENTS.md" "$dot_h_xdg/agents/AGENTS.md"
+  dot_health_link "codex-config" "$dot_h_codex/config.toml" "$dot_h_xdg/codex/config.toml"
 }
 
 dot_health_git() {
