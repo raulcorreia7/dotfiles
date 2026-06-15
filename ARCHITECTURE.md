@@ -37,7 +37,7 @@ installer internals.
 - `config/runtime.sh`: public runtime API and `rdf` command
 - `config/manifest.sh`: plugin registration order
 - `config/plugins/*/init.sh`: isolated plugin integration points
-- `config/agents/`: shared agent guidance consumed by both OpenCode and Codex
+- `config/agents/`: shared guidance, OpenCode commands, and portable skills exposed through `~/.agents`
 - `config/codex/`: managed minimal Codex configuration linked into `~/.codex`
 - `config/nvim/lua/plugins/theme-browser.lua`: minimal `lazy.nvim` plugin spec
 - `config/nvim/lua/config/theme-browser.lua`: theme-browser runtime config and local dev toggle
@@ -100,4 +100,6 @@ install
 - Keep shell scripts POSIX-`sh` compatible
 - Keep plugin loading opt-in via `DOTFILES_ENABLE_*`
 - Prefer explicit failures with actionable messages
+- Preserve an existing `~/.agents` as a numbered backup before installing the managed link
+- Keep OpenCode Markdown guidance separate from Codex command-approval `.rules` files
 - Keep Neovim plugin specs declarative; put local dev/runtime behavior in adjacent config modules

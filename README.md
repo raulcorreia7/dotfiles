@@ -118,9 +118,12 @@ The `rdf` command is the main interface for dotfiles management.
 
 ## Agent Guidance
 
-- `config/agents` is the single source of truth for shared agent instructions.
-- OpenCode consumes `~/.config/opencode/AGENTS.md` and `~/.config/agents/rules/*.md`.
-- Codex consumes `~/.codex/AGENTS.md` and `~/.codex/config.toml`, both linked from dotfiles-managed sources.
+- `config/agents` is the shared source for guidance, OpenCode commands, and portable skills.
+- The installer links `~/.agents` to `~/.config/agents`; both Codex and OpenCode discover skills from `~/.agents/skills/*/SKILL.md`.
+- OpenCode consumes `~/.config/opencode/AGENTS.md`, `commands/`, and the Markdown instruction fragments in `~/.config/agents/rules/*.md`.
+- Codex consumes `~/.codex/AGENTS.md` and `~/.codex/config.toml`.
+- Codex command-approval policies belong in `~/.codex/rules/*.rules`; they are unrelated to the shared Markdown guidance under `config/agents/rules`.
+- Tool-specific custom agents use `~/.config/opencode/agents/*.md` for OpenCode and `~/.codex/agents/*.toml` for Codex.
 
 ---
 
