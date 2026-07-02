@@ -29,7 +29,8 @@ installer internals.
 - `phases/50-configure.sh`: post-install configuration trigger
 - `install-arch.sh` and `install-macos.sh`: OS-specific package installation
 - `link.sh`: symlink orchestration using GNU Stow plus bridges for Codex-managed files
-- `post-install.sh`: shell, PATH, directories, and git defaults
+- `post-install.sh`: shell, PATH, desktop, login-screen, and git defaults
+- `desktop-defaults.sh`: targeted KDE shortcuts and XDG application defaults
 
 ### Runtime Layer (`init.sh`, `config/`)
 
@@ -37,8 +38,8 @@ installer internals.
 - `config/runtime.sh`: public runtime API and `rdf` command
 - `config/manifest.sh`: plugin registration order
 - `config/plugins/*/init.sh`: isolated plugin integration points
-- `config/agents/`: shared guidance, OpenCode commands, and portable skills exposed through `~/.agents`
-- `config/codex/`: managed minimal Codex configuration linked into `~/.codex`
+- `config/agents/`: shared guidance, skills, references, templates, and catalog exposed through `~/.agents`
+- `config/codex/`: managed Codex config, command rules, and custom agents linked into `~/.codex`
 - `config/nvim/lua/plugins/theme-browser.lua`: minimal `lazy.nvim` plugin spec
 - `config/nvim/lua/config/theme-browser.lua`: theme-browser runtime config and local dev toggle
 
@@ -48,9 +49,9 @@ installer internals.
 
 - `rdf reload`
 - `rdf edit`
-- `rdf doctor`
-- `rdf cd`
 - `rdf sync`
+- `rdf refresh`
+- `rdf health [tools|dirs|links|git|all]`
 - `rdf update [--full]` (Arch)
 - `rdf orphans [--remove]` (Arch)
 - `rdf cache [--clean]` (Arch)
@@ -101,5 +102,5 @@ install
 - Keep plugin loading opt-in via `DOTFILES_ENABLE_*`
 - Prefer explicit failures with actionable messages
 - Preserve an existing `~/.agents` as a numbered backup before installing the managed link
-- Keep OpenCode Markdown guidance separate from Codex command-approval `.rules` files
+- Keep OpenCode minimal; shared guidance lives in `config/agents`, while Codex command-approval `.rules` files live in `config/codex/rules`
 - Keep Neovim plugin specs declarative; put local dev/runtime behavior in adjacent config modules

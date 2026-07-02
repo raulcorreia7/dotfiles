@@ -25,9 +25,12 @@ run_link() {
 	[ "$(readlink "$TEST_HOME/.agents")" = "$TEST_CONFIG/agents" ]
 	[ "$(readlink "$TEST_CODEX/AGENTS.md")" = "$TEST_CONFIG/agents/AGENTS.md" ]
 	[ "$(readlink "$TEST_CODEX/config.toml")" = "$TEST_CONFIG/codex/config.toml" ]
+	[ "$(readlink "$TEST_CODEX/rules")" = "$TEST_CONFIG/codex/rules" ]
+	[ "$(readlink "$TEST_CODEX/agents")" = "$TEST_CONFIG/codex/agents" ]
 	[ -f "$TEST_HOME/.agents/skills/README.md" ]
-	[ -f "$TEST_CONFIG/opencode/commands/commit.md" ]
-	[ -f "$TEST_CONFIG/opencode/rules/coding.md" ]
+	[ -f "$TEST_HOME/.agents/skill-catalog.md" ]
+	[ -f "$TEST_CONFIG/opencode/opencode.json" ]
+	grep -Fq '"~/.config/agents/AGENTS.md"' "$TEST_CONFIG/opencode/opencode.json"
 }
 
 @test "link is idempotent" {
