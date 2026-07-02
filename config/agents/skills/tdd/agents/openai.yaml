@@ -1,0 +1,4 @@
+interface:
+  display_name: "TDD"
+  short_description: "Test-first red-green-refactor through behavior-focused vertical slices."
+  default_prompt: "$tdd"

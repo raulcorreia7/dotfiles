@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR Review"
+  short_description: "Review PRs/stories and draft concise PR text."
+  default_prompt: "$pr-review"

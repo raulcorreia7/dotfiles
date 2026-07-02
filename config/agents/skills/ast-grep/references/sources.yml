@@ -1,0 +1,22 @@
+retrieved_on: "2026-06-18"
+primary_authority:
+  - title: "ast-grep documentation"
+    url: "https://ast-grep.github.io/"
+  - title: "Command Line Reference"
+    url: "https://ast-grep.github.io/reference/cli.html"
+  - title: "Rule Object Reference"
+    url: "https://ast-grep.github.io/reference/rule.html"
+  - title: "Configuration Reference"
+    url: "https://ast-grep.github.io/reference/yaml.html"
+  - title: "Built-in Language List"
+    url: "https://ast-grep.github.io/reference/languages.html"
+  - title: "Using ast-grep with AI Tools"
+    url: "https://ast-grep.github.io/advanced/prompting.html"
+upstream_agent_skill:
+  repository: "https://github.com/ast-grep/agent-skill"
+  skill_source: "https://raw.githubusercontent.com/ast-grep/agent-skill/main/ast-grep/skills/ast-grep/SKILL.md"
+  rule_reference_source: "https://raw.githubusercontent.com/ast-grep/agent-skill/main/ast-grep/skills/ast-grep/references/rule_reference.md"
+  local_use: "Original workflow and rule-writing ideas adapted into compact Codex-native references."
+license_note: "The upstream README states the skill follows ast-grep's MIT license for included documentation or examples. This local skill uses source attribution and adapted summaries rather than a verbatim full copy."
+local_validation:
+  ast_grep_version_observed: "0.43.0"

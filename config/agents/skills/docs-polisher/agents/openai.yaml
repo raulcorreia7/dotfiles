@@ -1,0 +1,4 @@
+interface:
+  display_name: "Docs Polisher"
+  short_description: "Plan or polish docs architecture."
+  default_prompt: "Use $docs-polisher to plan or implement a documentation polish pass."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pipeline"
+  short_description: "Typed task pipelines for staged processing."
+  default_prompt: "$pipeline"

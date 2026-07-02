@@ -1,0 +1,4 @@
+# No project-local command permission rules are currently required.
+#
+# Add prefix_rule entries here only for commands this repository genuinely
+# needs to run outside the sandbox.

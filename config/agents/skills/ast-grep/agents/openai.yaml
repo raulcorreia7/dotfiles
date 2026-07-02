@@ -1,0 +1,4 @@
+interface:
+  display_name: "ast-grep"
+  short_description: "Structural code search and safe ast-grep rewrite guidance."
+  default_prompt: "$ast-grep"

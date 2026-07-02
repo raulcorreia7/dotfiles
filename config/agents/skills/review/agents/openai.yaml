@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review"
+  short_description: "Code and diff review for behavior, risk, maintainability, and tests."
+  default_prompt: "$review"

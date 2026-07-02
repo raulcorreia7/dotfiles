@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Comments"
+  short_description: "Audit and improve source comments and API docs."
+  default_prompt: "Use $code-comments to audit source comments and improve missing or noisy code documentation without changing behavior."

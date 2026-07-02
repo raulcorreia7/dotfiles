@@ -1,0 +1,4 @@
+interface:
+  display_name: "Diagrams"
+  short_description: "Create polished Mermaid diagrams"
+  default_prompt: "$diagrams"

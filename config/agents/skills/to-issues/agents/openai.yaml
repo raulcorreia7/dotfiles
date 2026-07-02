@@ -1,0 +1,6 @@
+interface:
+  display_name: "To Issues"
+  short_description: "Manual split of plans/PRDs/specs into vertical-slice issues."
+  default_prompt: "$to-issues"
+policy:
+  allow_implicit_invocation: false

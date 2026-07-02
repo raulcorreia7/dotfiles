@@ -1,0 +1,6 @@
+interface:
+  display_name: "Improve Codebase Architecture"
+  short_description: "Manual architecture-deepening scan with visual report and grilling follow-up."
+  default_prompt: "$improve-codebase-architecture"
+policy:
+  allow_implicit_invocation: false

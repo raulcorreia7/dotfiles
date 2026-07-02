@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test"
+  short_description: "Risk-based test design and verification."
+  default_prompt: "$test"

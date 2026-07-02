@@ -1,0 +1,6 @@
+interface:
+  display_name: "Prototype"
+  short_description: "Manual throwaway prototype for state/logic or UI design questions."
+  default_prompt: "$prototype"
+policy:
+  allow_implicit_invocation: false

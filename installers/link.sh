@@ -215,6 +215,14 @@ link_codex_files() {
 
   link_file "$XDG_CONFIG_HOME/agents/AGENTS.md" "$codex_home/AGENTS.md"
   link_file "$XDG_CONFIG_HOME/codex/config.toml" "$codex_home/config.toml"
+
+  if [ -d "$XDG_CONFIG_HOME/codex/rules" ]; then
+    link_file "$XDG_CONFIG_HOME/codex/rules" "$codex_home/rules"
+  fi
+
+  if [ -d "$XDG_CONFIG_HOME/codex/agents" ]; then
+    link_file "$XDG_CONFIG_HOME/codex/agents" "$codex_home/agents"
+  fi
 }
 
 link_bin_files() {

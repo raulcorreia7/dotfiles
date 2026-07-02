@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codebase Design"
+  short_description: "Deep-module vocabulary: small interfaces, clean seams, locality, and testability."
+  default_prompt: "$codebase-design"

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Discover"
+  short_description: "Manual repo/system discovery into source-backed artifacts."
+  default_prompt: "$discover"
+policy:
+  allow_implicit_invocation: false
