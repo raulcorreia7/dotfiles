@@ -83,16 +83,16 @@ The `rdf` command is the main interface for dotfiles management.
 | Command | Description |
 |---------|-------------|
 | `rdf sync` | Pull and apply latest dotfiles changes |
+| `rdf refresh` | Apply local dotfiles changes |
 | `rdf reload` | Reload dotfiles configuration |
 | `rdf edit` | Edit dotfiles in `$EDITOR` |
-| `rdf doctor` | Check tool status |
-| `rdf cd` | Go to dotfiles directory |
+| `rdf health [scope]` | Check tools, directories, links, and Git status |
 | `rdf update` | System update (Arch) |
 | `rdf update --full` | Full maintenance (Arch) |
 | `rdf orphans` | List orphan packages (Arch) |
-| `rdf orphans --remove` | Remove orphan packages (Arch) |
+| `rdf orphans --remove` | Prompt to remove orphan packages (Arch) |
 | `rdf cache` | Show pacman cache size (Arch) |
-| `rdf cache --clean` | Clean pacman cache (Arch) |
+| `rdf cache --clean` | Prompt to clean pacman cache (Arch) |
 
 ---
 
@@ -118,12 +118,11 @@ The `rdf` command is the main interface for dotfiles management.
 
 ## Agent Guidance
 
-- `config/agents` is the shared source for guidance, OpenCode commands, and portable skills.
-- The installer links `~/.agents` to `~/.config/agents`; both Codex and OpenCode discover skills from `~/.agents/skills/*/SKILL.md`.
-- OpenCode consumes `~/.config/opencode/AGENTS.md`, `commands/`, and the Markdown instruction fragments in `~/.config/agents/rules/*.md`.
-- Codex consumes `~/.codex/AGENTS.md` and `~/.codex/config.toml`.
-- Codex command-approval policies belong in `~/.codex/rules/*.rules`; they are unrelated to the shared Markdown guidance under `config/agents/rules`.
-- Tool-specific custom agents use `~/.config/opencode/agents/*.md` for OpenCode and `~/.codex/agents/*.toml` for Codex.
+- `config/agents` is the shared source for global guidance, skills, shared references, templates, and the skill catalog.
+- The installer links `~/.agents` to `~/.config/agents`; tools discover skills from `~/.agents/skills/*/SKILL.md`.
+- OpenCode is intentionally minimal and loads only `~/.config/agents/AGENTS.md` from `config/opencode/opencode.json`.
+- Codex consumes `~/.codex/AGENTS.md`, `~/.codex/config.toml`, `~/.codex/rules/*.rules`, and `~/.codex/agents/*.toml`.
+- Codex command-approval policies live in `config/codex/rules`; custom Codex agents live in `config/codex/agents`.
 
 ---
 
@@ -137,6 +136,8 @@ The `rdf` command is the main interface for dotfiles management.
 | `DOTFILES_ENABLE_NVIM` | 1 | Install nvim plugins |
 | `DOTFILES_OS_ARCH_ASSUME_YES` | 0 | Non-interactive pacman |
 | `DOTFILES_MACOS_CATEGORIES` | `base cli development gui` | Homebrew category install order |
+| `DOTFILES_POST_INSTALL_DESKTOP` | 1 | Apply KDE shortcuts and preferred applications |
+| `DOTFILES_POST_INSTALL_LOGIN_DISPLAY` | 1 | Apply the current KDE display layout to the login screen |
 
 ---
 
@@ -144,8 +145,8 @@ The `rdf` command is the main interface for dotfiles management.
 
 `theme-browser.nvim` is configured in two layers:
 
-- [config/nvim/lua/plugins/theme-browser.lua](/home/rcorreia/.dotfiles/config/nvim/lua/plugins/theme-browser.lua): minimal `lazy.nvim` spec
-- [config/nvim/lua/config/theme-browser.lua](/home/rcorreia/.dotfiles/config/nvim/lua/config/theme-browser.lua): runtime options and local dev toggle
+- [config/nvim/lua/plugins/theme-browser.lua](config/nvim/lua/plugins/theme-browser.lua): minimal `lazy.nvim` spec
+- [config/nvim/lua/config/theme-browser.lua](config/nvim/lua/config/theme-browser.lua): runtime options and local dev toggle
 
 Default behavior uses the published plugin:
 
@@ -183,7 +184,7 @@ This keeps the checked-in default portable while still making local plugin work 
 
 ```bash
 DOTFILES_DEBUG=1 source ~/.zshrc   # Debug loading
-rdf doctor                          # Check tools
+rdf health                          # Check dotfiles health
 make test                           # Dry run
 ```
 

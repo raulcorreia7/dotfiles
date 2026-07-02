@@ -1,5 +1,5 @@
-model = "gpt-5.4"
-model_reasoning_effort = "xhigh"
+model = "gpt-5.5"
+model_reasoning_effort = "medium"
 personality = "pragmatic"
 project_doc_fallback_filenames = [".agents.md"]
 approvals_reviewer = "user"
@@ -10,15 +10,11 @@ trust_level = "trusted"
 [projects."/home/rcorreia"]
 trust_level = "trusted"
 
-[projects."/home/rcorreia/projects/d2trader"]
+[projects."/home/rcorreia/projects/crispy-doom"]
 trust_level = "trusted"
 
-[projects."/home/rcorreia/projects/d2rlauncher"]
-trust_level = "trusted"
+[notice.model_migrations]
+"gpt-5.4" = "gpt-5.5"
 
-[projects."/home/rcorreia/projects/career-wrapped"]
-trust_level = "trusted"
-
-[mcp_servers.lightpanda]
-command = "bash"
-args = ["/home/rcorreia/projects/scripts/start-playwright-mcp.sh"]
+[tui.model_availability_nux]
+"gpt-5.5" = 4
