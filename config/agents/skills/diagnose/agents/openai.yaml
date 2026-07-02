@@ -1,0 +1,4 @@
+interface:
+  display_name: "Diagnose"
+  short_description: "Disciplined diagnosis loop for bugs, flakes, failures, and performance regressions."
+  default_prompt: "$diagnose"

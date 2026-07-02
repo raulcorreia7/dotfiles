@@ -1,0 +1,6 @@
+interface:
+  display_name: "To PRD"
+  short_description: "Manual synthesis of the current conversation into a PRD."
+  default_prompt: "$to-prd"
+policy:
+  allow_implicit_invocation: false

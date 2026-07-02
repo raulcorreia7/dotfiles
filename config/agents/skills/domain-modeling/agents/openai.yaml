@@ -1,0 +1,4 @@
+interface:
+  display_name: "Domain Modeling"
+  short_description: "Sharpen project terminology, CONTEXT.md, context maps, and ADRs."
+  default_prompt: "$domain-modeling"

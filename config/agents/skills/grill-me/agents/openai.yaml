@@ -1,0 +1,6 @@
+interface:
+  display_name: "Grill Me"
+  short_description: "Manual one-question-at-a-time interrogation for stateless plans and designs."
+  default_prompt: "$grill-me"
+policy:
+  allow_implicit_invocation: false

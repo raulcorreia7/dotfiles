@@ -1,0 +1,4 @@
+interface:
+  display_name: "Docs"
+  short_description: "Signal-gradient technical documentation."
+  default_prompt: "$docs"

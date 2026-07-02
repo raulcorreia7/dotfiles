@@ -1,0 +1,7 @@
+interface:
+  display_name: "Goal Loop"
+  short_description: "Goal loop with files and subagents."
+  default_prompt: "$goal-loop"
+
+policy:
+  allow_implicit_invocation: false

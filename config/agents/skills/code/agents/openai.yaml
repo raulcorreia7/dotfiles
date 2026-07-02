@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code"
+  short_description: "Application-code implementation with small, readable, verified changes."
+  default_prompt: "$code"

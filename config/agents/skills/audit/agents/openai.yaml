@@ -1,0 +1,6 @@
+interface:
+  display_name: "Audit"
+  short_description: "Manual read-only audit for project/code/tests/docs/infra/security."
+  default_prompt: "$audit"
+policy:
+  allow_implicit_invocation: false

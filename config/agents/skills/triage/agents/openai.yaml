@@ -1,0 +1,6 @@
+interface:
+  display_name: "Triage"
+  short_description: "Manual issue/PR triage state machine and agent-ready briefs."
+  default_prompt: "$triage"
+policy:
+  allow_implicit_invocation: false
