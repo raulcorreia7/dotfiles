@@ -2,9 +2,9 @@
 set -e
 # macOS package installer via Homebrew
 
-SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-. "$SCRIPT_DIR/lib.sh"
-. "$SCRIPT_DIR/config.sh"
+. "$SCRIPT_DIR/../install/lib.sh"
+
+PKGS_MACOS="$SCRIPT_DIR/macos"
 
 installed_count=0
 failed_count=0

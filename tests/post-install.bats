@@ -63,7 +63,7 @@ run_post_install() {
 		DOTFILES_POST_INSTALL_XDG_DIRS=0 \
 		SHELL=/bin/zsh \
 		XDG_CURRENT_DESKTOP=KDE \
-		"$REPO_ROOT/installers/post-install.sh"
+		"$REPO_ROOT/install/post-install.sh"
 }
 
 @test "post-install applies current KDE display layout to Plasma Login" {
@@ -85,7 +85,7 @@ run_post_install() {
 		DOTFILES_POST_INSTALL_XDG_DIRS=0 \
 		SHELL=/bin/zsh \
 		XDG_CURRENT_DESKTOP=KDE \
-		"$REPO_ROOT/installers/post-install.sh"
+		"$REPO_ROOT/install/post-install.sh"
 
 	[ "$status" -eq 0 ]
 	grep -Fq "sudo:install -D -m 600 -o plasmalogin -g plasmalogin $TEST_HOME/.config/kwinoutputconfig.json /var/lib/plasmalogin/.config/kwinoutputconfig.json" "$COMMAND_LOG"
@@ -157,7 +157,7 @@ EOF
 		DOTFILES_POST_INSTALL_XDG_DIRS=0 \
 		SHELL=/bin/zsh \
 		XDG_CURRENT_DESKTOP=KDE \
-		"$REPO_ROOT/installers/post-install.sh"
+		"$REPO_ROOT/install/post-install.sh"
 
 	[ "$status" -eq 0 ]
 	[ ! -s "$COMMAND_LOG" ]

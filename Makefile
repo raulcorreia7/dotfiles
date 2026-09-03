@@ -27,8 +27,8 @@ fmt:
 		exit 1; \
 	fi
 	@$(FD_CMD) -e sh -t f . $(DOTFILES_DIR) $(EXCLUDES) -x shfmt -w
-	@shfmt -w $(DOTFILES_DIR)/install
-	@shfmt -w $(DOTFILES_DIR)/uninstall
+	@shfmt -w $(DOTFILES_DIR)/install/install.sh
+	@shfmt -w $(DOTFILES_DIR)/install/uninstall.sh
 	@echo "Done."
 
 lint:
@@ -36,8 +36,8 @@ lint:
 		echo "fd (or fdfind) is required"; \
 		exit 1; \
 	fi
-	@shellcheck $(DOTFILES_DIR)/install
-	@shellcheck $(DOTFILES_DIR)/uninstall
+	@shellcheck $(DOTFILES_DIR)/install/install.sh
+	@shellcheck $(DOTFILES_DIR)/install/uninstall.sh
 	@$(FD_CMD) -e sh -t f . $(DOTFILES_DIR) $(EXCLUDES) -x shellcheck
 	@echo "Done."
 
@@ -55,7 +55,7 @@ markdown-lint:
 check: lint markdown-lint
 
 test:
-	@$(DOTFILES_DIR)/install --dry-run
+	@$(DOTFILES_DIR)/install/install.sh --dry-run
 	@$(MAKE) test-bats
 
 test-bats:
@@ -79,10 +79,11 @@ hooks-run:
 	@"$(DOTFILES_DIR)/.githooks/pre-commit"
 
 install:
-	@$(DOTFILES_DIR)/install
+	@$(DOTFILES_DIR)/install/install.sh
 
 uninstall:
-	@$(DOTFILES_DIR)/uninstall
+	@$(DOTFILES_DIR)/install/uninstall.sh
 
 backups:
-	@$(DOTFILES_DIR)/uninstall --list
+	@$(DOTFILES_DIR)/install/uninstall.sh --list
+

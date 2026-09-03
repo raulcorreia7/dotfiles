@@ -4,27 +4,17 @@ setup() {
   REPO_ROOT=$(cd "$BATS_TEST_DIRNAME/.." && pwd)
 }
 
-@test "install help prints usage" {
-  run "$REPO_ROOT/install" --help
+@test "install dry-run prints all stages and succeeds" {
+  run "$REPO_ROOT/install/install.sh" --dry-run
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Usage: ./install"* ]]
+  [[ "$output" == *"[dry-run] would run: do_check"* ]]
+  [[ "$output" == *"[dry-run] would run: do_setup"* ]]
+  [[ "$output" == *"[dry-run] would run: do_tools"* ]]
+  [[ "$output" == *"[dry-run] would run: do_configure"* ]]
 }
 
-@test "install list shows phases" {
-  run "$REPO_ROOT/install" --list
+@test "packages installer help prints usage" {
+  run "$REPO_ROOT/packages/install.sh" --help
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Available phases"* ]]
-  [[ "$output" == *"check"* ]]
-  [[ "$output" == *"configure"* ]]
-}
-
-@test "install dry-run only check and tools succeeds" {
-  run "$REPO_ROOT/install" --dry-run --only check,tools
-  [ "$status" -eq 0 ]
-}
-
-@test "uninstall help prints usage" {
-  run "$REPO_ROOT/uninstall" --help
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"Usage: ./uninstall"* ]]
+  [[ "$output" == *"Usage: ./packages/install.sh"* ]]
 }

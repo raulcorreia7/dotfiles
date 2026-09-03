@@ -2,37 +2,51 @@
 
 ## Overview
 
-This repository is split into two explicit layers:
+This repository separates pure configuration from OS package installation:
 
-- Installer layer: machine bootstrap and package/tool setup
-- Runtime layer: interactive shell behavior (`rdf`, aliases, plugin init)
+- `install/`: pure-configuration installer (linking, tools, post-install config)
+- `packages/`: standalone OS package installer, never invoked by `install/`
+- `config/` + `init.sh`: runtime layer (interactive shell behavior)
 
-The installer never depends on runtime internals, and runtime never depends on
-installer internals.
+The configuration installer never installs OS packages. The package installer
+never touches dotfiles. Runtime depends on the installer only via `rdf refresh` → `install/link.sh`; otherwise it never depends on installer internals. The package installer shares `install/lib.sh` for logging and OS detection.
 
 ## Entrypoints
 
-- `install`: phased installer runner
-- `uninstall`: restore backups created during setup
+- `install/install.sh`: pure-configuration installer
+- `install/uninstall.sh`: restore backups created during setup
+- `packages/install.sh`: standalone OS package installer
 - `init.sh`: runtime entrypoint sourced by shell rc files
 
-## Layer Responsibilities
+## Configuration Installer (`install/`)
 
-### Installer Layer (`installers/`)
-
-- `lib.sh`: logging, guards, OS detection, phase helpers
-- `config.sh`: path and package-list configuration
-- `phases/10-check.sh`: readiness checks (OS/support, required tools)
-- `phases/20-setup.sh`: linking via GNU Stow
-- `phases/30-install.sh`: OS package installation dispatcher
-- `phases/40-tools.sh`: mise/zimfw/nvim post-package tooling
-- `phases/50-configure.sh`: post-install configuration trigger
-- `install-arch.sh` and `install-macos.sh`: OS-specific package installation
+- `install.sh`: single-stage runner; runs `check -> setup -> tools -> configure` inline
+- `lib.sh`: logging, path helpers, user context, dependency guards, OS detection
+- `config.sh`: path configuration
 - `link.sh`: symlink orchestration using GNU Stow plus bridges for Codex-managed files
 - `post-install.sh`: shell, PATH, desktop, login-screen, and git defaults
 - `desktop-defaults.sh`: targeted KDE shortcuts and XDG application defaults
+- `uninstall.sh`: backup restore
 
-### Runtime Layer (`init.sh`, `config/`)
+Install flow:
+
+```text
+install/install.sh
+  check      shell, git, stow, dotfiles structure
+  setup      link.sh (GNU Stow)
+  tools      mise, zimfw, nvim plugins, rtk (each opt-out via DOTFILES_ENABLE_*)
+  configure  post-install.sh
+```
+
+## Package Installer (`packages/`)
+
+- `install.sh`: standalone dispatcher (arch/macos), run manually
+- `install-arch.sh`: pacman + AUR via paru
+- `install-macos.sh`: Homebrew bundle categories
+- `install-windows.ps1`: manual Windows setup
+- `arch/`, `macos/`, `windows/`: package lists
+
+## Runtime Layer (`init.sh`, `config/`)
 
 - `init.sh`: runtime bootstrap, env load, zimfw init, aliases, manifest
 - `config/runtime.sh`: public runtime API and `rdf` command
@@ -50,7 +64,7 @@ installer internals.
 - `rdf reload`
 - `rdf edit`
 - `rdf sync`
-- `rdf refresh`
+- `rdf refresh` (re-runs `install/link.sh`, then reloads)
 - `rdf health [tools|dirs|links|git|all]`
 - `rdf update [--full]` (Arch)
 - `rdf orphans [--remove]` (Arch)
@@ -62,17 +76,6 @@ installer internals.
 - `dot_shell_type`
 - `dot_eval_init <tool>`
 - `dot_load_plugin <plugin>`
-
-## Install Flow
-
-```text
-install
-  -> phases/10-check.sh
-  -> phases/20-setup.sh
-  -> phases/30-install.sh
-  -> phases/40-tools.sh
-  -> phases/50-configure.sh
-```
 
 ## Runtime Flow
 
@@ -97,9 +100,9 @@ install
 
 ## Design Invariants
 
-- Keep installer and runtime concerns separate
+- Keep configuration install and package install in separate folders; `install/` never invokes `packages/`
 - Keep shell scripts POSIX-`sh` compatible
-- Keep plugin loading opt-in via `DOTFILES_ENABLE_*`
+- Keep plugin and tool loading gated via `DOTFILES_ENABLE_*` (default on, set to `0` to skip)
 - Prefer explicit failures with actionable messages
 - Preserve an existing `~/.agents` as a numbered backup before installing the managed link
 - Keep OpenCode minimal; shared guidance lives in `config/agents`, while Codex command-approval `.rules` files live in `config/codex/rules`

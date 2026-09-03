@@ -15,7 +15,7 @@ run_link() {
 		CODEX_HOME="$TEST_CODEX" \
 		DOTFILES_DIR="$REPO_ROOT" \
 		DOTFILES_INTERACTIVE=0 \
-		"$REPO_ROOT/installers/link.sh"
+		"$REPO_ROOT/install/link.sh"
 }
 
 @test "link creates documented agent configuration paths" {
@@ -80,7 +80,7 @@ run_link() {
 		XDG_CONFIG_HOME="$TEST_CONFIG" \
 		DOTFILES_DIR="$REPO_ROOT" \
 		DOTFILES_INTERACTIVE=0 \
-		"$REPO_ROOT/uninstall" --all
+		"$REPO_ROOT/install/uninstall.sh" --all
 
 	[ "$status" -eq 0 ]
 	[ ! -L "$TEST_HOME/.agents" ]
@@ -110,7 +110,7 @@ EOF
 		DOTFILES_DIR="$REPO_ROOT" \
 		DOTFILES_INTERACTIVE=0 \
 		PATH="$fake_bin:$PATH" \
-		"$REPO_ROOT/installers/link.sh"
+		"$REPO_ROOT/install/link.sh"
 
 	[ "$status" -ne 0 ]
 	[[ "$output" == *"Cannot move $TEST_HOME/.agents"* ]]

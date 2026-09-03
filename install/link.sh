@@ -225,20 +225,6 @@ link_codex_files() {
   fi
 }
 
-link_bin_files() {
-  log ""
-  log "Linking binaries..."
-
-  has_bins=0
-  for f in "$REPO_DIR"/bin/*; do
-    [ -f "$f" ] || continue
-    has_bins=1
-    prepare_destination "$BIN_TARGET/$(basename "$f")"
-  done
-
-  [ "$has_bins" = "1" ] || return 0
-  stow_path "$REPO_DIR" "$BIN_TARGET" "bin" || return 1
-}
 
 main() {
   require_command "stow" "GNU Stow is required for linking"
@@ -246,7 +232,6 @@ main() {
   log "Creating directories..."
   ensure_dir "$XDG_CONFIG_HOME" && log "  $XDG_CONFIG_HOME"
   ensure_dir "$BIN_TARGET" && log "  $BIN_TARGET"
-  ensure_dir "$REPO_DIR/bin" && log "  $REPO_DIR/bin"
 
   log "Using GNU Stow for linking"
 
@@ -254,7 +239,6 @@ main() {
   link_config_dirs || return 1
   link_agents_home || return 1
   link_codex_files || return 1
-  link_bin_files || return 1
 
   setup_shell_rc "$SHELL_ZSHRC"
   setup_shell_rc "$SHELL_BASHRC"

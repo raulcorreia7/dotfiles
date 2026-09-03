@@ -2,19 +2,19 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-. "$SCRIPT_DIR/lib.sh"
-. "$SCRIPT_DIR/config.sh"
+. "$SCRIPT_DIR/../install/lib.sh"
+
+PKGS_ARCH_PACMAN_FILE="$SCRIPT_DIR/arch/pacman"
+PKGS_ARCH_AUR_FILE="$SCRIPT_DIR/arch/aur"
+AUR_BASE_URL="https://aur.archlinux.org"
+
+read_packages() {
+  [ -f "$1" ] || return 0
+  grep -v '^[[:space:]]*$' "$1" | grep -v '^#' || true
+}
 
 DOTFILES_OS_ARCH_ASSUME_YES="${DOTFILES_OS_ARCH_ASSUME_YES:-0}"
-
-if [ -n "${SUDO_USER:-}" ]; then
-  ORIGINAL_HOME="/home/$SUDO_USER"
-  XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$ORIGINAL_HOME/.config}"
-  CONFIG_TARGET="$XDG_CONFIG_HOME/.dotfiles"
-  BIN_TARGET="$ORIGINAL_HOME/.local/bin"
-  SHELL_ZSHRC="$ORIGINAL_HOME/.zshrc"
-  SHELL_BASHRC="$ORIGINAL_HOME/.bashrc"
-fi
+BUILD_DIR="${BUILD_DIR:-${TMPDIR:-/tmp}}"
 
 check_sudo_access() {
   command -v sudo >/dev/null 2>&1 || log_error "sudo is required but not found"
@@ -103,15 +103,6 @@ install_pacman_packages() {
   pkg_list_file=$(make_list_file "$pkg_file") || return
   installed_list_file=$(get_installed_list_file)
 
-  if [ "${DOTFILES_VERIFY_PACKAGES:-0}" = "1" ]; then
-    repo_list_file=$(get_pacman_repo_list_file)
-    missing=$(comm -23 "$pkg_list_file" "$repo_list_file")
-    [ -n "$missing" ] && {
-      printf '%s\n' "$missing" >&2
-      log_error "Pacman package(s) not found in repos"
-    }
-  fi
-
   packages_to_install=$(comm -23 "$pkg_list_file" "$installed_list_file")
 
   if [ -n "$packages_to_install" ]; then
@@ -175,9 +166,6 @@ install_aur_packages() {
     return
   }
 
-  if [ "${DOTFILES_VERIFY_PACKAGES:-0}" = "1" ]; then
-    paru -Si $(cat "$aur_list_file") || log_error "AUR package(s) not found"
-  fi
 
   installed_list_file=$(get_installed_list_file)
   packages_to_install=$(comm -23 "$aur_list_file" "$installed_list_file")
@@ -198,21 +186,11 @@ install_aur_packages() {
   rm -f "$aur_list_file"
 }
 
-is_arch_based() {
-  [ -f /etc/arch-release ] || [ -f /etc/cachyos-release ]
-}
-
-is_arch_from_os_release() {
-  [ -f /etc/os-release ] && {
-    . /etc/os-release
-    [ "${ID:-}" = "arch" ] || [ "${ID_LIKE:-}" = "arch" ]
-  }
-}
 
 main() {
   check_sudo_access || true
 
-  if is_arch_based || is_arch_from_os_release; then
+  if [ "$(detect_os)" = "arch" ]; then
     remove_conflicting_packages "${PKGS_ARCH_PACMAN_FILE}"
     install_pacman_packages
     install_paru

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Dotfiles Uninstaller - Restore backed up configs
-# Usage: ./uninstall [OPTIONS]
+# Usage: ./install/uninstall.sh [OPTIONS]
 #
 # Options:
 #   -h, --help     Show this help message
@@ -13,9 +13,9 @@
 
 set -e
 
-DOTFILES_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-. "$DOTFILES_DIR/installers/lib.sh"
-. "$DOTFILES_DIR/installers/config.sh"
+DOTFILES_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+. "$DOTFILES_DIR/install/lib.sh"
+. "$DOTFILES_DIR/install/config.sh"
 
 INTERACTIVE="${DOTFILES_INTERACTIVE:-1}"
 DRY_RUN=0
@@ -37,7 +37,7 @@ list_backups() {
 		printf '%s\n' "$(basename "$f")"
 		found=1
 	done
-	[ "$found" = "0" ] && log_info "No backups found"
+	if [ "$found" = "0" ]; then log_info "No backups found"; fi
 }
 
 latest_agents_backup() {
@@ -206,7 +206,7 @@ main() {
 		fi
 	fi
 
-	[ "$found" = "0" ] && log_info "No backups found"
+	if [ "$found" = "0" ]; then log_info "No backups found"; fi
 
 	log_info "Done"
 }

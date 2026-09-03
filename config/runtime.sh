@@ -234,15 +234,15 @@ dot_reload() {
 
 dot_refresh() {
   dot_rf_dir="${DOTFILES_DIR:-$HOME/.dotfiles}"
-  dot_rf_install="$dot_rf_dir/install"
+  dot_rf_link="$dot_rf_dir/install/link.sh"
 
-  [ -x "$dot_rf_install" ] || {
-    echo "rdf refresh: install script not found" >&2
+  [ -r "$dot_rf_link" ] || {
+    echo "rdf refresh: link.sh not found" >&2
     return 1
   }
 
   echo "Refreshing dotfiles..."
-  "$dot_rf_install" --only setup || return 1
+  sh "$dot_rf_link" || return 1
   dot_reload
 }
 

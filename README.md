@@ -1,21 +1,26 @@
 # dotfiles
 
-Modular, XDG-first dotfiles with strict separation between installer and runtime.
-Shared agent guidance lives in `config/agents`, with OpenCode and Codex
-consuming the same `AGENTS.md`.
+Modular, XDG-first dotfiles with strict separation between pure configuration
+(`install/`) and OS package installation (`packages/`). Shared agent guidance
+lives in `config/agents`, with OpenCode and Codex consuming the same
+`AGENTS.md`.
 
 ## Quickstart
 
-Minimum prerequisites:
+Minimum prerequisites for configuration install:
 
 - `git`
-- `stow` (GNU Stow is required for setup phase)
+- `stow` (GNU Stow is required for setup)
 
 ### Required Dependencies by OS
 
 Required for install/setup:
 
 - `git`, `stow`, and one supported shell (`bash` or `zsh`)
+
+Required for the standalone package installer (`./packages/install.sh`):
+
+- `pacman`/`paru` (Arch) or Homebrew (macOS) — see `packages/install.sh --help`
 
 Required for local quality checks (`make check`):
 
@@ -40,7 +45,10 @@ brew install git stow bash zsh shellcheck shfmt fd node bats-core
 ```sh
 git clone https://github.com/YOUR_USER/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
-make install
+./install/install.sh
+
+# Optional, separate step: OS packages (Arch/macOS)
+./packages/install.sh
 
 # Optional but recommended: install local git hooks
 make hooks-install
@@ -96,23 +104,33 @@ The `rdf` command is the main interface for dotfiles management.
 
 ---
 
-## Install Phases
+## Configuration Install
 
 ```bash
-./install                        # Run all phases
-./install setup                  # Run single phase
-./install --only setup,tools     # Run specific phases
-./install --skip install         # Skip package installation
-./install -n                     # Dry run
+./install/install.sh          # Run all stages
+./install/install.sh -n       # Dry run
 ```
 
-| Phase | Description |
-|-------|-------------|
-| `check` | Validate system readiness |
-| `setup` | Create directories, link configs |
-| `install` | Install OS packages |
-| `tools` | Install mise, zimfw, nvim plugins |
-| `configure` | Post-install configuration |
+Stages run in order: `check` (validate system readiness) -> `setup` (create
+directories, link configs via GNU Stow) -> `tools` (mise tools, zimfw modules,
+nvim plugins, rtk) -> `configure` (post-install configuration). Each stage can
+be disabled via `DOTFILES_ENABLE_*` environment variables.
+
+---
+
+## Package Installation (standalone)
+
+OS package installation is fully separate from configuration and is never run
+by `./install/install.sh`:
+
+```bash
+./packages/install.sh         # Installs packages for the detected OS
+./packages/install.sh --help  # Usage and supported systems
+```
+
+- Arch / EndeavourOS / CachyOS: pacman + AUR via paru (`packages/arch/`)
+- macOS: Homebrew bundle (`packages/macos/`)
+- Windows: manual, see `packages/install-windows.ps1`
 
 ---
 
@@ -134,8 +152,8 @@ The `rdf` command is the main interface for dotfiles management.
 | `DOTFILES_ENABLE_MISE` | 1 | Install mise tools |
 | `DOTFILES_ENABLE_ZIMFW` | 1 | Build zimfw |
 | `DOTFILES_ENABLE_NVIM` | 1 | Install nvim plugins |
-| `DOTFILES_OS_ARCH_ASSUME_YES` | 0 | Non-interactive pacman |
-| `DOTFILES_MACOS_CATEGORIES` | `base cli development gui` | Homebrew category install order |
+| `DOTFILES_OS_ARCH_ASSUME_YES` | 0 | Non-interactive pacman (package installer) |
+| `DOTFILES_MACOS_CATEGORIES` | `base cli development gui` | Homebrew category install order (package installer) |
 | `DOTFILES_POST_INSTALL_DESKTOP` | 1 | Apply KDE shortcuts and preferred applications |
 | `DOTFILES_POST_INSTALL_LOGIN_DISPLAY` | 1 | Apply the current KDE display layout to the login screen |
 
