@@ -2,3 +2,8 @@
 #
 # Add prefix_rule entries here only for commands this repository genuinely
 # needs to run outside the sandbox.
+prefix_rule(pattern=["bin/rebof3", "diff"], decision="allow")
+prefix_rule(pattern=["sed", "-n", "1,80p", "out/asm-diff/func_801f3d18/diff.patch"], decision="allow")
+prefix_rule(pattern=["rm", "-f", "out/index/harness.sqlite"], decision="allow")
+prefix_rule(pattern=["bin/harness", "diff"], decision="allow")
+prefix_rule(pattern=["git", "diff", "--check"], decision="allow")
