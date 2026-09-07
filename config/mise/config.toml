@@ -1,9 +1,11 @@
 [tools]
 bun = "latest"
 deno = "latest"
+"github:can1357/oh-my-pi" = "18"
 go = "latest"
 node = "lts"
 pnpm = "latest"
+python = "latest"
 rust = "latest"
 uv = "latest"
 zig = "latest"
