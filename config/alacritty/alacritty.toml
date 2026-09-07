@@ -45,6 +45,10 @@ style = "Bold Italic"
 semantic_escape_chars = ",│`|:\"' ()[]{}<>\t"
 save_to_clipboard = true
 
+[colors.selection]
+text = "#c0caf5"
+background = "#33467c"
+
 [cursor]
 style = "Underline"
 vi_mode_style = "None"
@@ -147,4 +151,4 @@ regex = '(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https?://|news:|file:|
 [general]
 live_config_reload = true
 working_directory = "None"
-import = ["~/.config/alacritty/themes/themes/nord.toml"]
+import = ["~/.config/alacritty/themes/themes/tokyo_night.toml"]
