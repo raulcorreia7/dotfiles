@@ -1,0 +1,94 @@
+#!/bin/sh
+
+set -eu
+
+usage() {
+	cat <<'EOF'
+Usage: yeti-monitor [status|on|off|toggle]
+
+Control the Yeti hardware microphone feed to its headphone output.
+Microphone capture is not changed.
+EOF
+}
+
+find_yeti_card() {
+	if [ -n "${YETI_ALSA_CARD:-}" ]; then
+		printf '%s\n' "$YETI_ALSA_CARD"
+		return
+	fi
+
+	awk '
+    /Yeti Stereo Microphone/ {
+      sub(/^.*\[/, "")
+      sub(/\].*$/, "")
+      gsub(/[[:space:]]/, "")
+      print
+      exit
+    }
+  ' "${YETI_PROC_CARDS:-/proc/asound/cards}"
+}
+
+monitor_state() {
+	mixer_output=$(amixer -c "$card" sget Mic 2>/dev/null) || {
+		echo "yeti-monitor: cannot read mixer controls for ALSA card '$card'" >&2
+		exit 1
+	}
+
+	state=$(printf '%s\n' "$mixer_output" | awk '
+    /Playback.*\[(on|off)\]/ {
+      sub(/ Capture.*/, "")
+      if ($0 ~ /\[on\]/) print "on"
+      if ($0 ~ /\[off\]/) print "off"
+      exit
+    }
+  ')
+	[ -n "$state" ] || {
+		echo "yeti-monitor: Yeti Mic playback control not found" >&2
+		exit 1
+	}
+	printf '%s\n' "$state"
+}
+
+set_monitor() {
+	amixer -c "$card" sset Mic playback "$1" >/dev/null
+}
+
+command -v amixer >/dev/null 2>&1 || {
+	echo "yeti-monitor: amixer is required (install alsa-utils)" >&2
+	exit 1
+}
+
+card=$(find_yeti_card)
+[ -n "$card" ] || {
+	echo "yeti-monitor: Yeti Stereo Microphone not found" >&2
+	exit 1
+}
+
+case "${1:-status}" in
+status)
+	;;
+on)
+	set_monitor unmute
+	;;
+off)
+	set_monitor mute
+	;;
+toggle)
+	if [ "$(monitor_state)" = "on" ]; then
+		set_monitor mute
+	else
+		set_monitor unmute
+	fi
+	;;
+-h | --help)
+	usage
+	exit 0
+	;;
+*)
+	usage >&2
+	exit 2
+	;;
+esac
+
+current_state=$(monitor_state)
+printf 'Yeti direct monitoring: %s\n' "$current_state"
