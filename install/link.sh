@@ -225,6 +225,21 @@ link_codex_files() {
   fi
 }
 
+link_omp_files() {
+  omp_home="${OMP_HOME:-$HOME/.omp}"
+  omp_src="$REPO_DIR/config/omp/agent"
+
+  log ""
+  log "Linking omp-managed files..."
+
+  [ -e "$omp_src" ] || return 0
+  ensure_dir "$omp_home/agent/extensions"
+
+  link_file "$omp_src/keybindings.yml" "$omp_home/agent/keybindings.yml"
+  link_file "$omp_src/models.yml" "$omp_home/agent/models.yml"
+  link_file "$omp_src/config.yml" "$omp_home/agent/config.yml"
+  link_file "$omp_src/extensions/rcorreia.disabled" "$omp_home/agent/extensions/rcorreia.disabled"
+}
 
 main() {
   require_command "stow" "GNU Stow is required for linking"
@@ -239,7 +254,7 @@ main() {
   link_config_dirs || return 1
   link_agents_home || return 1
   link_codex_files || return 1
-
+  link_omp_files || return 1
   setup_shell_rc "$SHELL_ZSHRC"
   setup_shell_rc "$SHELL_BASHRC"
 

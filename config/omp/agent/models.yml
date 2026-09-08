@@ -1,0 +1,29 @@
+providers:
+  ninfer:
+    baseUrl: http://127.0.0.1:8181/v1
+    auth: none
+    api: openai-completions
+    compat:
+      supportsReasoningEffort: true
+      reasoningContentField: reasoning_content
+      requiresReasoningContentForToolCalls: true
+      reasoningEffortMap:
+        minimal: low
+        high: medium
+        max: xhigh
+      supportsStrictMode: false
+      supportsForcedToolChoice: false
+      supportsDeveloperRole: true
+      supportsStore: false
+    discovery:
+      type: openai-models-list
+    modelOverrides:
+      qwen3.8-27b:
+        thinking:
+          mode: effort
+          efforts: [low, medium, xhigh]
+          defaultLevel: medium
+          requiresEffort: false
+        input: [text]
+        contextWindow: 240000
+        maxTokens: 240000

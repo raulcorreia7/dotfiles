@@ -1,0 +1,14 @@
+# Reasoning:
+#   alt+,      -> rcorreia extension: decrease reasoning
+#   alt+.      -> rcorreia extension: increase reasoning
+app.thinking.cycle: []
+
+# Plan mode (codex-style): Shift+Tab toggles planning.
+app.plan.toggle:
+  - Shift+Tab
+  - Alt+Shift+P
+
+# Ctrl+E opens the draft in $VISUAL / $EDITOR (in addition to the built-in Ctrl+G).
+app.editor.external:
+  - Ctrl+G
+  - Ctrl+E
