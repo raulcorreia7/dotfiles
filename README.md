@@ -38,7 +38,7 @@ lists carry `git`, `stow`, and `zsh`; on macOS install Homebrew first
 | `./setup uninstall` | removes links/rc block, restores backups |
 | `./setup configure` | opt-in desktop/git defaults (XDG dirs, git, KDE) |
 
-Flags: `-n`/`--dry-run`, `--profile <name>`, `-h`/`--help`.
+Flags: `-n`/`--dry-run`, `-p`/`--profile <name>`, `-h`/`--help`.
 
 ## Layout
 
@@ -65,10 +65,12 @@ are skipped.
 git pull                                  # sync the clone
 ./setup --links                           # re-link after adding/removing configs or bin scripts
 exec zsh                                  # reload the shell
-stow --simulate --restow dotconfigs       # check links without changing anything (run in the repo)
+stow --dir="$DOTFILES_DIR" --target="$HOME" --simulate --restow dotconfigs   # check links without changing anything
 ```
 
-Machine-local overrides go in `env.local` at the repo root (gitignored).
+`setup` is switches-only — no environment knobs. Machine-local shell settings
+(what `init.sh` sources at startup) go in `env.local` at the repo root
+(gitignored).
 Add an app: drop `dotconfigs/.config/<app>/` in place and run `./setup --links`.
 
 ## Notes
