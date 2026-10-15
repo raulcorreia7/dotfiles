@@ -1,6 +1,0 @@
-interface:
-  display_name: "Worktrees"
-  short_description: "Predictable Git worktree workflows."
-  default_prompt: "$worktrees"
-policy:
-  allow_implicit_invocation: false
