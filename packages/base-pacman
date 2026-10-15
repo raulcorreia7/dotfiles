@@ -1,19 +1,27 @@
 # base — Arch (pacman) · every machine (minimal for now)
 # one package per line; blank lines and # comments are ignored
-fzf
-git
-# fd
-ripgrep
-eza
-wl-clipboard
-zoxide
-stow
-curl
-ttf-jetbrains-mono-nerd
-tmux
+
+# --- shell & terminal ---
 zsh
-neovim
+tmux
 mise
-lazygit
 alacritty
 ghostty
+
+# --- CLI & dev tools ---
+git
+curl
+stow
+fzf
+ripgrep
+# fd (disabled for now)
+eza
+zoxide
+wl-clipboard
+lazygit
+
+# --- editor ---
+neovim
+
+# --- fonts ---
+ttf-jetbrains-mono-nerd
