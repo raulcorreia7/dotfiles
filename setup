@@ -2,18 +2,13 @@
 # dotfiles — the one entry script: wire a machine (packages → links → rc).
 #
 # Usage:
-#   setup [-n|--dry-run] [--profile <name>] [--packages|--links] [-h|--help]
+#   setup [-n|--dry-run] [-p|--profile <name>] [--packages|--links] [-h|--help]
 #   setup uninstall [-n|--dry-run] [-h]
 #   setup configure [-n|--dry-run] [-h]
 #
 # Stages (a plain run does all of them, in order):
 #   --packages   install packages/base-<os> + packages/<profile>-<os>
 #   --links      stow dotconfigs + link bin scripts + write the shell rc block
-#
-# Environment:
-#   DOTFILES_PROFILE           preset the profile (skips the prompt)
-#   DOTFILES_SKIP_PACKAGES=1   skip package installs (links only)
-#   DOTFILES_OS                override OS detection (arch|macos|apt)
 #
 # Side effects: package installs (pacman/paru · brew bundle · apt-get),
 # symlinks under $HOME (~/.config, ~/.local/bin), conflict backups (path.bak),
@@ -28,6 +23,18 @@ BIN_DIR="$REPO_DIR/bin"
 DOTCONFIGS_DIR="$REPO_DIR/dotconfigs"
 BIN_TARGET="$HOME/.local/bin"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+PROJECTS_DIR="$HOME/projects"
+
+STOW_PACKAGE=dotconfigs
+STOW_MAX_PASSES=3
+DEFAULT_PROFILE=personal
+ALACRITTY_THEMES_REPO=https://github.com/alacritty/alacritty-theme
+PARU_AUR_URL=https://aur.archlinux.org/paru.git
+CACHYOS_ZSH_LINE='source /usr/share/cachyos-zsh-config/cachyos-config.zsh'
+APP_DIRS="$XDG_DATA_HOME/applications:/usr/local/share/applications:/usr/share/applications"
 
 DRY_RUN=0
 STAGE=all       # all | packages | links
@@ -160,15 +167,13 @@ list_profiles() {
 
 resolve_profile() {
   [ -n "$PROFILE" ] && return 0
-  if [ -n "${DOTFILES_PROFILE:-}" ]; then
-    PROFILE=$DOTFILES_PROFILE
-  elif [ -t 0 ]; then
-    available=$(list_profiles | tr '\n' ' ')
-    printf 'Profile [personal] (%s): ' "$available" >&2
+  if [ -t 0 ]; then
+    available=$(list_profiles | tr '\n' ' ' | sed 's/ $//')
+    printf 'Profile [%s] (%s): ' "$DEFAULT_PROFILE" "$available" >&2
     read -r answer || answer=""
-    PROFILE=${answer:-personal}
+    PROFILE=${answer:-$DEFAULT_PROFILE}
   else
-    die "no profile set — use --profile <name> or DOTFILES_PROFILE (available: $(list_profiles | tr '\n' ' '))"
+    die "no profile set — use --profile <name> (available: $(list_profiles | tr '\n' ' ' | sed 's/ $//'))"
   fi
   case "$PROFILE" in
   "" | */* | .*) die "invalid profile name: $PROFILE" ;;
@@ -182,7 +187,7 @@ ensure_paru() {
   note "paru not found — bootstrapping it from the AUR"
   run_sudo pacman -S --needed --noconfirm base-devel git
   build_dir=$(mktemp -d)
-  run git clone https://aur.archlinux.org/paru.git "$build_dir/paru"
+  run git clone "$PARU_AUR_URL" "$build_dir/paru"
   if [ "$DRY_RUN" = 1 ]; then
     note "would run: makepkg -si (in $build_dir/paru)"
   else
@@ -240,13 +245,14 @@ install_packages() {
 
 # --- links ------------------------------------------------------------------
 
-# stow --restow dotconfigs; on conflicts the blocking real files are backed up
-# (front, retried, max three passes)
+# stow --restow; conflicting real files are backed up and stow retried
+# (up to STOW_MAX_PASSES)
 stow_dotconfigs() {
   pass=0
-  while [ "$pass" -lt 3 ]; do
+  while [ "$pass" -lt "$STOW_MAX_PASSES" ]; do
     pass=$((pass + 1))
-    if output=$(cd "$HOME" && run stow --dir="$REPO_DIR" --target="$HOME" --restow dotconfigs 2>&1); then
+    if output=$(cd "$HOME" && run stow --dir="$REPO_DIR" --target="$HOME" \
+      --restow "$STOW_PACKAGE" 2>&1); then
       if [ -n "$output" ]; then
         if [ "$DRY_RUN" = 1 ]; then
           # run() already formatted the preview; print it as-is
@@ -274,7 +280,7 @@ stow_dotconfigs() {
 $conflicts
 EOF
   done
-  die "stow still reports conflicts after 3 backup passes"
+  die "stow still reports conflicts after $STOW_MAX_PASSES backup passes"
 }
 
 link_bin_scripts() {
@@ -297,11 +303,12 @@ link_bin_scripts() {
 }
 
 clone_alacritty_themes() {
-  themes_dir="$DOTCONFIGS_DIR/.config/alacritty/themes"
-  [ -d "$DOTCONFIGS_DIR/.config/alacritty" ] || return 0
+  config_dir="$DOTCONFIGS_DIR/.config/alacritty"
+  themes_dir="$config_dir/themes"
+  [ -d "$config_dir" ] || return 0
   [ -d "$themes_dir" ] && return 0
   note "cloning alacritty themes"
-  run git clone https://github.com/alacritty/alacritty-theme "$themes_dir"
+  run git clone "$ALACRITTY_THEMES_REPO" "$themes_dir"
 }
 
 # drop any previous or legacy dotfiles block from an rc file
@@ -352,7 +359,7 @@ update_rc_file() {
 
 link_all() {
   require_command stow "GNU Stow is required — install the 'stow' package and re-run"
-  note "stow --restow dotconfigs"
+  note "stow --restow $STOW_PACKAGE"
   stow_dotconfigs
   link_bin_scripts
   clone_alacritty_themes
@@ -378,12 +385,12 @@ verify_and_report() {
     printf 'checked:  git · stow · zsh\n'
   fi
   printf 'next:     exec zsh\n'
-  printf 'links:    stow --simulate --restow dotconfigs\n'
+  printf 'links:    stow --dir="%s" --target="$HOME" --simulate --restow %s\n' "$REPO_DIR" "$STOW_PACKAGE"
 }
 
 run_setup() {
   resolve_profile
-  OS=${DOTFILES_OS:-$(detect_os)}
+  OS=$(detect_os)
   case "$OS" in
   arch | macos | apt) ;;
   *) die "unsupported OS: $OS (supported: arch · macos · debian/ubuntu)" ;;
@@ -391,14 +398,10 @@ run_setup() {
 
   note "dotfiles setup — profile $PROFILE · os $OS · stage $STAGE"
 
-  run mkdir -p "$HOME/.config" "$BIN_TARGET"
+  run mkdir -p "$XDG_CONFIG_HOME" "$BIN_TARGET"
 
   if [ "$STAGE" = all ] || [ "$STAGE" = packages ]; then
-    if [ "${DOTFILES_SKIP_PACKAGES:-0}" = 1 ]; then
-      note "DOTFILES_SKIP_PACKAGES=1 — skipping packages"
-    else
-      install_packages
-    fi
+    install_packages
   fi
 
   if [ "$STAGE" = all ] || [ "$STAGE" = links ]; then
@@ -450,11 +453,12 @@ restore_backups() {
 
 run_uninstall() {
   require_command stow "GNU Stow is required to remove the links"
-  note "unstowing dotconfigs"
+  note "unstowing $STOW_PACKAGE"
   if [ "$DRY_RUN" = 1 ]; then
-    note "would run: stow --delete dotconfigs"
+    note "would run: stow --delete $STOW_PACKAGE"
   else
-    if output=$(cd "$HOME" && stow --dir="$REPO_DIR" --target="$HOME" --delete dotconfigs 2>&1); then
+    if output=$(cd "$HOME" && stow --dir="$REPO_DIR" --target="$HOME" \
+      --delete "$STOW_PACKAGE" 2>&1); then
       [ -n "$output" ] && note "$output"
     else
       warn "stow reported issues while deleting (links may be partly removed):"
@@ -497,14 +501,13 @@ run_uninstall() {
   printf 'backups left on disk (if any): <path>.bak[.N]\n'
 }
 
-# --- configure (opt-in) -----------------------------------------------------
+# --- desktop defaults (KDE) -------------------------------------------------
 
 desktop_entry_exists() {
   entry=$1
-  dirs="${DOTFILES_APPLICATION_DIRS:-$HOME/.local/share/applications:/usr/local/share/applications:/usr/share/applications}"
   old_ifs=$IFS
   IFS=:
-  for dir in $dirs; do
+  for dir in $APP_DIRS; do
     if [ -f "$dir/$entry" ]; then
       IFS=$old_ifs
       return 0
@@ -530,14 +533,8 @@ is_kde_desktop() {
   esac
 }
 
-is_cachyos() {
-  [ -r /etc/os-release ] && (
-    . /etc/os-release
-    [ "${ID:-}" = "cachyos" ]
-  )
-}
-
-apply_kde_defaults() {
+# terminal choice + launch shortcuts via kwriteconfig6
+apply_kde_shortcuts() {
   command -v kwriteconfig6 >/dev/null 2>&1 || return 0
   desktop_entry_exists Alacritty.desktop || return 0
 
@@ -553,6 +550,7 @@ apply_kde_defaults() {
   fi
 }
 
+# default application per MIME type (entries missing on this machine are skipped)
 apply_mime_defaults() {
   command -v xdg-mime >/dev/null 2>&1 || return 0
 
@@ -584,6 +582,38 @@ apply_mime_defaults() {
   if desktop_entry_exists vesktop.desktop; then
     set_mime_default vesktop.desktop x-scheme-handler/discord
   fi
+}
+
+# copy the current KWin screen layout to the login greeter (plasmalogin/sddm)
+apply_login_display_config() {
+  is_kde_desktop || return 0
+
+  output_config="$XDG_CONFIG_HOME/kwinoutputconfig.json"
+  [ -r "$output_config" ] || return 0
+
+  greeter_user=""
+  if getent passwd plasmalogin >/dev/null 2>&1; then
+    greeter_user=plasmalogin
+  elif getent passwd sddm >/dev/null 2>&1; then
+    greeter_user=sddm
+  fi
+  [ -n "$greeter_user" ] || return 0
+
+  greeter_home=$(getent passwd "$greeter_user" | cut -d: -f6)
+  [ -n "$greeter_home" ] || return 0
+
+  note "applying the KDE display layout to the $greeter_user login screen"
+  run_sudo install -D -m 600 -o "$greeter_user" -g "$greeter_user" \
+    "$output_config" "$greeter_home/.config/kwinoutputconfig.json"
+}
+
+# --- configure (opt-in) -----------------------------------------------------
+
+is_cachyos() {
+  [ -r /etc/os-release ] && (
+    . /etc/os-release
+    [ "${ID:-}" = "cachyos" ]
+  )
 }
 
 apply_git_defaults() {
@@ -620,50 +650,28 @@ apply_zsh_default() {
   run chsh -s "$zsh_path" || warn "could not change the shell — run: chsh -s \"$zsh_path\""
 }
 
+# CachyOS ships a zsh config that overrides the prompt; disable that one line
 apply_cachyos_zsh_fixup() {
   rc_file=$HOME/.zshrc
   [ -f "$rc_file" ] || return 0
   is_cachyos || return 0
-  line='source /usr/share/cachyos-zsh-config/cachyos-config.zsh'
-  grep -Fqx "$line" "$rc_file" || return 0
-  run sh -c 'sed "s|^source /usr/share/cachyos-zsh-config/cachyos-config.zsh$|# &|" "$1" >"$1.tmp" && mv "$1.tmp" "$1"' sh "$rc_file"
+  grep -Fqx "$CACHYOS_ZSH_LINE" "$rc_file" || return 0
+  run sh -c 'sed "s|^$2\$|# &|" "$1" >"$1.tmp" && mv "$1.tmp" "$1"' sh "$rc_file" "$CACHYOS_ZSH_LINE"
   note "disabled the CachyOS zsh config in $rc_file"
-}
-
-apply_login_display_config() {
-  is_kde_desktop || return 0
-
-  output_config="$XDG_CONFIG_HOME/kwinoutputconfig.json"
-  [ -r "$output_config" ] || return 0
-
-  greeter_user=""
-  if getent passwd plasmalogin >/dev/null 2>&1; then
-    greeter_user=plasmalogin
-  elif getent passwd sddm >/dev/null 2>&1; then
-    greeter_user=sddm
-  fi
-  [ -n "$greeter_user" ] || return 0
-
-  greeter_home=$(getent passwd "$greeter_user" | cut -d: -f6)
-  [ -n "$greeter_home" ] || return 0
-
-  note "applying the KDE display layout to the $greeter_user login screen"
-  run_sudo install -D -m 600 -o "$greeter_user" -g "$greeter_user" \
-    "$output_config" "$greeter_home/.config/kwinoutputconfig.json"
 }
 
 run_configure() {
   note "dotfiles configure — desktop + git defaults (opt-in)"
-  run mkdir -p "$HOME/.config" "$HOME/.cache" "$HOME/.local/state" "$BIN_TARGET" "$HOME/projects"
+  run mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$BIN_TARGET" "$PROJECTS_DIR"
   ensure_line_in_file "$HOME/.zshrc" 'export PATH="$HOME/.local/bin:$PATH"'
   apply_cachyos_zsh_fixup
   apply_zsh_default
   apply_git_defaults
   if is_kde_desktop; then
-    apply_kde_defaults
+    apply_kde_shortcuts
     apply_mime_defaults
+    apply_login_display_config
   fi
-  apply_login_display_config
   printf '\nconfigured: xdg dirs · ~/projects · zsh shell · git defaults · desktop defaults (KDE only)\n'
 }
 
