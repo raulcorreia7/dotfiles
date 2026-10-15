@@ -1,17 +1,17 @@
-# FILE AUTOMATICALLY GENERATED FROM /home/rcorreia/.dotfiles/config/.zimrc
-# EDIT THE SOURCE FILE AND THEN RUN zimfw build. DO NOT DIRECTLY EDIT THIS FILE!
+# zimfw init — generated from .zimrc; module paths are $ZIM_HOME-relative so the clone can live anywhere.
+# After editing .zimrc: ZIM_HOME=$PWD/zimfw zimfw build (then re-relativize the paths it writes).
 
 if [[ -e ${ZIM_CONFIG_FILE:-${ZDOTDIR:-${HOME}}/.zimrc} ]] zimfw() { source "/usr/share/zimfw/zimfw.zsh" "${@}" }
-fpath=("${HOME}/.dotfiles/config/zimfw/modules/git/functions" "${HOME}/.dotfiles/config/zimfw/modules/utility/functions" "${HOME}/.dotfiles/config/zimfw/modules/duration-info/functions" "${HOME}/.dotfiles/config/zimfw/modules/git-info/functions" "${HOME}/.dotfiles/config/zimfw/modules/zsh-completions/src" "${HOME}/.dotfiles/config/zimfw/modules/completion/functions" ${fpath})
+fpath=("${ZIM_HOME}/modules/git/functions" "${ZIM_HOME}/modules/utility/functions" "${ZIM_HOME}/modules/duration-info/functions" "${ZIM_HOME}/modules/git-info/functions" "${ZIM_HOME}/modules/zsh-completions/src" "${ZIM_HOME}/modules/completion/functions" ${fpath})
 autoload -Uz -- git-alias-lookup git-branch-current git-branch-delete-interactive git-branch-remote-tracking git-dir git-ignore-add git-root git-stash-clear-interactive git-stash-recover git-submodule-move git-submodule-remove mkcd mkpw duration-info-precmd duration-info-preexec coalesce git-action git-info
-source "${HOME}/.dotfiles/config/zimfw/modules/environment/init.zsh"
-source "${HOME}/.dotfiles/config/zimfw/modules/git/init.zsh"
-source "${HOME}/.dotfiles/config/zimfw/modules/input/init.zsh"
-source "${HOME}/.dotfiles/config/zimfw/modules/termtitle/init.zsh"
-source "${HOME}/.dotfiles/config/zimfw/modules/utility/init.zsh"
-source "${HOME}/.dotfiles/config/zimfw/modules/duration-info/init.zsh"
-source "${HOME}/.dotfiles/config/zimfw/modules/asciiship/asciiship.zsh-theme"
-source "${HOME}/.dotfiles/config/zimfw/modules/completion/init.zsh"
-source "${HOME}/.dotfiles/config/zimfw/modules/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-source "${HOME}/.dotfiles/config/zimfw/modules/zsh-history-substring-search/zsh-history-substring-search.zsh"
-source "${HOME}/.dotfiles/config/zimfw/modules/zsh-autosuggestions/zsh-autosuggestions.zsh"
+source "${ZIM_HOME}/modules/environment/init.zsh"
+source "${ZIM_HOME}/modules/git/init.zsh"
+source "${ZIM_HOME}/modules/input/init.zsh"
+source "${ZIM_HOME}/modules/termtitle/init.zsh"
+source "${ZIM_HOME}/modules/utility/init.zsh"
+source "${ZIM_HOME}/modules/duration-info/init.zsh"
+source "${ZIM_HOME}/modules/asciiship/asciiship.zsh-theme"
+source "${ZIM_HOME}/modules/completion/init.zsh"
+source "${ZIM_HOME}/modules/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+source "${ZIM_HOME}/modules/zsh-history-substring-search/zsh-history-substring-search.zsh"
+source "${ZIM_HOME}/modules/zsh-autosuggestions/zsh-autosuggestions.zsh"

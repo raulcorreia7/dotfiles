@@ -1,13 +1,4 @@
-# personal — macOS (Homebrew)
+# personal — macOS (Homebrew) · personal machines (minimal for now)
+# Homebrew Bundle file: brew "formula" / cask "app"
 cask "rectangle"
-cask "alt-tab"
-cask "flameshot"
 cask "obsidian"
-cask "firefox"
-cask "google-chrome"
-cask "chatgpt"
-cask "chatbox"
-cask "keepassxc"
-cask "deskreen"
-cask "neardrop"
-cask "duet"
