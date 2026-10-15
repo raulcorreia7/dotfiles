@@ -1,14 +1,9 @@
-# work — macOS (Homebrew)
+# work — macOS (Homebrew) · work machines (minimal for now)
+# Homebrew Bundle file: brew "formula" / cask "app"
 brew "awscli"
 brew "aws-vault"
-brew "android-platform-tools"
-brew "scrcpy"
 
+# casks
 cask "microsoft-teams"
-cask "bruno"
-cask "dbeaver-community"
-cask "db-browser-for-sqlite"
-cask "mongodb-compass"
-cask "postman"
 cask "docker"
 cask "docker-desktop"
