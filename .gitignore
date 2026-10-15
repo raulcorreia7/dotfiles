@@ -1,4 +1,4 @@
-# Machine-local env overrides (source of truth: env.local.example? no — just create it)
+# Machine-local shell overrides; init.sh sources this file. Create it yourself.
 env.local
 
 # Machine-local lock files
