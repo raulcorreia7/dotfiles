@@ -1,3 +1,6 @@
+# Machine-local env overrides (source of truth: env.local.example? no — just create it)
+env.local
+
 # Machine-local lock files
 **/lazy-lock.json
 **/package-lock.json
