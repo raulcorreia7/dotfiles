@@ -1,6 +1,0 @@
-interface:
-  display_name: "Teach"
-  short_description: "Manual multi-session teaching workspace."
-  default_prompt: "$teach"
-policy:
-  allow_implicit_invocation: false
