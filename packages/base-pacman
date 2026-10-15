@@ -19,6 +19,7 @@ eza
 zoxide
 wl-clipboard
 lazygit
+openai-codex
 
 # --- editor ---
 neovim

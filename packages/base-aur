@@ -4,8 +4,5 @@
 # --- shell & terminal ---
 zimfw
 
-# --- CLI & dev tools ---
-openai-codex-bin
-
 # --- editor ---
 visual-studio-code-bin
