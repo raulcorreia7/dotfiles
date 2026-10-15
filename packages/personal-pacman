@@ -1,4 +1,6 @@
 # personal — Arch (pacman) · personal machines (minimal for now)
 # one package per line; blank lines and # comments are ignored
+
+# --- applications ---
 firefox
 bitwarden

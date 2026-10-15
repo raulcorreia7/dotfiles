@@ -1,13 +1,19 @@
 # base — Debian/Ubuntu (apt) · every machine (minimal for now)
 # one package per line; blank lines and # comments are ignored
+
+# --- shell & terminal ---
+zsh
+tmux
+
+# --- CLI & dev tools ---
 git
+curl
+stow
 fzf
 ripgrep
 fd-find
 eza
 zoxide
-curl
-stow
-zsh
-tmux
+
+# --- editor ---
 neovim
