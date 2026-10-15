@@ -3,5 +3,5 @@
 
 # --- applications (casks) ---
 # cask "microsoft-teams" (disabled for now)
-cask "docker"
+# cask "docker" is the legacy name for docker-desktop — keep only the current one
 cask "docker-desktop"
