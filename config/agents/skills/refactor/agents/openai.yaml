@@ -1,4 +1,0 @@
-interface:
-  display_name: "Refactor"
-  short_description: "Behavior-preserving simplification and structure changes."
-  default_prompt: "$refactor"

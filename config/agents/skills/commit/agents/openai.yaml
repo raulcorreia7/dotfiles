@@ -1,6 +1,0 @@
-interface:
-  display_name: "Commit"
-  short_description: "Focused staging and commit messages."
-  default_prompt: "$commit"
-policy:
-  allow_implicit_invocation: false

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Scripts"
-  short_description: "Safe developer automation and CLI helpers."
-  default_prompt: "$scripts"
