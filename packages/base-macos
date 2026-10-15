@@ -2,7 +2,7 @@
 # Homebrew Bundle file: brew "formula" / cask "app"
 brew "fzf"
 brew "git"
-brew "fd"
+# brew "fd"
 brew "ripgrep"
 brew "eza"
 brew "zoxide"
@@ -11,7 +11,7 @@ brew "curl"
 brew "mise"
 brew "neovim"
 brew "lazygit"
-brew "zellij"
+# brew "zellij"
 
 # casks
 cask "ghostty"
