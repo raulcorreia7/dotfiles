@@ -1,4 +1,4 @@
 # personal — macOS (Homebrew) · personal machines (minimal for now)
 # Homebrew Bundle file: brew "formula" / cask "app"
-cask "rectangle"
+# cask "rectangle"
 cask "obsidian"

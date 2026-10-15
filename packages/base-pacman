@@ -2,7 +2,7 @@
 # one package per line; blank lines and # comments are ignored
 fzf
 git
-fd
+# fd
 ripgrep
 eza
 wl-clipboard
