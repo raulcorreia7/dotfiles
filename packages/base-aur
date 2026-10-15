@@ -1,4 +1,11 @@
 # base — Arch (AUR) · every machine
-openai-codex-bin
+# one package per line; blank lines and # comments are ignored
+
+# --- shell & terminal ---
 zimfw
+
+# --- CLI & dev tools ---
+openai-codex-bin
+
+# --- editor ---
 visual-studio-code-bin

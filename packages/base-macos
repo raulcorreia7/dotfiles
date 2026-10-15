@@ -1,18 +1,24 @@
 # base — macOS (Homebrew) · every machine (minimal for now)
 # Homebrew Bundle file: brew "formula" / cask "app"
-brew "fzf"
+
+# --- shell & terminal ---
+# brew "zellij" (disabled for now)
+
+# --- CLI & dev tools ---
 brew "git"
-# brew "fd"
+brew "curl"
+brew "stow"
+brew "fzf"
 brew "ripgrep"
+# brew "fd" (disabled for now)
 brew "eza"
 brew "zoxide"
-brew "stow"
-brew "curl"
 brew "mise"
-brew "neovim"
 brew "lazygit"
-# brew "zellij"
 
-# casks
+# --- editor ---
+brew "neovim"
+
+# --- applications (casks) ---
 cask "ghostty"
 cask "visual-studio-code"
