@@ -1,9 +1,9 @@
 # work — macOS (Homebrew) · work machines (minimal for now)
 # Homebrew Bundle file: brew "formula" / cask "app"
-brew "awscli"
-brew "aws-vault"
+# brew "awscli"
+# brew "aws-vault"
 
 # casks
-cask "microsoft-teams"
+# cask "microsoft-teams"
 cask "docker"
 cask "docker-desktop"
