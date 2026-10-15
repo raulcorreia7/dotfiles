@@ -1,0 +1,14 @@
+# work — macOS (Homebrew)
+brew "awscli"
+brew "aws-vault"
+brew "android-platform-tools"
+brew "scrcpy"
+
+cask "microsoft-teams"
+cask "bruno"
+cask "dbeaver-community"
+cask "db-browser-for-sqlite"
+cask "mongodb-compass"
+cask "postman"
+cask "docker"
+cask "docker-desktop"

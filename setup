@@ -1,0 +1,723 @@
+#!/bin/sh
+# dotfiles — the one entry script: wire a machine (packages → links → rc).
+#
+# Usage:
+#   setup [-n|--dry-run] [--profile <name>] [--packages|--links] [-h|--help]
+#   setup uninstall [-n|--dry-run] [-h]
+#   setup configure [-n|--dry-run] [-h]
+#
+# Stages (a plain run does all of them, in order):
+#   --packages   install packages/base-<os> + packages/<profile>-<os>
+#   --links      stow dotconfigs + link bin scripts + write the shell rc block
+#
+# Environment:
+#   DOTFILES_PROFILE           preset the profile (skips the prompt)
+#   DOTFILES_SKIP_PACKAGES=1   skip package installs (links only)
+#   DOTFILES_OS                override OS detection (arch|macos|apt)
+#
+# Side effects: package installs (pacman/paru · brew bundle · apt-get),
+# symlinks under $HOME (~/.config, ~/.local/bin), conflict backups (path.bak),
+# and a marker block in ~/.zshrc / ~/.bashrc. Never deletes unowned files.
+# --dry-run prints every planned change and writes nothing.
+
+set -eu
+
+REPO_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+PACKAGES_DIR="$REPO_DIR/packages"
+BIN_DIR="$REPO_DIR/bin"
+DOTCONFIGS_DIR="$REPO_DIR/dotconfigs"
+BIN_TARGET="$HOME/.local/bin"
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+DRY_RUN=0
+STAGE=all       # all | packages | links
+COMMAND=setup   # setup | uninstall | configure
+PROFILE=""
+OS=""
+
+if [ "$(id -u)" = "0" ]; then SUDO=""; else SUDO="sudo"; fi
+
+# --- output -----------------------------------------------------------------
+
+note() { printf '[setup] %s\n' "$*" >&2; }
+warn() { printf '[setup] warning: %s\n' "$*" >&2; }
+die() {
+  printf '[setup] error: %s\n' "$*" >&2
+  exit 1
+}
+
+usage() {
+  sed -n '/^#!/,/^$/p' "$0" | sed '1d;$d'
+}
+
+# run CMD... — execute unless --dry-run, where the command is printed instead.
+run() {
+  if [ "$DRY_RUN" = 1 ]; then
+    note "would run: $*"
+    return 0
+  fi
+  "$@"
+}
+
+run_sudo() {
+  if [ -n "$SUDO" ]; then
+    run "$SUDO" "$@"
+  else
+    run "$@"
+  fi
+}
+
+# --- small helpers ----------------------------------------------------------
+
+count_lines() {
+  awk 'NF { c++ } END { print c+0 }'
+}
+
+read_list() {
+  [ -f "$1" ] || return 0
+  sed -e 's/#.*//' -e 's/[[:space:]]*$//' -e '/^[[:space:]]*$/d' "$1"
+}
+
+# collect the package names for one OS token from base + profile lists
+collect_packages() {
+  os_key=$1
+  {
+    read_list "$PACKAGES_DIR/base-$os_key"
+    read_list "$PACKAGES_DIR/$PROFILE-$os_key"
+  }
+}
+
+# next free backup path: path.bak, then path.bak.1, path.bak.2, …
+next_backup_path() {
+  backup="$1.bak"
+  index=0
+  while [ -e "$backup" ] || [ -L "$backup" ]; do
+    index=$((index + 1))
+    backup="$1.bak.$index"
+  done
+  printf '%s\n' "$backup"
+}
+
+back_up() {
+  backup=$(next_backup_path "$1")
+  warn "conflict: $1 exists → backed up to $backup"
+  run mv "$1" "$backup"
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || die "${2:-$1 is required}"
+}
+
+ensure_line_in_file() {
+  file=$1
+  line=$2
+  [ -f "$file" ] || return 0
+  grep -Fqx "$line" "$file" && return 0
+  run sh -c 'printf "\n%s\n" "$1" >>"$2"' sh "$line" "$file"
+}
+
+detect_os() {
+  case "$(uname -s)" in
+  Darwin) printf 'macos\n' ;;
+  Linux)
+    if [ -f /etc/arch-release ] || [ -f /etc/cachyos-release ]; then
+      printf 'arch\n'
+    elif [ -r /etc/os-release ]; then
+      os_id=$(uname -s)
+      # shellcheck disable=SC1091
+      os_id=$(. /etc/os-release && printf '%s' "${ID_LIKE:-${ID:-$os_id}}")
+      case "$os_id" in
+      *arch*) printf 'arch\n' ;;
+      *debian* | *ubuntu*) printf 'apt\n' ;;
+      *) printf 'linux\n' ;;
+      esac
+    else
+      printf 'linux\n'
+    fi
+    ;;
+  *) printf 'unknown\n' ;;
+  esac
+}
+
+# --- profiles ---------------------------------------------------------------
+
+list_profiles() {
+  {
+    for file in "$PACKAGES_DIR"/*-*; do
+      [ -f "$file" ] || continue
+      name=${file##*/}
+      name=${name%-*}
+      [ "$name" = base ] || printf '%s\n' "$name"
+    done
+    for dir in "$BIN_DIR"/*/; do
+      [ -d "$dir" ] || continue
+      name=${dir%/}
+      name=${name##*/}
+      [ "$name" = base ] || printf '%s\n' "$name"
+    done
+  } | sort -u
+}
+
+resolve_profile() {
+  [ -n "$PROFILE" ] && return 0
+  if [ -n "${DOTFILES_PROFILE:-}" ]; then
+    PROFILE=$DOTFILES_PROFILE
+  elif [ -t 0 ]; then
+    available=$(list_profiles | tr '\n' ' ')
+    printf 'Profile [personal] (%s): ' "$available" >&2
+    read -r answer || answer=""
+    PROFILE=${answer:-personal}
+  else
+    die "no profile set — use --profile <name> or DOTFILES_PROFILE (available: $(list_profiles | tr '\n' ' '))"
+  fi
+  case "$PROFILE" in
+  "" | */* | .*) die "invalid profile name: $PROFILE" ;;
+  esac
+}
+
+# --- packages ---------------------------------------------------------------
+
+ensure_paru() {
+  command -v paru >/dev/null 2>&1 && return 0
+  note "paru not found — bootstrapping it from the AUR"
+  run_sudo pacman -S --needed --noconfirm base-devel git
+  build_dir=$(mktemp -d)
+  run git clone https://aur.archlinux.org/paru.git "$build_dir/paru"
+  if [ "$DRY_RUN" = 1 ]; then
+    note "would run: makepkg -si (in $build_dir/paru)"
+  else
+    (
+      cd "$build_dir/paru"
+      makepkg -si --noconfirm
+    )
+  fi
+  rm -rf "$build_dir"
+}
+
+install_arch() {
+  packages=$(collect_packages pacman)
+  if [ -n "$packages" ]; then
+    note "installing pacman packages ($(printf '%s\n' "$packages" | count_lines))"
+    # shellcheck disable=SC2086
+    run_sudo pacman -S --needed --noconfirm $packages
+  fi
+
+  aur_packages=$(collect_packages aur)
+  if [ -n "$aur_packages" ]; then
+    ensure_paru
+    note "installing AUR packages ($(printf '%s\n' "$aur_packages" | count_lines))"
+    # shellcheck disable=SC2086
+    run paru -S --needed --noconfirm $aur_packages
+  fi
+}
+
+install_macos() {
+  command -v brew >/dev/null 2>&1 || die "Homebrew is required on macOS — install it first:
+  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+  for file in "$PACKAGES_DIR/base-macos" "$PACKAGES_DIR/$PROFILE-macos"; do
+    [ -f "$file" ] || continue
+    note "brew bundle --file ${file#"$REPO_DIR"/}"
+    run brew bundle --file "$file" --no-lock
+  done
+}
+
+install_apt() {
+  packages=$(collect_packages apt)
+  [ -n "$packages" ] || return 0
+  note "installing apt packages ($(printf '%s\n' "$packages" | count_lines))"
+  run_sudo apt-get update -qq
+  # shellcheck disable=SC2086
+  run_sudo apt-get install -y $packages
+}
+
+install_packages() {
+  case "$OS" in
+  arch) install_arch ;;
+  macos) install_macos ;;
+  apt) install_apt ;;
+  esac
+}
+
+# --- links ------------------------------------------------------------------
+
+# stow --restow dotconfigs; on conflicts the blocking real files are backed up
+# (front, retried, max three passes)
+stow_dotconfigs() {
+  pass=0
+  while [ "$pass" -lt 3 ]; do
+    pass=$((pass + 1))
+    if output=$(cd "$HOME" && run stow --dir="$REPO_DIR" --target="$HOME" --restow dotconfigs 2>&1); then
+      [ -n "$output" ] && note "$output"
+      return 0
+    fi
+    [ "$DRY_RUN" = 1 ] && return 0
+    conflicts=$(printf '%s\n' "$output" | sed -n 's/^.*existing target is not owned by stow: //p')
+    [ -n "$conflicts" ] || {
+      printf '%s\n' "$output" >&2
+      return 1
+    }
+    while IFS= read -r path; do
+      [ -n "$path" ] || continue
+      case "$path" in
+      /*) target=$path ;;
+      *) target=$HOME/$path ;;
+      esac
+      back_up "$target"
+    done <<EOF
+$conflicts
+EOF
+  done
+  die "stow still reports conflicts after 3 backup passes"
+}
+
+link_bin_scripts() {
+  for dir in "$BIN_DIR/base" "$BIN_DIR/$PROFILE"; do
+    [ -d "$dir" ] || continue
+    for script in "$dir"/*; do
+      [ -f "$script" ] || continue
+      target="$BIN_TARGET/${script##*/}"
+      if [ -L "$target" ]; then
+        case "$(readlink "$target")" in
+        "$REPO_DIR"/*) run rm -f "$target" ;;
+        *) back_up "$target" ;;
+        esac
+      elif [ -e "$target" ]; then
+        back_up "$target"
+      fi
+      run ln -s "$script" "$target"
+    done
+  done
+}
+
+clone_alacritty_themes() {
+  themes_dir="$DOTCONFIGS_DIR/.config/alacritty/themes"
+  [ -d "$DOTCONFIGS_DIR/.config/alacritty" ] || return 0
+  [ -d "$themes_dir" ] && return 0
+  note "cloning alacritty themes"
+  run git clone https://github.com/alacritty/alacritty-theme "$themes_dir"
+}
+
+# drop any previous or legacy dotfiles block from an rc file
+strip_rc_block() {
+  awk '
+    /^# dotfiles$/ { skip = 1; next }
+    /^# Source dotfiles$/ { skip = 1; next }
+    skip == 1 { if ($0 ~ /init\.sh/) skip = 0; next }
+    { print }
+  ' "$1" >"$2"
+}
+
+# rewrite one shell rc file: drop any previous/legacy dotfiles block, append
+# the current one. Unchanged files are left alone.
+update_rc_file() {
+  rc_file=$1
+  if [ ! -f "$rc_file" ]; then
+    if [ "$DRY_RUN" = 1 ]; then
+      note "would create $rc_file with the dotfiles block"
+      return 0
+    fi
+    touch "$rc_file"
+    note "created $rc_file"
+  fi
+
+  filtered=$(mktemp)
+  updated=$(mktemp)
+  strip_rc_block "$rc_file" "$filtered"
+  {
+    cat "$filtered"
+    printf '%s\n' "# dotfiles"
+    printf 'export DOTFILES_DIR="%s"\n' "$REPO_DIR"
+    printf '%s\n' '[ -r "$DOTFILES_DIR/init.sh" ] && . "$DOTFILES_DIR/init.sh"'
+  } >"$updated"
+
+  if cmp -s "$rc_file" "$updated"; then
+    rm -f "$filtered" "$updated"
+    return 0
+  fi
+  if [ "$DRY_RUN" = 1 ]; then
+    note "would update the dotfiles block in $rc_file (DOTFILES_DIR=$REPO_DIR)"
+  else
+    cat "$updated" >"$rc_file"
+    note "updated $rc_file (DOTFILES_DIR=$REPO_DIR)"
+  fi
+  rm -f "$filtered" "$updated"
+}
+
+link_all() {
+  require_command stow "GNU Stow is required — install the 'stow' package and re-run"
+  note "stow --restow dotconfigs"
+  stow_dotconfigs
+  link_bin_scripts
+  clone_alacritty_themes
+  update_rc_file "$HOME/.zshrc"
+  [ -f "$HOME/.bashrc" ] && update_rc_file "$HOME/.bashrc"
+  return 0
+}
+
+# --- setup (plain run) ------------------------------------------------------
+
+verify_and_report() {
+  missing=""
+  for tool in git stow zsh; do
+    command -v "$tool" >/dev/null 2>&1 || missing="$missing $tool"
+  done
+  printf '\n'
+  printf 'profile:  %s\n' "$PROFILE"
+  printf 'os:       %s\n' "$OS"
+  printf 'stage:    %s\n' "$STAGE"
+  if [ -n "$missing" ]; then
+    warn "missing:${missing} — install and re-run"
+  else
+    printf 'checked:  git · stow · zsh\n'
+  fi
+  printf 'next:     exec zsh\n'
+  printf 'links:    stow --simulate --restow dotconfigs\n'
+}
+
+run_setup() {
+  resolve_profile
+  OS=${DOTFILES_OS:-$(detect_os)}
+  case "$OS" in
+  arch | macos | apt) ;;
+  *) die "unsupported OS: $OS (supported: arch · macos · debian/ubuntu)" ;;
+  esac
+
+  note "dotfiles setup — profile $PROFILE · os $OS · stage $STAGE"
+
+  run mkdir -p "$HOME/.config" "$BIN_TARGET"
+
+  if [ "$STAGE" = all ] || [ "$STAGE" = packages ]; then
+    if [ "${DOTFILES_SKIP_PACKAGES:-0}" = 1 ]; then
+      note "DOTFILES_SKIP_PACKAGES=1 — skipping packages"
+    else
+      install_packages
+    fi
+  fi
+
+  if [ "$STAGE" = all ] || [ "$STAGE" = links ]; then
+    link_all
+  fi
+
+  verify_and_report
+}
+
+# --- uninstall --------------------------------------------------------------
+
+restore_backups() {
+  find "$XDG_CONFIG_HOME" "$BIN_TARGET" \( -name '*.bak' -o -name '*.bak.[0-9]*' \) 2>/dev/null |
+    sed 's/\.bak\(\.[0-9]*\)\{0,1\}$//' | sort -u |
+    while IFS= read -r orig; do
+      [ -n "$orig" ] || continue
+      best=""
+      for candidate in "$orig.bak" "$orig".bak.[0-9]*; do
+        [ -e "$candidate" ] || [ -L "$candidate" ] || continue
+        if [ -z "$best" ]; then
+          best=$candidate
+          continue
+        fi
+        case "$best" in
+        *.bak) best=$candidate ;;
+        *)
+          new_index=${candidate##*.}
+          old_index=${best##*.}
+          case "$new_index" in *[!0-9]* | "") continue ;; esac
+          if [ "$new_index" -gt "$old_index" ]; then best=$candidate; fi
+          ;;
+        esac
+      done
+      [ -n "$best" ] || continue
+      if [ -L "$orig" ]; then
+        run rm -f "$orig"
+      elif [ -e "$orig" ]; then
+        warn "not restoring $best — $orig exists (remove it first)"
+        continue
+      fi
+      run mv "$best" "$orig"
+      note "restored ${orig#"$HOME"/} from ${best##*/}"
+    done
+}
+
+run_uninstall() {
+  require_command stow "GNU Stow is required to remove the links"
+  note "unstowing dotconfigs"
+  if [ "$DRY_RUN" = 1 ]; then
+    note "would run: stow --delete dotconfigs"
+  else
+    if output=$(cd "$HOME" && stow --dir="$REPO_DIR" --target="$HOME" --delete dotconfigs 2>&1); then
+      [ -n "$output" ] && note "$output"
+    else
+      warn "stow reported issues while deleting (links may be partly removed):"
+      printf '%s\n' "$output" >&2
+    fi
+  fi
+
+  for link in "$BIN_TARGET"/* "$BIN_TARGET"/.[!.]*; do
+    [ -L "$link" ] || continue
+    case "$(readlink "$link")" in
+    "$REPO_DIR"/*)
+      note "removing bin link ${link#"$HOME"/}"
+      run rm -f "$link"
+      ;;
+    esac
+  done
+
+  restore_backups
+
+  for rc_file in "$HOME/.zshrc" "$HOME/.bashrc"; do
+    [ -f "$rc_file" ] || continue
+    filtered=$(mktemp)
+    strip_rc_block "$rc_file" "$filtered"
+    if cmp -s "$rc_file" "$filtered"; then
+      rm -f "$filtered"
+      continue
+    fi
+    if [ "$DRY_RUN" = 1 ]; then
+      note "would remove the dotfiles block from $rc_file"
+      rm -f "$filtered"
+    else
+      cat "$filtered" >"$rc_file"
+      rm -f "$filtered"
+      note "removed the dotfiles block from $rc_file"
+    fi
+  done
+
+  printf '\n'
+  printf 'uninstalled: links removed · bin links removed · backups restored · rc block stripped\n'
+  printf 'backups left on disk (if any): <path>.bak[.N]\n'
+}
+
+# --- configure (opt-in) -----------------------------------------------------
+
+desktop_entry_exists() {
+  entry=$1
+  dirs="${DOTFILES_APPLICATION_DIRS:-$HOME/.local/share/applications:/usr/local/share/applications:/usr/share/applications}"
+  old_ifs=$IFS
+  IFS=:
+  for dir in $dirs; do
+    if [ -f "$dir/$entry" ]; then
+      IFS=$old_ifs
+      return 0
+    fi
+  done
+  IFS=$old_ifs
+  return 1
+}
+
+set_mime_default() {
+  entry=$1
+  shift
+  desktop_entry_exists "$entry" || return 0
+  for mime in "$@"; do
+    run xdg-mime default "$entry" "$mime" || warn "failed to set $mime → $entry"
+  done
+}
+
+is_kde_desktop() {
+  case "${XDG_CURRENT_DESKTOP:-}:${DESKTOP_SESSION:-}" in
+  *KDE* | *kde* | *Plasma* | *plasma*) return 0 ;;
+  *) return 1 ;;
+  esac
+}
+
+is_cachyos() {
+  [ -r /etc/os-release ] && (
+    . /etc/os-release
+    [ "${ID:-}" = "cachyos" ]
+  )
+}
+
+apply_kde_defaults() {
+  command -v kwriteconfig6 >/dev/null 2>&1 || return 0
+  desktop_entry_exists Alacritty.desktop || return 0
+
+  run kwriteconfig6 --file kdeglobals --group General --key TerminalApplication --notify alacritty
+  run kwriteconfig6 --file kdeglobals --group General --key TerminalService --notify Alacritty.desktop
+  run kwriteconfig6 --file kglobalshortcutsrc --group services --group Alacritty.desktop --key _launch --notify "Ctrl+Alt+T"
+
+  if desktop_entry_exists com.mitchellh.ghostty.desktop; then
+    run kwriteconfig6 --file kglobalshortcutsrc --group services --group com.mitchellh.ghostty.desktop --key _launch --notify ""
+  fi
+  if desktop_entry_exists org.kde.konsole.desktop; then
+    run kwriteconfig6 --file kglobalshortcutsrc --group services --group org.kde.konsole.desktop --key _launch --notify none
+  fi
+}
+
+apply_mime_defaults() {
+  command -v xdg-mime >/dev/null 2>&1 || return 0
+
+  set_mime_default firefox.desktop \
+    x-scheme-handler/http x-scheme-handler/https x-scheme-handler/mailto \
+    text/html application/xhtml+xml application/xml text/xml application/pdf
+
+  set_mime_default code.desktop \
+    text/plain application/json application/x-shellscript \
+    text/x-c text/x-c++src text/x-chdr text/x-c++hdr \
+    text/x-java text/x-python text/x-script.python text/x-lua text/x-rust text/markdown
+
+  set_mime_default org.kde.gwenview.desktop \
+    image/avif image/gif image/jpeg image/png image/svg+xml image/webp
+
+  set_mime_default org.kde.haruna.desktop \
+    video/mp4 video/x-matroska video/mpeg video/ogg video/quicktime video/webm
+
+  set_mime_default mpv.desktop \
+    audio/aac audio/flac audio/mp4 audio/mpeg audio/ogg audio/vnd.wave audio/webm
+
+  set_mime_default org.kde.dolphin.desktop inode/directory
+
+  set_mime_default org.kde.ark.desktop \
+    application/gzip application/vnd.rar application/x-7z-compressed \
+    application/x-bzip2 application/x-compressed-tar application/x-tar \
+    application/x-xz application/zip
+
+  if desktop_entry_exists vesktop.desktop; then
+    set_mime_default vesktop.desktop x-scheme-handler/discord
+  fi
+}
+
+apply_git_defaults() {
+  command -v git >/dev/null 2>&1 || return 0
+
+  run git config --global init.defaultBranch main
+  run git config --global pull.rebase true
+  run git config --global fetch.prune true
+  run git config --global core.editor "${EDITOR:-nvim}"
+
+  if command -v delta >/dev/null 2>&1; then
+    run git config --global core.pager delta
+    run git config --global interactive.diffFilter "delta --color-only"
+    run git config --global delta.side-by-side true
+    run git config --global delta.line-numbers true
+    run git config --global delta.navigate true
+  elif command -v difft >/dev/null 2>&1; then
+    run git config --global diff.external difft
+  fi
+
+  if command -v difft >/dev/null 2>&1; then
+    run git config --global alias.dft "-c diff.external=difft diff"
+    run git config --global alias.dshow "-c diff.external=difft show --ext-diff"
+    run git config --global alias.dlog "-c diff.external=difft log -p --ext-diff"
+    run git config --global alias.dst "-c diff.external=difft stash show --ext-diff -p"
+  fi
+}
+
+apply_zsh_default() {
+  command -v zsh >/dev/null 2>&1 || return 0
+  zsh_path=$(command -v zsh)
+  [ "${SHELL:-}" = "$zsh_path" ] && return 0
+  note "setting the default shell to zsh"
+  run chsh -s "$zsh_path" || warn "could not change the shell — run: chsh -s \"$zsh_path\""
+}
+
+apply_cachyos_zsh_fixup() {
+  rc_file=$HOME/.zshrc
+  [ -f "$rc_file" ] || return 0
+  is_cachyos || return 0
+  line='source /usr/share/cachyos-zsh-config/cachyos-config.zsh'
+  grep -Fqx "$line" "$rc_file" || return 0
+  run sh -c 'sed "s|^source /usr/share/cachyos-zsh-config/cachyos-config.zsh$|# &|" "$1" >"$1.tmp" && mv "$1.tmp" "$1"' sh "$rc_file"
+  note "disabled the CachyOS zsh config in $rc_file"
+}
+
+apply_login_display_config() {
+  is_kde_desktop || return 0
+
+  output_config="$XDG_CONFIG_HOME/kwinoutputconfig.json"
+  [ -r "$output_config" ] || return 0
+
+  greeter_user=""
+  if getent passwd plasmalogin >/dev/null 2>&1; then
+    greeter_user=plasmalogin
+  elif getent passwd sddm >/dev/null 2>&1; then
+    greeter_user=sddm
+  fi
+  [ -n "$greeter_user" ] || return 0
+
+  greeter_home=$(getent passwd "$greeter_user" | cut -d: -f6)
+  [ -n "$greeter_home" ] || return 0
+
+  note "applying the KDE display layout to the $greeter_user login screen"
+  run_sudo install -D -m 600 -o "$greeter_user" -g "$greeter_user" \
+    "$output_config" "$greeter_home/.config/kwinoutputconfig.json"
+}
+
+run_configure() {
+  note "dotfiles configure — desktop + git defaults (opt-in)"
+  run mkdir -p "$HOME/.config" "$HOME/.cache" "$HOME/.local/state" "$BIN_TARGET" "$HOME/projects"
+  ensure_line_in_file "$HOME/.zshrc" 'export PATH="$HOME/.local/bin:$PATH"'
+  apply_cachyos_zsh_fixup
+  apply_zsh_default
+  apply_git_defaults
+  if is_kde_desktop; then
+    apply_kde_defaults
+    apply_mime_defaults
+  fi
+  apply_login_display_config
+  printf '\nconfigured: xdg dirs · ~/projects · zsh shell · git defaults · desktop defaults (KDE only)\n'
+}
+
+# --- entry ------------------------------------------------------------------
+
+parse_args() {
+  case "${1:-}" in
+  uninstall | configure)
+    COMMAND=$1
+    shift
+    ;;
+  esac
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -n | --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    -p | --profile)
+      [ -n "${2:-}" ] || die "option $1 requires an argument"
+      PROFILE=$2
+      shift 2
+      ;;
+    --profile=*)
+      PROFILE=${1#--profile=}
+      shift
+      ;;
+    --packages)
+      [ "$STAGE" = links ] && die "--packages and --links are mutually exclusive"
+      STAGE=packages
+      shift
+      ;;
+    --links)
+      [ "$STAGE" = packages ] && die "--packages and --links are mutually exclusive"
+      STAGE=links
+      shift
+      ;;
+    --)
+      shift
+      [ $# -eq 0 ] || die "unexpected argument: $1"
+      ;;
+    -*)
+      die "unknown option: $1 (try --help)"
+      ;;
+    *)
+      die "unexpected argument: $1 (try --help)"
+      ;;
+    esac
+  done
+
+  [ "$COMMAND" = setup ] || [ "$STAGE" = all ] || die "stage switches only apply to a plain setup run"
+}
+
+main() {
+  parse_args "$@"
+  case "$COMMAND" in
+  setup) run_setup ;;
+  uninstall) run_uninstall ;;
+  configure) run_configure ;;
+  esac
+}
+
+main "$@"
