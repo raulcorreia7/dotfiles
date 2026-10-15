@@ -1,0 +1,18 @@
+# base — Debian/Ubuntu (apt) · every machine
+git
+fzf
+fd-find
+ripgrep
+bat
+eza
+jq
+zoxide
+curl
+wget
+stow
+zsh
+tmux
+build-essential
+shellcheck
+shfmt
+unzip
