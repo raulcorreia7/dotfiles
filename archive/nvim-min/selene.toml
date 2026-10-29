@@ -1,9 +1,0 @@
-std = 'neovim'
-
-[lints]
-# Neovim plugins use `_G` for reload-safe setup sentinels.
-global_usage = 'allow'
-# Plugin APIs intentionally use positional and named fields in the same table.
-mixed_table = 'allow'
-# StyLua intentionally compacts simple callbacks onto one line.
-multiple_statements = 'allow'
