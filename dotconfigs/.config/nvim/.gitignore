@@ -6,5 +6,3 @@ debug
 foo.*
 *.log
 data
-lua/plugins/theme-browser-selected.lua
-lazy-lock.json
