@@ -18,8 +18,6 @@ return {
   { "olimorris/onedarkpro.nvim", lazy = true },
   { "marko-cerovac/material.nvim", lazy = true },
   { "thesimonho/kanagawa-paper", branch = "neovim", lazy = true, opts = {} },
-  { "sainnhe/sonokai", lazy = true },
   { "sainnhe/edge", lazy = true },
   { "savq/melange-nvim", lazy = true },
 }
-
