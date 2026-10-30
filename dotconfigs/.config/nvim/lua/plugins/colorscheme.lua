@@ -4,11 +4,8 @@
 local file = vim.fn.stdpath("data") .. "/theme"
 
 local function saved()
-  if vim.fn.filereadable(file) ~= 1 then
-    return nil
-  end
-  local name = vim.fn.readfile(file)[1]
-  return name ~= "" and name or nil
+  local name = vim.fn.filereadable(file) == 1 and vim.fn.readfile(file)[1] or nil
+  return name and name ~= "" and name or nil
 end
 
 local function save(name)
