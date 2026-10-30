@@ -1,34 +1,66 @@
--- Not documented by LazyVim (see LazyVim/LazyVim#4884, closed): picks made
--- with <leader>uC are persisted here to stdpath("data")/theme and re-applied
--- on startup. No hardcoded colorscheme; none picked yet = LazyVim default.
-local pinfile = vim.fn.stdpath("data") .. "/theme"
+-- Picked colorscheme is persisted to stdpath("data")/theme and re-applied at
+-- startup. Both pickers can write it: fzf-lua owns <leader>uC, snacks is kept
+-- working in case the picker extra changes.
+local file = vim.fn.stdpath("data") .. "/theme"
 
-local function apply(name)
-  -- lazy.nvim auto-loads plugin-owned colorschemes; aura-theme is the one
-  -- exception (colors live under packages/neovim, added by its config).
-  if name:find("^aura") then
-    pcall(require("lazy").load, { plugins = { "aura-theme" } })
+local function saved()
+  if vim.fn.filereadable(file) ~= 1 then
+    return nil
   end
-  vim.cmd.colorscheme(name)
+  local name = vim.fn.readfile(file)[1]
+  return name ~= "" and name or nil
+end
+
+local function save(name)
+  if name and name ~= "" then
+    vim.fn.writefile({ name }, file)
+  end
+end
+
+-- Persist only after the colorscheme actually loaded, so a broken name never
+-- becomes the startup choice.
+local function apply(name)
+  if name and name ~= "" and pcall(vim.cmd.colorscheme, name) then
+    save(name)
+  end
 end
 
 return {
   {
     "LazyVim/LazyVim",
-    opts = {
-      colorscheme = function()
-        local f = io.open(pinfile, "r")
-        local name = f and f:read("*l")
-        if f then
-          f:close()
+    opts = function(_, opts)
+      -- NOTE: opts here are the plugin spec opts, not LazyVim's defaults, so
+      -- opts.colorscheme is usually nil and must fall back explicitly.
+      local fallback = opts.colorscheme or "tokyonight"
+
+      opts.colorscheme = function()
+        local name = saved()
+        if name and pcall(vim.cmd.colorscheme, name) then
+          return
         end
-        if name then
-          apply(name)
+
+        if type(fallback) == "function" then
+          fallback()
         else
-          require("tokyonight").load()
+          vim.cmd.colorscheme(fallback)
         end
-      end,
-    },
+      end
+    end,
+  },
+  {
+    "ibhagwan/fzf-lua",
+    optional = true,
+    opts = function(_, opts)
+      -- fzf-lua provider options are top-level keys, not under `defaults`:
+      -- `defaults.colorschemes.actions` is merged as a nested table and ignored.
+      opts.colorschemes = vim.tbl_deep_extend("force", opts.colorschemes or {}, {
+        actions = {
+          ["enter"] = function(selected)
+            apply(selected and selected[1] and selected[1]:match("^[^:]+"))
+          end,
+        },
+      })
+    end,
   },
   {
     "folke/snacks.nvim",
@@ -38,17 +70,14 @@ return {
           colorschemes = {
             confirm = function(picker, item)
               picker:close()
-              if item then
-                -- keep the previewer from restoring the old colorscheme
-                -- (same as the default confirm in snacks config/sources.lua)
-                picker.preview.state.colorscheme = nil
-                vim.schedule(function()
-                  local w = assert(io.open(pinfile, "w"))
-                  w:write(item.text)
-                  w:close()
-                  apply(item.text)
-                end)
+              if not item then
+                return
               end
+
+              picker.preview.state.colorscheme = nil
+              vim.schedule(function()
+                apply(item.text)
+              end)
             end,
           },
         },
@@ -56,3 +85,4 @@ return {
     },
   },
 }
+
