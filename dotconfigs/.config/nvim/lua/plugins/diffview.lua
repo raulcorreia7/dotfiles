@@ -21,9 +21,14 @@ return {
               end
 
               vim.schedule(function()
+                -- `A...B` needs a merge base; unrelated histories (snapshot or
+                -- orphan branches) make diffview fail with "Failed to parse
+                -- rev". Fall back to a direct `A..B` diff in that case.
+                vim.fn.system({ "git", "-C", item.cwd or vim.fn.getcwd(), "merge-base", item.branch, "HEAD" })
+                local sep = vim.v.shell_error == 0 and "..." or ".."
                 vim.api.nvim_cmd({
                   cmd = "DiffviewOpen",
-                  args = { item.branch .. "...HEAD" },
+                  args = { item.branch .. sep .. "HEAD" },
                 }, {})
               end)
             end,
