@@ -1,0 +1,142 @@
+providers:
+  deepseek:
+    baseUrl: https://api.deepseek.com
+  # One root for every local launcher; each backend runs at 127.0.0.1:9001, except
+  # Project Maya at 127.0.0.1:9003. Run one backend at a time.
+  local-inference:
+    baseUrl: http://127.0.0.1:9001/v1
+    auth: none
+    compat:
+      supportsReasoningEffort: true
+      reasoningContentField: reasoning_content
+      requiresReasoningContentForToolCalls: true
+      supportsStrictMode: false
+      supportsDeveloperRole: true
+      supportsStore: false
+      supportsReasoningParams: true
+      reasoningEffortMap:
+        minimal: low
+        high: xhigh
+        max: xhigh
+    models:
+    - id: qwen3.8-27b
+      name: Qwen3.8 27B NVFP4 (ninfer)
+      baseUrl: http://127.0.0.1:9001/v1
+      api: openai-completions
+      reasoning: true
+      input:
+      - text
+      contextWindow: 262144
+      maxTokens: 262144
+      thinking:
+        mode: effort
+        efforts:
+        - low
+        - medium
+        - xhigh
+        defaultLevel: xhigh
+        requiresEffort: false
+      compat:
+        supportsForcedToolChoice: false
+        reasoningEffortMap:
+          minimal: low
+          high: xhigh
+          max: xhigh
+      cost:
+        input: 0
+        output: 0
+        cacheRead: 0
+        cacheWrite: 0
+      tokenizer: qwen3
+    - id: qwen3.8-27b-groupwise
+      name: Qwen3.8 27B Groupwise INT (ninfer)
+      baseUrl: http://127.0.0.1:9001/v1
+      api: openai-completions
+      reasoning: true
+      input:
+      - text
+      contextWindow: 262144
+      maxTokens: 262144
+      thinking:
+        mode: effort
+        efforts:
+        - low
+        - medium
+        - xhigh
+        defaultLevel: xhigh
+        requiresEffort: false
+      compat:
+        supportsForcedToolChoice: false
+        reasoningEffortMap:
+          minimal: low
+          high: xhigh
+          max: xhigh
+      cost:
+        input: 0
+        output: 0
+        cacheRead: 0
+        cacheWrite: 0
+      tokenizer: qwen3
+    - id: qwen3.8-flash-next
+      name: Qwen3.8 Flash Next (Strata)
+      baseUrl: http://127.0.0.1:9001/v1
+      api: openai-completions
+      reasoning: true
+      input:
+      - text
+      contextWindow: 262144
+      maxTokens: 262144
+      omitMaxOutputTokens: true
+      thinking:
+        mode: effort
+        efforts:
+        - low
+        - medium
+        - xhigh
+        defaultLevel: xhigh
+        requiresEffort: false
+      compat:
+        supportsReasoningParams: true
+        thinkingFormat: qwen-chat-template
+        qwenTemplateReasoningEffort: true
+      cost:
+        input: 0
+        output: 0
+        cacheRead: 0
+        cacheWrite: 0
+      tokenizer: qwen3
+    # Project Maya serves GLM-5.3-Flash on port 9003; run it instead of a 9001
+    # backend. GLM's thinking levels are low, high and max (thinkingFormat is the
+    # default reasoning_effort); the run config's default level is high.
+    - id: glm-5.3-flash
+      name: GLM-5.3 Flash (Project Maya)
+      baseUrl: http://127.0.0.1:9003/v1
+      api: openai-completions
+      reasoning: true
+      input:
+      - text
+      - image
+      contextWindow: 131072
+      maxTokens: 131072
+      thinking:
+        mode: effort
+        efforts:
+        - low
+        - medium
+        - high
+        - xhigh
+        defaultLevel: high
+        requiresEffort: false
+      compat:
+        supportsForcedToolChoice: false
+        reasoningEffortMap:
+          minimal: low
+          medium: high
+          xhigh: max
+      cost:
+        input: 0
+        output: 0
+        cacheRead: 0
+        cacheWrite: 0
+      tokenizer: glm5
+    api: openai-completions
