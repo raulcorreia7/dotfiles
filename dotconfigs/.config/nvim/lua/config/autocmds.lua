@@ -16,3 +16,18 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.opt_local.spell = true
   end,
 })
+
+-- `nvim <dir>` is handed to the snacks explorer, which opens a picker but
+-- leaves the process cwd at the launch directory. Adopt the directory so the
+-- terminal (<c-/>), pickers, and `:!` work where the editor was opened.
+-- NOTE: only a single directory argument; opening files keeps the launch cwd.
+vim.api.nvim_create_autocmd("VimEnter", {
+  group = vim.api.nvim_create_augroup("adopt_dir_arg", { clear = true }),
+  once = true,
+  callback = function()
+    local dir = vim.fn.argv(0)
+    if vim.fn.argc() == 1 and vim.fn.isdirectory(dir) == 1 then
+      vim.fn.chdir(vim.fn.fnamemodify(dir, ":p"))
+    end
+  end,
+})
