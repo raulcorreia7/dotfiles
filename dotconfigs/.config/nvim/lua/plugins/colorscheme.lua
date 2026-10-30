@@ -1,45 +1,16 @@
 -- Picked colorscheme is persisted to stdpath("data")/theme and re-applied at
--- startup. Both pickers can write it: fzf-lua owns <leader>uC, snacks is kept
--- working in case the picker extra changes.
+-- startup. Snacks owns <leader>uC when the snacks picker is active; fzf-lua is
+-- kept working because this config also enables the fzf extra.
 local file = vim.fn.stdpath("data") .. "/theme"
-
-local function saved()
-  local name = vim.fn.filereadable(file) == 1 and vim.fn.readfile(file)[1] or nil
-  return name and name ~= "" and name or nil
-end
-
-local function save(name)
-  if name and name ~= "" then
-    vim.fn.writefile({ name }, file)
-  end
-end
-
--- Persist only after the colorscheme actually loaded, so a broken name never
--- becomes the startup choice.
-local function apply(name)
-  if name and name ~= "" and pcall(vim.cmd.colorscheme, name) then
-    save(name)
-  end
-end
 
 return {
   {
     "LazyVim/LazyVim",
     opts = function(_, opts)
-      -- NOTE: opts here are the plugin spec opts, not LazyVim's defaults, so
-      -- opts.colorscheme is usually nil and must fall back explicitly.
-      local fallback = opts.colorscheme or "tokyonight"
-
-      opts.colorscheme = function()
-        local name = saved()
-        if name and pcall(vim.cmd.colorscheme, name) then
-          return
-        end
-
-        if type(fallback) == "function" then
-          fallback()
-        else
-          vim.cmd.colorscheme(fallback)
+      if vim.fn.filereadable(file) == 1 then
+        local name = vim.fn.readfile(file)[1]
+        if name and name ~= "" then
+          opts.colorscheme = name
         end
       end
     end,
@@ -48,12 +19,13 @@ return {
     "ibhagwan/fzf-lua",
     optional = true,
     opts = function(_, opts)
-      -- fzf-lua provider options are top-level keys, not under `defaults`:
-      -- `defaults.colorschemes.actions` is merged as a nested table and ignored.
       opts.colorschemes = vim.tbl_deep_extend("force", opts.colorschemes or {}, {
         actions = {
           ["enter"] = function(selected)
-            apply(selected and selected[1] and selected[1]:match("^[^:]+"))
+            local name = selected and selected[1] and selected[1]:match("^[^:]+")
+            if name and name ~= "" and pcall(vim.cmd.colorscheme, name) then
+              vim.fn.writefile({ name }, file)
+            end
           end,
         },
       })
@@ -73,7 +45,9 @@ return {
 
               picker.preview.state.colorscheme = nil
               vim.schedule(function()
-                apply(item.text)
+                if pcall(vim.cmd.colorscheme, item.text) then
+                  vim.fn.writefile({ item.text }, file)
+                end
               end)
             end,
           },
@@ -82,4 +56,3 @@ return {
     },
   },
 }
-
