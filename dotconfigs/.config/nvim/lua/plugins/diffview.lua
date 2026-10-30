@@ -31,7 +31,7 @@ return {
         end,
         desc = "Diffview: Compare Branch",
       },
-      { "<leader>gh", "<cmd>DiffviewFileHistory %<cr>", desc = "Diffview: File History" },
+      { "<leader>gF", "<cmd>DiffviewFileHistory %<cr>", desc = "Diffview: File History" },
       { "<leader>gH", "<cmd>DiffviewFileHistory<cr>", desc = "Diffview: Repository History" },
     },
     opts = {
