@@ -35,10 +35,12 @@ return {
       { "<leader>gH", "<cmd>DiffviewFileHistory<cr>", desc = "Diffview: Repository History" },
     },
     opts = {
+      -- Diffview merges these into its defaults (disable_defaults = false).
+      -- Add only a close key: the diff and file panels have none.
       keymaps = {
-        view = { q = "<cmd>DiffviewClose<cr>" },
-        file_panel = { q = "<cmd>DiffviewClose<cr>" },
-        file_history_panel = { q = "<cmd>DiffviewClose<cr>" },
+        view = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close diffview" } } },
+        file_panel = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close diffview" } } },
+        file_history_panel = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close diffview" } } },
       },
     },
   },
