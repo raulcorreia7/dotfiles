@@ -7,7 +7,7 @@ return {
       },
       grep = {
         follow = true,
-        hidden = true,
+        hidden = false,
       },
     },
   },

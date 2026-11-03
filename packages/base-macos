@@ -5,6 +5,7 @@
 # brew "zellij" (disabled for now)
 
 # --- CLI & dev tools ---
+cask "font-jetbrains-mono-nerd-font"
 brew "git"
 brew "curl"
 brew "stow"

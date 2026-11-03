@@ -4,6 +4,9 @@
 # --- shell & terminal ---
 zsh
 tmux
+fontconfig
+curl
+xz-utils
 
 # --- CLI & dev tools ---
 git

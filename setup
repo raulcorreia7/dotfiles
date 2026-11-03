@@ -241,6 +241,39 @@ install_packages() {
   macos) install_macos ;;
   apt) install_apt ;;
   esac
+  ensure_fonts
+}
+
+# --- fonts ------------------------------------------------------------------
+
+# Terminal configs use this family. pacman and brew install it as a package; apt has none,
+# so a pinned Nerd Fonts release goes into ~/.local/share/fonts.
+FONT_FAMILY="JetBrainsMono Nerd Font"
+FONT_RELEASE="https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/JetBrainsMono.tar.xz"
+
+font_installed() {
+  if command -v fc-list >/dev/null 2>&1; then
+    fc-list | grep -qi "$FONT_FAMILY"
+  else
+    find "$HOME/Library/Fonts" /Library/Fonts -iname '*JetBrainsMonoNerd*' 2>/dev/null | grep -q .
+  fi
+}
+
+ensure_fonts() {
+  font_installed && return 0
+  [ "$OS" = apt ] || {
+    warn "$FONT_FAMILY is not installed — check the font entry in packages/"
+    return 0
+  }
+  dest="$HOME/.local/share/fonts/JetBrainsMono"
+  note "installing $FONT_FAMILY to ${dest#"$HOME"/}"
+  run mkdir -p "$dest"
+  if [ "$DRY_RUN" = 1 ]; then
+    note "would run: curl -fsSL $FONT_RELEASE | tar -xJ -C $dest"
+    return 0
+  fi
+  curl -fsSL "$FONT_RELEASE" | tar -xJ -C "$dest" || die "font download failed: $FONT_RELEASE"
+  run fc-cache -f "$dest"
 }
 
 # --- links ------------------------------------------------------------------
@@ -383,6 +416,11 @@ verify_and_report() {
     warn "missing:${missing} — install and re-run"
   else
     printf 'checked:  git · stow · zsh\n'
+  fi
+  if font_installed; then
+    printf 'font:     %s\n' "$FONT_FAMILY"
+  else
+    warn "font missing: $FONT_FAMILY — run: setup --packages"
   fi
   printf 'next:     exec zsh\n'
   printf 'links:    stow --dir="%s" --target="$HOME" --simulate --restow %s\n' "$REPO_DIR" "$STOW_PACKAGE"
