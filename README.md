@@ -51,7 +51,7 @@ init.sh              # shell runtime (env, aliases, tool inits, zimfw)
 packages/            # base-pacman · personal-macos · work-pacman · …
 bin/base/            # scripts on every machine (→ ~/.local/bin)
 bin/<profile>/       # profile-only scripts
-dotconfigs/          # mirrors $HOME: .config/{alacritty,ghostty,mise,nvim,opencode,tmux} · .omp
+dotconfigs/          # mirrors $HOME: .alias · .config/{alacritty,ghostty,mise,nvim,opencode,tmux} · .omp
 zimfw/               # vendored zsh framework (modules + .zimrc)
 ```
 
@@ -65,7 +65,7 @@ are skipped.
 ## Maintenance
 
 ```sh
-git pull && ./setup --files     # take new repo files; your changed files are kept
+git pull && ./setup --files     # take new repo files: copies you never edited update, edited ones are kept
 ./setup diff                    # what differs here
 ./setup save                    # bring this machine's edits into the repo
 git diff && git commit          # share what should be shared; git checkout -- the rest
@@ -73,6 +73,25 @@ git diff && git commit          # share what should be shared; git checkout -- t
 
 Each machine has its own copies, so one machine can differ (omp models, mise tools) without
 affecting the others. Nothing changes until you run `setup`, `save`, or `--force`.
+
+How `setup` tells an old copy from an edited one: a file whose content equals any earlier
+committed version of that path is an unedited older copy, so `setup` updates it. Anything else
+you changed stays, with a warning. `setup save` skips older copies, so it can never write a stale
+file back over a newer one. If you edited a file *and* the repo changed it, `setup` keeps yours:
+run `setup diff`, merge by hand, then `save`.
+
+## Aliases
+
+Two files, loaded by `init.sh` in this order, so the machine-local one wins:
+
+| File | Scope | How it gets there |
+|---|---|---|
+| `~/.alias` | every computer | `dotconfigs/.alias` in this repo; `setup` installs it and updates it after a `git pull` |
+| `~/.alias.local` | this computer only | you create it; it is not in the repo and `setup` never touches it |
+
+Both are plain POSIX `sh`, so bash and zsh read them alike. Put an alias in `dotconfigs/.alias` to
+share it, in `~/.alias.local` to keep it on one machine. Until `setup` has installed `~/.alias`,
+`init.sh` reads the repo's copy, so a freshly pulled alias never goes missing.
 
 `setup` is switches-only — no environment knobs. Machine-local shell settings
 (what `init.sh` sources at startup) go in `env.local` at the repo root

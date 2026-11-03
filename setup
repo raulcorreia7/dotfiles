@@ -13,8 +13,9 @@
 #   --files      copy dotconfigs/ into $HOME and bin scripts into ~/.local/bin,
 #                then write the shell rc block (--links is an old name for it)
 #
-# Files are copies, not symlinks, so each machine can differ. A file that differs locally is
-# kept and reported; --force backs it up (path.bak) and replaces it with the repo's copy.
+# Files are copies, not symlinks, so each machine can differ. A copy nobody edited is updated
+# when the repo has a newer version. A file edited locally is kept and reported; --force backs
+# it up (path.bak) and replaces it with the repo's copy.
 #
 # Side effects: package installs (pacman/paru · brew bundle · apt-get), copied files
 # under $HOME, backups (path.bak), and a marker block in ~/.zshrc / ~/.bashrc.
@@ -325,8 +326,19 @@ remove_repo_links() {
   done
 }
 
-# Copy repo files into $HOME. Missing files are added; files that differ are kept and
-# reported, or with --force backed up and replaced.
+# true when FILE is an unmodified older copy of REL (a path in this repo): its content equals
+# some earlier committed version, so it only needs updating. A file with local edits matches
+# none, and so does one the repo has never tracked.
+is_stale_copy() {
+  stale_hash=$(git -C "$REPO_DIR" hash-object -- "$1" 2>/dev/null) || return 1
+  git -C "$REPO_DIR" log --format=%H -- "$2" 2>/dev/null |
+    while IFS= read -r stale_commit; do
+      git -C "$REPO_DIR" rev-parse -q --verify "$stale_commit:$2" 2>/dev/null
+    done | grep -qx "$stale_hash"
+}
+
+# Copy repo files into $HOME. Missing files are added and unedited older copies updated; files
+# edited locally are kept and reported, or with --force backed up and replaced.
 copy_files() {
   remove_repo_links
   managed_files | while IFS=$TAB read -r src dst; do
@@ -337,6 +349,9 @@ copy_files() {
       note "added $rel"
     elif cmp -s "$src" "$dst"; then
       continue
+    elif is_stale_copy "$dst" "${src#"$REPO_DIR"/}"; then
+      run cp -p "$src" "$dst"
+      note "updated $rel: the repo has a newer version"
     elif [ "$FORCE" = 1 ]; then
       back_up "$dst"
       run cp -p "$src" "$dst"
@@ -353,7 +368,11 @@ run_diff() {
   managed_files | while IFS=$TAB read -r src dst; do
     if [ ! -e "$dst" ]; then
       printf 'missing here: %s\n' "${dst#"$HOME"/}"
-    elif ! cmp -s "$src" "$dst"; then
+    elif cmp -s "$src" "$dst"; then
+      continue
+    elif is_stale_copy "$dst" "${src#"$REPO_DIR"/}"; then
+      printf 'older copy (setup updates it): %s\n' "${dst#"$HOME"/}"
+    else
       git --no-pager diff --no-index -- "$src" "$dst" || true
     fi
   done
@@ -366,6 +385,7 @@ run_save() {
     [ -f "$dst" ] || continue
     is_repo_link "$dst" && continue
     cmp -s "$src" "$dst" && continue
+    is_stale_copy "$dst" "${src#"$REPO_DIR"/}" && continue
     run cp "$dst" "$src"
     note "saved ${dst#"$HOME"/}"
   done

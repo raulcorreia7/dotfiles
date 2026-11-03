@@ -52,9 +52,14 @@ if [ -n "${ZSH_VERSION:-}" ]; then
   [ -r "$ZIM_HOME/init.zsh" ] && . "$ZIM_HOME/init.zsh"
 fi
 
-# --- aliases
-alias nvcfg='${EDITOR:-nvim} ~/.config/nvim'
-dot_has eza && alias ls='eza'
+# --- aliases: ~/.alias is shared (installed by setup), ~/.alias.local is for this machine only.
+# Until setup has installed ~/.alias, the repo's copy keeps the aliases working.
+if [ -r "$HOME/.alias" ]; then
+  . "$HOME/.alias"
+elif [ -r "$DOTFILES_DIR/dotconfigs/.alias" ]; then
+  . "$DOTFILES_DIR/dotconfigs/.alias"
+fi
+[ -r "$HOME/.alias.local" ] && . "$HOME/.alias.local"
 
 # ssh + tmux: attach to (or start) the "main" session on a remote host
 sta() {

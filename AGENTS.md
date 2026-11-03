@@ -24,7 +24,7 @@ linter. `setup` and `init.sh` are the only tooling, by design.
 | --- | --- |
 | `setup` | wiring a machine — the only entry point (run · diff · save · uninstall · configure) |
 | `init.sh` | the shell runtime: environment, aliases, tool init, prompt, zimfw |
-| `dotconfigs/` | config files laid out as in `$HOME`; `setup` copies them |
+| `dotconfigs/` | config files laid out as in `$HOME`; `setup` copies them. `dotconfigs/.alias` is the shared alias file; per-machine aliases go in `~/.alias.local`, never in the repo |
 | `packages/` | package lists, one file per profile and OS |
 | `bin/` | scripts we own; copied into `~/.local/bin` |
 | `zimfw/` | the vendored zsh framework used by `init.sh` |
@@ -44,7 +44,7 @@ packages/
 bin/
   base/                 # scripts on every machine
   personal/             # scripts for one profile
-dotconfigs/             # mirrors $HOME: .config/<app>/ · .omp/
+dotconfigs/             # mirrors $HOME: .alias · .config/<app>/ · .omp/
 zimfw/                  # vendored modules and .zimrc
 ```
 
