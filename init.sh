@@ -257,3 +257,10 @@ workshop'
     tmux new-session
   fi
 fi
+
+# Model API key for opencode, omp, and other clients. `bin/ai-client.sh` in the infra repo
+# writes this file once per machine; the key never enters this repo.
+if [ -r "${XDG_CONFIG_HOME:-$HOME/.config}/homelab/ai.key" ]; then
+  AI_API_KEY="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/homelab/ai.key")"
+  export AI_API_KEY
+fi
