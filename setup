@@ -1,19 +1,24 @@
 #!/bin/sh
-# dotfiles — the one entry script: wire a machine (packages → links → rc).
+# dotfiles — the one entry script: set up a machine (packages → files → rc).
 #
 # Usage:
-#   setup [-n|--dry-run] [-p|--profile <name>] [--packages|--links] [-h|--help]
+#   setup [-n|--dry-run] [-p|--profile <name>] [--packages|--files] [--force] [-h|--help]
+#   setup diff [-p|--profile <name>]       show where this machine differs from the repo
+#   setup save [-n] [-p|--profile <name>]  copy local edits back into the repo, then commit
 #   setup uninstall [-n|--dry-run] [-h]
 #   setup configure [-n|--dry-run] [-h]
 #
 # Stages (a plain run does all of them, in order):
 #   --packages   install packages/base-<os> + packages/<profile>-<os>
-#   --links      stow dotconfigs + link bin scripts + write the shell rc block
+#   --files      copy dotconfigs/ into $HOME and bin scripts into ~/.local/bin,
+#                then write the shell rc block (--links is an old name for it)
 #
-# Side effects: package installs (pacman/paru · brew bundle · apt-get),
-# symlinks under $HOME (~/.config, ~/.local/bin), conflict backups (path.bak),
-# and a marker block in ~/.zshrc / ~/.bashrc. Never deletes unowned files.
-# --dry-run prints every planned change and writes nothing.
+# Files are copies, not symlinks, so each machine can differ. A file that differs locally is
+# kept and reported; --force backs it up (path.bak) and replaces it with the repo's copy.
+#
+# Side effects: package installs (pacman/paru · brew bundle · apt-get), copied files
+# under $HOME, backups (path.bak), and a marker block in ~/.zshrc / ~/.bashrc.
+# Never deletes unowned files. --dry-run prints every planned change and writes nothing.
 
 set -eu
 
@@ -28,8 +33,6 @@ XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 PROJECTS_DIR="$HOME/projects"
 
-STOW_PACKAGE=dotconfigs
-STOW_MAX_PASSES=3
 DEFAULT_PROFILE=personal
 ALACRITTY_THEMES_REPO=https://github.com/alacritty/alacritty-theme
 PARU_AUR_URL=https://aur.archlinux.org/paru.git
@@ -37,10 +40,12 @@ CACHYOS_ZSH_LINE='source /usr/share/cachyos-zsh-config/cachyos-config.zsh'
 APP_DIRS="$XDG_DATA_HOME/applications:/usr/local/share/applications:/usr/share/applications"
 
 DRY_RUN=0
-STAGE=all       # all | packages | links
-COMMAND=setup   # setup | uninstall | configure
+FORCE=0
+STAGE=all       # all | packages | files
+COMMAND=setup   # setup | diff | save | uninstall | configure
 PROFILE=""
 OS=""
+TAB=$(printf '\t')
 
 if [ "$(id -u)" = "0" ]; then SUDO=""; else SUDO="sudo"; fi
 
@@ -276,70 +281,107 @@ ensure_fonts() {
   run fc-cache -f "$dest"
 }
 
-# --- links ------------------------------------------------------------------
+# --- files ------------------------------------------------------------------
 
-# stow --restow; conflicting real files are backed up and stow retried
-# (up to STOW_MAX_PASSES)
-stow_dotconfigs() {
-  pass=0
-  while [ "$pass" -lt "$STOW_MAX_PASSES" ]; do
-    pass=$((pass + 1))
-    if output=$(cd "$HOME" && run stow --dir="$REPO_DIR" --target="$HOME" \
-      --restow "$STOW_PACKAGE" 2>&1); then
-      if [ -n "$output" ]; then
-        if [ "$DRY_RUN" = 1 ]; then
-          # run() already formatted the preview; print it as-is
-          printf '%s\n' "$output" >&2
-        else
-          note "$output"
-        fi
-      fi
-      return 0
-    fi
-    [ "$DRY_RUN" = 1 ] && return 0
-    conflicts=$(printf '%s\n' "$output" | sed -n 's/^.*existing target is not owned by stow: //p')
-    [ -n "$conflicts" ] || {
-      printf '%s\n' "$output" >&2
-      return 1
-    }
-    while IFS= read -r path; do
-      [ -n "$path" ] || continue
-      case "$path" in
-      /*) target=$path ;;
-      *) target=$HOME/$path ;;
-      esac
-      back_up "$target"
-    done <<EOF
-$conflicts
-EOF
-  done
-  die "stow still reports conflicts after $STOW_MAX_PASSES backup passes"
-}
-
-link_bin_scripts() {
+# One "source<TAB>target" line per managed file. dotconfigs/ mirrors $HOME: every file git
+# knows there (tracked, or new and not ignored), except the repo's own .gitignore files.
+# bin/base + bin/<profile> go to ~/.local/bin.
+managed_files() {
+  git -C "$DOTCONFIGS_DIR" ls-files --cached --others --exclude-standard | sort -u |
+    grep -v -e '^\.gitignore$' -e '/\.gitignore$' |
+    while IFS= read -r rel; do
+      [ -f "$DOTCONFIGS_DIR/$rel" ] && printf '%s\t%s\n' "$DOTCONFIGS_DIR/$rel" "$HOME/$rel"
+    done
   for dir in "$BIN_DIR/base" "$BIN_DIR/$PROFILE"; do
     [ -d "$dir" ] || continue
     for script in "$dir"/*; do
-      [ -f "$script" ] || continue
-      target="$BIN_TARGET/${script##*/}"
-      if [ -L "$target" ]; then
-        case "$(readlink "$target")" in
-        "$REPO_DIR"/*) run rm -f "$target" ;;
-        *) back_up "$target" ;;
-        esac
-      elif [ -e "$target" ]; then
-        back_up "$target"
-      fi
-      run ln -s "$script" "$target"
+      [ -f "$script" ] && printf '%s\t%s\n' "$script" "$BIN_TARGET/${script##*/}"
     done
+  done
+  return 0
+}
+
+# true when PATH is a symlink into this repo (left by the old stow setup)
+is_repo_link() {
+  [ -L "$1" ] || return 1
+  case "$(readlink -f "$1" 2>/dev/null)" in
+  "$REPO_DIR"/*) return 0 ;;
+  esac
+  return 1
+}
+
+# Remove symlinks into this repo on the way to any managed file, whole directories
+# included, so copies land in $HOME and not back in the repo. Other links are left alone.
+remove_repo_links() {
+  managed_files | cut -f2 | while IFS= read -r path; do
+    while [ "$path" != "$HOME" ] && [ "$path" != / ]; do
+      printf '%s\n' "$path"
+      path=$(dirname "$path")
+    done
+  done | sort -u | while IFS= read -r path; do
+    is_repo_link "$path" || continue
+    note "replacing the link ${path#"$HOME"/} with a copy"
+    run rm "$path"
   done
 }
 
+# Copy repo files into $HOME. Missing files are added; files that differ are kept and
+# reported, or with --force backed up and replaced.
+copy_files() {
+  remove_repo_links
+  managed_files | while IFS=$TAB read -r src dst; do
+    rel=${dst#"$HOME"/}
+    if [ ! -e "$dst" ] && [ ! -L "$dst" ]; then
+      run mkdir -p "$(dirname "$dst")"
+      run cp -p "$src" "$dst"
+      note "added $rel"
+    elif cmp -s "$src" "$dst"; then
+      continue
+    elif [ "$FORCE" = 1 ]; then
+      back_up "$dst"
+      run cp -p "$src" "$dst"
+      note "replaced $rel"
+    else
+      warn "kept $rel: it differs from the repo (setup diff, then setup save or --force)"
+    fi
+  done
+}
+
+# Print every managed file that is missing here or differs from the repo.
+run_diff() {
+  resolve_profile
+  managed_files | while IFS=$TAB read -r src dst; do
+    if [ ! -e "$dst" ]; then
+      printf 'missing here: %s\n' "${dst#"$HOME"/}"
+    elif ! cmp -s "$src" "$dst"; then
+      git --no-pager diff --no-index -- "$src" "$dst" || true
+    fi
+  done
+}
+
+# Copy this machine's edits back into the repo; review with git diff, then commit.
+run_save() {
+  resolve_profile
+  managed_files | while IFS=$TAB read -r src dst; do
+    [ -f "$dst" ] || continue
+    is_repo_link "$dst" && continue
+    cmp -s "$src" "$dst" && continue
+    run cp "$dst" "$src"
+    note "saved ${dst#"$HOME"/}"
+  done
+  printf '\nnext:     git -C "%s" diff, then commit what should be shared\n' "$REPO_DIR"
+}
+
 clone_alacritty_themes() {
-  config_dir="$DOTCONFIGS_DIR/.config/alacritty"
-  themes_dir="$config_dir/themes"
-  [ -d "$config_dir" ] || return 0
+  themes_dir="$XDG_CONFIG_HOME/alacritty/themes"
+  [ -d "$DOTCONFIGS_DIR/.config/alacritty" ] || return 0
   [ -d "$themes_dir" ] && return 0
+  # an older setup cloned them inside the repo; reuse that clone
+  if [ -d "$DOTCONFIGS_DIR/.config/alacritty/themes" ]; then
+    note "copying alacritty themes from the repo's old clone"
+    run cp -R "$DOTCONFIGS_DIR/.config/alacritty/themes" "$themes_dir"
+    return 0
+  fi
   note "cloning alacritty themes"
   run git clone "$ALACRITTY_THEMES_REPO" "$themes_dir"
 }
@@ -390,11 +432,10 @@ update_rc_file() {
   rm -f "$filtered" "$updated"
 }
 
-link_all() {
-  require_command stow "GNU Stow is required — install the 'stow' package and re-run"
-  note "stow --restow $STOW_PACKAGE"
-  stow_dotconfigs
-  link_bin_scripts
+install_files() {
+  require_command git
+  note "copying dotconfigs/ and bin scripts"
+  copy_files
   clone_alacritty_themes
   update_rc_file "$HOME/.zshrc"
   [ -f "$HOME/.bashrc" ] && update_rc_file "$HOME/.bashrc"
@@ -405,7 +446,7 @@ link_all() {
 
 verify_and_report() {
   missing=""
-  for tool in git stow zsh; do
+  for tool in git zsh; do
     command -v "$tool" >/dev/null 2>&1 || missing="$missing $tool"
   done
   printf '\n'
@@ -415,7 +456,7 @@ verify_and_report() {
   if [ -n "$missing" ]; then
     warn "missing:${missing} — install and re-run"
   else
-    printf 'checked:  git · stow · zsh\n'
+    printf 'checked:  git · zsh\n'
   fi
   if font_installed; then
     printf 'font:     %s\n' "$FONT_FAMILY"
@@ -423,7 +464,7 @@ verify_and_report() {
     warn "font missing: $FONT_FAMILY — run: setup --packages"
   fi
   printf 'next:     exec zsh\n'
-  printf 'links:    stow --dir="%s" --target="$HOME" --simulate --restow %s\n' "$REPO_DIR" "$STOW_PACKAGE"
+  printf 'files:    setup diff · setup save (local edits → repo, then commit)\n'
 }
 
 run_setup() {
@@ -442,8 +483,8 @@ run_setup() {
     install_packages
   fi
 
-  if [ "$STAGE" = all ] || [ "$STAGE" = links ]; then
-    link_all
+  if [ "$STAGE" = all ] || [ "$STAGE" = files ]; then
+    install_files
   fi
 
   verify_and_report
@@ -451,70 +492,15 @@ run_setup() {
 
 # --- uninstall --------------------------------------------------------------
 
-restore_backups() {
-  find "$XDG_CONFIG_HOME" "$BIN_TARGET" \( -name '*.bak' -o -name '*.bak.[0-9]*' \) 2>/dev/null |
-    sed 's/\.bak\(\.[0-9]*\)\{0,1\}$//' | sort -u |
-    while IFS= read -r orig; do
-      [ -n "$orig" ] || continue
-      # a backup nested inside another .bak dir is not ours to restore
-      case "$orig" in
-      *.bak/* | *.bak.[0-9]*/*) continue ;;
-      esac
-      best=""
-      for candidate in "$orig.bak" "$orig".bak.[0-9]*; do
-        [ -e "$candidate" ] || [ -L "$candidate" ] || continue
-        if [ -z "$best" ]; then
-          best=$candidate
-          continue
-        fi
-        case "$best" in
-        *.bak) best=$candidate ;;
-        *)
-          new_index=${candidate##*.}
-          old_index=${best##*.}
-          case "$new_index" in *[!0-9]* | "") continue ;; esac
-          if [ "$new_index" -gt "$old_index" ]; then best=$candidate; fi
-          ;;
-        esac
-      done
-      [ -n "$best" ] || continue
-      if [ -L "$orig" ]; then
-        run rm -f "$orig"
-      elif [ -e "$orig" ]; then
-        warn "not restoring $best — $orig exists (remove it first)"
-        continue
-      fi
-      run mv "$best" "$orig"
-      note "restored ${orig#"$HOME"/} from ${best##*/}"
-    done
-}
-
+# Copies belong to the machine and stay. Uninstall removes what still points into the
+# repo (links from the old stow setup) and the rc block.
 run_uninstall() {
-  require_command stow "GNU Stow is required to remove the links"
-  note "unstowing $STOW_PACKAGE"
-  if [ "$DRY_RUN" = 1 ]; then
-    note "would run: stow --delete $STOW_PACKAGE"
-  else
-    if output=$(cd "$HOME" && stow --dir="$REPO_DIR" --target="$HOME" \
-      --delete "$STOW_PACKAGE" 2>&1); then
-      [ -n "$output" ] && note "$output"
-    else
-      warn "stow reported issues while deleting (links may be partly removed):"
-      printf '%s\n' "$output" >&2
-    fi
-  fi
-
+  remove_repo_links
   for link in "$BIN_TARGET"/* "$BIN_TARGET"/.[!.]*; do
-    [ -L "$link" ] || continue
-    case "$(readlink "$link")" in
-    "$REPO_DIR"/*)
-      note "removing bin link ${link#"$HOME"/}"
-      run rm -f "$link"
-      ;;
-    esac
+    is_repo_link "$link" || continue
+    note "removing bin link ${link#"$HOME"/}"
+    run rm -f "$link"
   done
-
-  restore_backups
 
   for rc_file in "$HOME/.zshrc" "$HOME/.bashrc"; do
     [ -f "$rc_file" ] || continue
@@ -535,8 +521,7 @@ run_uninstall() {
   done
 
   printf '\n'
-  printf 'uninstalled: links removed · bin links removed · backups restored · rc block stripped\n'
-  printf 'backups left on disk (if any): <path>.bak[.N]\n'
+  printf 'uninstalled: repo links removed · rc block stripped · copied files kept\n'
 }
 
 # --- desktop defaults (KDE) -------------------------------------------------
@@ -717,7 +702,7 @@ run_configure() {
 
 parse_args() {
   case "${1:-}" in
-  uninstall | configure)
+  diff | save | uninstall | configure)
     COMMAND=$1
     shift
     ;;
@@ -743,13 +728,17 @@ parse_args() {
       shift
       ;;
     --packages)
-      [ "$STAGE" = links ] && die "--packages and --links are mutually exclusive"
+      [ "$STAGE" = files ] && die "--packages and --files are mutually exclusive"
       STAGE=packages
       shift
       ;;
-    --links)
-      [ "$STAGE" = packages ] && die "--packages and --links are mutually exclusive"
-      STAGE=links
+    --files | --links)
+      [ "$STAGE" = packages ] && die "--packages and --files are mutually exclusive"
+      STAGE=files
+      shift
+      ;;
+    -f | --force)
+      FORCE=1
       shift
       ;;
     --)
@@ -772,6 +761,8 @@ main() {
   parse_args "$@"
   case "$COMMAND" in
   setup) run_setup ;;
+  diff) run_diff ;;
+  save) run_save ;;
   uninstall) run_uninstall ;;
   configure) run_configure ;;
   esac

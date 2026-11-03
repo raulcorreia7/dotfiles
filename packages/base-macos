@@ -8,7 +8,6 @@
 cask "font-jetbrains-mono-nerd-font"
 brew "git"
 brew "curl"
-brew "stow"
 brew "fzf"
 brew "ripgrep"
 # brew "fd" (disabled for now)

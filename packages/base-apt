@@ -5,13 +5,11 @@
 zsh
 tmux
 fontconfig
-curl
 xz-utils
 
 # --- CLI & dev tools ---
 git
 curl
-stow
 fzf
 ripgrep
 fd-find
