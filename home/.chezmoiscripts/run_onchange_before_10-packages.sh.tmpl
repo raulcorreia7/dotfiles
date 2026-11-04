@@ -1,0 +1,70 @@
+{{- /* Installs the lists in .chezmoidata/packages.yaml. Re-runs when they, the profile or the host change. */ -}}
+{{- $manager := includeTemplate "package-manager" . | trim -}}
+#!/bin/sh
+# packages {{ .packages | toJson | sha256sum }} · {{ .profile }} · {{ .host }}
+set -eu
+
+as_root() {
+  if [ "$(id -u)" = 0 ]; then
+    "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+{{ if eq $manager "brew" -}}
+{{- $brew := includeTemplate "package-list" (dict "manager" "brew" "data" .) -}}
+{{- $cask := includeTemplate "package-list" (dict "manager" "cask" "data" .) -}}
+main() {
+  command -v brew >/dev/null 2>&1 || {
+    echo "Homebrew is required: https://brew.sh" >&2
+    exit 1
+  }
+
+  brew install {{ $brew }}
+  brew install --cask {{ $cask }}
+}
+
+{{- else if eq $manager "apt" -}}
+{{- $apt := includeTemplate "package-list" (dict "manager" "apt" "data" .) -}}
+# add_repo NAME KEY_URL REPO_URL SUITE COMPONENTS: add an apt repository unless it is configured.
+add_repo() {
+  keyring="/etc/apt/keyrings/$1.${2##*.}"
+
+  grep -rqsF "$3" /etc/apt/sources.list /etc/apt/sources.list.d && return 0
+
+  as_root install -dm 755 /etc/apt/keyrings
+  curl -fsSL "$2" | as_root tee "$keyring" >/dev/null
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=$keyring] $3 $4 $5" |
+    as_root tee "/etc/apt/sources.list.d/$1.list" >/dev/null
+}
+
+main() {
+{{- range .repos.apt }}
+  add_repo {{ .name }} {{ .key }} {{ .url }} {{ .suite }} {{ .components }}
+{{- end }}
+
+  as_root apt-get update -qq
+  as_root apt-get install -y {{ $apt }}
+}
+
+{{- else if eq $manager "pacman" -}}
+{{- $pacman := includeTemplate "package-list" (dict "manager" "pacman" "data" .) -}}
+{{- $aur := includeTemplate "package-list" (dict "manager" "aur" "data" .) -}}
+main() {
+  as_root pacman -S --needed --noconfirm {{ $pacman }}
+
+  if command -v paru >/dev/null 2>&1; then
+    paru -S --needed --noconfirm {{ $aur }}
+  else
+    echo "paru is not installed: skipping AUR packages ({{ $aur }})" >&2
+  fi
+}
+
+{{- else -}}
+main() {
+  echo "packages: no support for this OS, skipping" >&2
+}
+{{- end }}
+
+main "$@"

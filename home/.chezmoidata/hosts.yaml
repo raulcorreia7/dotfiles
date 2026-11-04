@@ -1,0 +1,10 @@
+# Per-machine package additions, keyed by host name (asked on `chezmoi init`, default `hostname`).
+# A machine with no entry just gets its profile's packages. Managers: apt, pacman, aur, brew, cask.
+# SSH hosts are deliberately not here: they stay on each machine, in ~/.ssh/config.d/.
+hosts:
+  talos: # desktop, Arch
+    packages: {}
+  p14s: # laptop, Arch
+    packages: {}
+  rcorreia-milence-laptop: # work laptop, Ubuntu
+    packages: {}

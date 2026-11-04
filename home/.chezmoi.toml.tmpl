@@ -1,0 +1,14 @@
+{{- /* Asked once per machine on `chezmoi init`; answers are kept in ~/.config/chezmoi/chezmoi.toml, not in the repo. */ -}}
+{{- $host := promptStringOnce . "host" "Host name (key in .chezmoidata/hosts.yaml)" .chezmoi.hostname -}}
+{{- $profile := promptChoiceOnce . "profile" "Machine profile" (list "personal" "work") -}}
+{{- $gitName := promptStringOnce . "gitName" "Git name" "" -}}
+{{- $gitEmail := promptStringOnce . "gitEmail" "Git email" "" -}}
+
+# Keep using this clone as the source, wherever it lives.
+sourceDir = {{ .chezmoi.sourceDir | quote }}
+
+[data]
+    host = {{ $host | quote }}
+    profile = {{ $profile | quote }}
+    gitName = {{ $gitName | quote }}
+    gitEmail = {{ $gitEmail | quote }}

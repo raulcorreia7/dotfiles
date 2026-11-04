@@ -1,0 +1,6 @@
+# Defaults for every host. Named zz- so it is read after your own entries, because ssh keeps
+# the first value it finds. Your hosts go in other files here, e.g. ~/.ssh/config.d/hosts.
+Host *
+    AddKeysToAgent yes
+    ServerAliveInterval 30
+    ServerAliveCountMax 4

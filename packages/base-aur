@@ -1,8 +1,0 @@
-# base — Arch (AUR) · every machine
-# one package per line; blank lines and # comments are ignored
-
-# --- shell & terminal ---
-zimfw
-
-# --- editor ---
-visual-studio-code-bin

@@ -1,0 +1,68 @@
+{{- /* KDE only: alacritty as the terminal, and default applications per MIME type. */ -}}
+{{- if eq .chezmoi.os "linux" -}}
+#!/bin/sh
+set -eu
+
+APP_DIRS="${XDG_DATA_HOME:-$HOME/.local/share}/applications /usr/local/share/applications /usr/share/applications"
+
+is_kde() {
+  case "${XDG_CURRENT_DESKTOP:-}" in
+    *KDE*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+has_entry() {
+  for dir in $APP_DIRS; do
+    [ -f "$dir/$1" ] && return 0
+  done
+  return 1
+}
+
+# set_default ENTRY MIME...: skipped when the application is not installed
+set_default() {
+  entry=$1
+  shift
+  has_entry "$entry" || return 0
+  for mime in "$@"; do
+    xdg-mime default "$entry" "$mime"
+  done
+}
+
+set_terminal() {
+  command -v kwriteconfig6 >/dev/null 2>&1 && has_entry Alacritty.desktop || return 0
+  kwriteconfig6 --file kdeglobals --group General --key TerminalApplication --notify alacritty
+  kwriteconfig6 --file kdeglobals --group General --key TerminalService --notify Alacritty.desktop
+  kwriteconfig6 --file kglobalshortcutsrc --group services --group Alacritty.desktop --key _launch --notify "Ctrl+Alt+T"
+}
+
+set_mime_defaults() {
+  command -v xdg-mime >/dev/null 2>&1 || return 0
+  set_default firefox.desktop \
+    x-scheme-handler/http x-scheme-handler/https x-scheme-handler/mailto \
+    text/html application/xhtml+xml application/xml text/xml application/pdf
+  set_default code.desktop \
+    text/plain application/json application/x-shellscript text/markdown \
+    text/x-c text/x-c++src text/x-chdr text/x-c++hdr text/x-java \
+    text/x-python text/x-script.python text/x-lua text/x-rust
+  set_default org.kde.gwenview.desktop \
+    image/avif image/gif image/jpeg image/png image/svg+xml image/webp
+  set_default org.kde.haruna.desktop \
+    video/mp4 video/x-matroska video/mpeg video/ogg video/quicktime video/webm
+  set_default mpv.desktop \
+    audio/aac audio/flac audio/mp4 audio/mpeg audio/ogg audio/vnd.wave audio/webm
+  set_default org.kde.dolphin.desktop inode/directory
+  set_default org.kde.ark.desktop \
+    application/gzip application/vnd.rar application/x-7z-compressed application/x-bzip2 \
+    application/x-compressed-tar application/x-tar application/x-xz application/zip
+  set_default vesktop.desktop x-scheme-handler/discord
+}
+
+main() {
+  is_kde || return 0
+  set_terminal
+  set_mime_defaults
+}
+
+main "$@"
+{{- end }}

@@ -1,0 +1,16 @@
+#!/bin/sh
+# Installs the tools in dot_config/mise/config.toml.tmpl. Re-runs when that file, the profile
+# or the apt-only tool list changes.
+# {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }} · {{ .profile }} · {{ .packages.mise | toJson | sha256sum }}
+set -eu
+
+main() {
+  command -v mise >/dev/null 2>&1 || {
+    echo "mise is not installed: skipping" >&2
+    return 0
+  }
+
+  mise install --yes
+}
+
+main "$@"

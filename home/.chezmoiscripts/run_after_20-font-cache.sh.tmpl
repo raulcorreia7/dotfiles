@@ -1,0 +1,12 @@
+{{- if eq .chezmoi.os "linux" -}}
+#!/bin/sh
+# Lets the system see the fonts chezmoi unpacked (see .chezmoiexternal.toml.tmpl).
+set -eu
+
+main() {
+  command -v fc-cache >/dev/null 2>&1 || return 0
+  fc-cache -f "$HOME/.local/share/fonts"
+}
+
+main "$@"
+{{- end }}

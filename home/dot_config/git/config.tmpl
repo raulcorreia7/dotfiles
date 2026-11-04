@@ -1,0 +1,39 @@
+# Shared git defaults. Identity comes from the answers given to `chezmoi init`, kept on the
+# machine and not in the repo. ~/.gitconfig is read after this file and wins on conflict.
+{{ if .gitEmail -}}
+[user]
+    name = {{ .gitName | quote }}
+    email = {{ .gitEmail | quote }}
+
+{{ end -}}
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true
+
+[fetch]
+    prune = true
+
+[merge]
+    conflictstyle = zdiff3
+
+# delta pages diffs and filters `git add -p`; difftastic is behind the dft/dshow/dlog/dst
+# aliases. gitui draws its own diffs, so neither applies to it.
+[core]
+    editor = nvim
+    pager = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    side-by-side = true
+    line-numbers = true
+    navigate = true
+
+[alias]
+    dft = -c diff.external=difft diff
+    dshow = -c diff.external=difft show --ext-diff
+    dlog = -c diff.external=difft log -p --ext-diff
+    dst = -c diff.external=difft stash show --ext-diff -p

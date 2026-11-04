@@ -1,0 +1,124 @@
+# Native packages, per package manager and profile. Every machine gets `base`, then the list
+# named after its profile, then its own extras from hosts.yaml. Installed by
+# .chezmoiscripts/run_onchange_before_10-packages.sh.tmpl, which re-runs when this file changes.
+#
+# Rule: use the OS package manager. Add the tool's official repository when upstream runs one
+# and it is newer than the distro (`repos`). Only when a manager has no package at all does
+# mise supply it (`mise`). Runtimes (node, go, python, ...) always belong to mise:
+# dot_config/mise/config.toml.tmpl. One owner per tool, never two.
+#
+# Names differ by manager, so the same tool appears once per manager. Keep `base` minimal.
+
+# Official apt repositories, added before installing. Skipped when already configured.
+repos:
+  apt:
+    - { name: mise, key: "https://mise.jdx.dev/gpg-key.pub", url: "https://mise.jdx.dev/deb", suite: stable, components: main }
+    - { name: github-cli, key: "https://cli.github.com/packages/githubcli-archive-keyring.gpg", url: "https://cli.github.com/packages", suite: stable, components: main }
+    - { name: eza, key: "https://raw.githubusercontent.com/eza-community/eza/main/deb.asc", url: "http://deb.gierens.de", suite: stable, components: main }
+
+packages:
+  apt: # Debian / Ubuntu
+    base:
+      # shell and terminal
+      - zsh
+      - tmux
+      - alacritty
+      - mise
+      - fontconfig
+      # command line
+      - git
+      - git-delta
+      - gh
+      - curl
+      - fzf
+      - ripgrep
+      - fd-find
+      - bat
+      - eza
+      - zoxide
+      - tealdeer
+      # system
+      - build-essential
+      - wl-clipboard
+      - alsa-utils # amixer, used by yeti-monitor
+    personal: []
+    work: []
+
+  pacman: # Arch
+    base:
+      # shell and terminal
+      - zsh
+      - tmux
+      - alacritty
+      - ghostty
+      - mise
+      - fontconfig
+      # command line
+      - git
+      - git-delta
+      - github-cli
+      - neovim
+      - gitui
+      - difftastic
+      - curl
+      - fzf
+      - ripgrep
+      - fd
+      - bat
+      - eza
+      - zoxide
+      - tealdeer
+      - openai-codex
+      # system
+      - wl-clipboard
+      - alsa-utils # amixer, used by yeti-monitor
+    personal:
+      - firefox
+      - bitwarden
+    work: []
+
+  aur: # Arch, built with paru
+    base:
+      - visual-studio-code-bin
+    personal: []
+    work: []
+
+  brew: # macOS formulae
+    base:
+      # shell and terminal
+      - mise
+      # command line
+      - git
+      - git-delta
+      - gh
+      - neovim
+      - gitui
+      - difftastic
+      - curl
+      - fzf
+      - ripgrep
+      - fd
+      - bat
+      - eza
+      - zoxide
+      - tealdeer
+    personal: []
+    work: []
+
+  cask: # macOS applications
+    base:
+      - font-jetbrains-mono-nerd-font
+      - ghostty
+      - visual-studio-code
+    personal:
+      - obsidian
+    work:
+      - docker-desktop
+
+  # Tools mise supplies because that manager has no package: apt has no gitui or difftastic,
+  # and no current neovim (the PPAs carry old or pre-release builds).
+  mise:
+    apt:
+      - difftastic
+      - gitui
+      - neovim

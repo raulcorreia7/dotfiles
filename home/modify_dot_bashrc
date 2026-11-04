@@ -1,0 +1,18 @@
+#!/bin/sh
+# chezmoi modify script: keep the distro's ~/.bashrc and append one line that loads the
+# shared runtime. chezmoi pipes the current file in and writes whatever this prints.
+set -eu
+
+# shellcheck disable=SC2016
+LINE='. "${XDG_CONFIG_HOME:-$HOME/.config}/shell/init.sh" # managed by chezmoi'
+
+main() {
+  content=$(cat)
+  printf '%s\n' "$content"
+  case "$content" in
+    *shell/init.sh*) ;;
+    *) printf '%s\n' "$LINE" ;;
+  esac
+}
+
+main "$@"

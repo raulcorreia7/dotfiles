@@ -1,0 +1,13 @@
+#!/bin/sh
+# chezmoi modify script for ~/.ssh/config: keep the file, make sure it starts with one Include.
+# Host entries never live in this repo: each machine keeps its own in ~/.ssh/config.d/.
+set -eu
+
+INCLUDE="Include ~/.ssh/config.d/*"
+
+main() {
+  printf '%s\n' "$INCLUDE"
+  cat | grep -vxF "$INCLUDE" || true
+}
+
+main "$@"

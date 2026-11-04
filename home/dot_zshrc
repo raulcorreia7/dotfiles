@@ -1,0 +1,2 @@
+# Managed by chezmoi. Put machine-local settings in ~/.config/shell/env.local instead.
+. "${XDG_CONFIG_HOME:-$HOME/.config}/shell/init.sh"

@@ -1,0 +1,11 @@
+{{- /* Prints the package manager of this machine: apt, pacman, brew, or nothing. */ -}}
+{{- if eq .chezmoi.os "darwin" -}}
+brew
+{{- else if eq .chezmoi.os "linux" -}}
+{{- $id := list .chezmoi.osRelease.id (.chezmoi.osRelease.idLike | default "") | join " " -}}
+{{- if or (contains "debian" $id) (contains "ubuntu" $id) -}}
+apt
+{{- else if contains "arch" $id -}}
+pacman
+{{- end -}}
+{{- end -}}

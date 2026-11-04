@@ -1,0 +1,15 @@
+# Shell aliases, sourced by init.sh (uses its dot_has helper). Machine-local ones go in env.local.
+
+# alias_fallback NAME OTHER: if NAME is missing but OTHER exists, alias NAME to OTHER.
+# Debian and Ubuntu install bat and fd as batcat and fdfind.
+alias_fallback() {
+  dot_has "$1" && return 0
+  # shellcheck disable=SC2139
+  dot_has "$2" && alias "$1=$2"
+}
+
+alias_fallback bat batcat
+alias_fallback fd fdfind
+unset -f alias_fallback
+
+dot_has eza && alias ls='eza'

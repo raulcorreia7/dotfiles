@@ -1,0 +1,9 @@
+# Files here are not installed. The file is a template, so rules can depend on OS or profile.
+
+# Docs that live next to configs, such as nvim's.
+**/README.md
+
+# ALSA is Linux only.
+{{ if ne .chezmoi.os "linux" -}}
+.local/bin/yeti-monitor
+{{ end -}}

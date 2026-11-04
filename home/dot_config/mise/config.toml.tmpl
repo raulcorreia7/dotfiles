@@ -1,0 +1,23 @@
+{{- $manager := includeTemplate "package-manager" . | trim -}}
+# Runtimes, plus tools the OS package manager has no package for.
+# Everything else is a native package: see .chezmoidata/packages.yaml.
+[tools]
+# runtimes
+bun = "latest"
+deno = "latest"
+go = "latest"
+node = "lts"
+pnpm = "latest"
+python = "latest"
+rust = "latest"
+uv = "latest"
+zig = "latest"
+
+# tools
+"github:can1357/oh-my-pi" = { version = "latest", minimum_release_age = "0s" }
+{{- range dig $manager (list) .packages.mise }}
+{{ . }} = "latest"
+{{- end }}
+{{- if ne .profile "work" }}
+"http:rizin" = { version = "0.9.1", url = "https://github.com/rizinorg/rizin/releases/download/v{{ "{{version}}" }}/rizin-v{{ "{{version}}" }}-static-x86_64.tar.xz" } # pinned: the URL is built from the version
+{{- end }}

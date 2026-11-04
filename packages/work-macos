@@ -1,7 +1,0 @@
-# work — macOS (Homebrew) · work machines (minimal for now)
-# Homebrew Bundle file: brew "formula" / cask "app"
-
-# --- applications (casks) ---
-# cask "microsoft-teams" (disabled for now)
-# cask "docker" is the legacy name for docker-desktop — keep only the current one
-cask "docker-desktop"

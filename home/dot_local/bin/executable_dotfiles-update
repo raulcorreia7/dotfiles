@@ -1,0 +1,54 @@
+#!/bin/sh
+# dotfiles-update: bring this machine up to date with the repo and with upstream's latest.
+# Covers dotfiles, externals (zimfw, themes, font, tmux plugin manager), mise tools, zsh
+# modules and tmux plugins. System packages are left to the OS (sudo apt/pacman/brew).
+set -eu
+
+export ZIM_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/zim"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+step() {
+  printf '==> %s\n' "$*"
+}
+
+has() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+update_dotfiles() {
+  step "dotfiles and externals"
+  chezmoi update --refresh-externals always
+}
+
+update_runtimes() {
+  has mise || return 0
+  step "mise tools"
+  mise upgrade
+}
+
+update_zsh_modules() {
+  has zsh && [ -r "$ZIM_HOME/zimfw.zsh" ] || return 0
+  step "zsh modules"
+  ZIM_CONFIG_FILE="$CONFIG_DIR/shell/zimrc" zsh "$ZIM_HOME/zimfw.zsh" update
+}
+
+update_tmux_plugins() {
+  plugins="$CONFIG_DIR/tmux/plugins/tpm/bin/update_plugins"
+  [ -x "$plugins" ] || return 0
+  step "tmux plugins"
+  "$plugins" all
+}
+
+main() {
+  has chezmoi || {
+    echo "dotfiles-update: chezmoi is not installed" >&2
+    exit 1
+  }
+
+  update_dotfiles
+  update_runtimes
+  update_zsh_modules
+  update_tmux_plugins
+}
+
+main "$@"

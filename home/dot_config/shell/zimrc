@@ -1,0 +1,21 @@
+# zimfw modules. After editing, open a new shell: init.sh rebuilds when this file changes.
+# Modules without a path come from github.com/zimfw/<name>.
+
+# --- shell basics
+zmodule environment
+zmodule git
+zmodule input
+zmodule termtitle
+zmodule utility
+
+# --- prompt: Powerlevel10k, configured in p10k.zsh
+zmodule romkatv/powerlevel10k --use degit
+
+# --- completion (must come after modules that add completions)
+zmodule zsh-users/zsh-completions --fpath src
+zmodule completion
+
+# --- must be last, in this order
+zmodule zsh-users/zsh-syntax-highlighting
+zmodule zsh-users/zsh-history-substring-search
+zmodule zsh-users/zsh-autosuggestions

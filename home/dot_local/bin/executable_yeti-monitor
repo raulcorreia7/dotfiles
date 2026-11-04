@@ -1,0 +1,96 @@
+#!/bin/sh
+# yeti-monitor [status|on|off|toggle]
+# Control the Yeti hardware microphone feed to its headphone output (capture is unchanged).
+# YETI_ALSA_CARD and YETI_PROC_CARDS override card detection (the latter is for tests).
+set -eu
+
+die() {
+  echo "yeti-monitor: $*" >&2
+  exit 1
+}
+
+usage() {
+  cat <<'USAGE'
+Usage: yeti-monitor [status|on|off|toggle]
+
+Control the Yeti hardware microphone feed to its headphone output.
+Microphone capture is not changed.
+USAGE
+}
+
+require_amixer() {
+  command -v amixer >/dev/null 2>&1 || die "amixer is required (install alsa-utils)"
+}
+
+# Print the ALSA card id of the Yeti, or nothing.
+find_card() {
+  if [ -n "${YETI_ALSA_CARD:-}" ]; then
+    printf '%s\n' "$YETI_ALSA_CARD"
+    return
+  fi
+  awk '
+    /Yeti Stereo Microphone/ {
+      sub(/^.*\[/, "")
+      sub(/\].*$/, "")
+      gsub(/[[:space:]]/, "")
+      print
+      exit
+    }
+  ' "${YETI_PROC_CARDS:-/proc/asound/cards}"
+}
+
+# state CARD: print "on" or "off"
+state() {
+  mixer=$(amixer -c "$1" sget Mic 2>/dev/null) || die "cannot read mixer controls for ALSA card '$1'"
+  current=$(printf '%s\n' "$mixer" | awk '
+    /Playback.*\[(on|off)\]/ {
+      sub(/ Capture.*/, "")
+      if ($0 ~ /\[on\]/) print "on"
+      if ($0 ~ /\[off\]/) print "off"
+      exit
+    }
+  ')
+  [ -n "$current" ] || die "Yeti Mic playback control not found"
+  printf '%s\n' "$current"
+}
+
+# set_monitor CARD unmute|mute
+set_monitor() {
+  amixer -c "$1" sset Mic playback "$2" >/dev/null
+}
+
+toggle() {
+  if [ "$(state "$1")" = on ]; then
+    set_monitor "$1" mute
+  else
+    set_monitor "$1" unmute
+  fi
+}
+
+main() {
+  action=${1:-status}
+  case "$action" in
+    -h | --help)
+      usage
+      return 0
+      ;;
+    status | on | off | toggle) ;;
+    *)
+      usage >&2
+      return 2
+      ;;
+  esac
+
+  require_amixer
+  card=$(find_card)
+  [ -n "$card" ] || die "Yeti Stereo Microphone not found"
+
+  case "$action" in
+    on) set_monitor "$card" unmute ;;
+    off) set_monitor "$card" mute ;;
+    toggle) toggle "$card" ;;
+  esac
+  printf 'Yeti direct monitoring: %s\n' "$(state "$card")"
+}
+
+main "$@"

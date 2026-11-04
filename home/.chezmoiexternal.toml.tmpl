@@ -1,0 +1,29 @@
+# Third-party files and repos, fetched on `chezmoi apply` and refreshed weekly.
+# Nothing here is vendored in this repo, and nothing is pinned: all of it tracks upstream's latest.
+
+# zsh framework; `zimfw init` (see shell/zsh.zsh) installs the modules listed in zimrc.
+[".local/share/zim/zimfw.zsh"]
+    type = "file"
+    url = "https://github.com/zimfw/zimfw/releases/latest/download/zimfw.zsh"
+    refreshPeriod = "168h"
+
+# alacritty.toml imports a theme from here.
+[".config/alacritty/themes"]
+    type = "git-repo"
+    url = "https://github.com/alacritty/alacritty-theme.git"
+    refreshPeriod = "168h"
+
+# tmux plugin manager; it installs the plugins listed in tmux.conf.
+[".config/tmux/plugins/tpm"]
+    type = "git-repo"
+    url = "https://github.com/tmux-plugins/tpm.git"
+    refreshPeriod = "168h"
+
+{{ if eq .chezmoi.os "linux" -}}
+# The terminal font. macOS gets it from a Homebrew cask instead (see packages.yaml).
+[".local/share/fonts/JetBrainsMono"]
+    type = "archive"
+    url = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz"
+    include = ["*.ttf"]
+    refreshPeriod = "168h"
+{{ end -}}
