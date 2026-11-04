@@ -3,7 +3,11 @@
 # SSH hosts are deliberately not here: they stay on each machine, in ~/.ssh/config.d/.
 hosts:
   talos: # desktop, Arch
-    packages: {}
+    packages:
+      pacman:
+        - docker
+        - docker-buildx
+        - docker-compose
   p14s: # laptop, Arch
     packages: {}
   rcorreia-milence-laptop: # work laptop, Ubuntu

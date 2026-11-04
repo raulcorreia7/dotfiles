@@ -27,15 +27,27 @@ main() {
 
 {{- else if eq $manager "apt" -}}
 {{- $apt := includeTemplate "package-list" (dict "manager" "apt" "data" .) -}}
+# codename: print the release codename, the Ubuntu one on derivatives.
+codename() {
+  (. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+}
+
 # add_repo NAME KEY_URL REPO_URL SUITE COMPONENTS: add an apt repository unless it is configured.
+# SUITE `codename` means this release's codename. A key URL without an extension is saved as .asc.
 add_repo() {
-  keyring="/etc/apt/keyrings/$1.${2##*.}"
+  key_file="${2##*/}"
+  case "$key_file" in
+    *.*) keyring="/etc/apt/keyrings/$1.${key_file##*.}" ;;
+    *) keyring="/etc/apt/keyrings/$1.asc" ;;
+  esac
+  suite="$4"
+  [ "$suite" = codename ] && suite="$(codename)"
 
   grep -rqsF "$3" /etc/apt/sources.list /etc/apt/sources.list.d && return 0
 
   as_root install -dm 755 /etc/apt/keyrings
   curl -fsSL "$2" | as_root tee "$keyring" >/dev/null
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=$keyring] $3 $4 $5" |
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=$keyring] $3 $suite $5" |
     as_root tee "/etc/apt/sources.list.d/$1.list" >/dev/null
 }
 

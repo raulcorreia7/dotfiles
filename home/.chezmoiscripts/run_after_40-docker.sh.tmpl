@@ -1,0 +1,39 @@
+{{- /* Docker Engine on Linux: daemon running, and docker usable without sudo. macOS uses Docker Desktop. */ -}}
+{{- if eq .chezmoi.os "linux" -}}
+#!/bin/sh
+# Docker post-install: https://docs.docker.com/engine/install/linux-postinstall/
+# WARNING: the docker group grants root-level access to this machine.
+set -eu
+
+as_root() {
+  if [ "$(id -u)" = 0 ]; then
+    "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+enable_service() {
+  command -v systemctl >/dev/null 2>&1 || return 0
+  systemctl is-enabled --quiet docker.service 2>/dev/null &&
+    systemctl is-active --quiet docker.service && return 0
+  as_root systemctl enable --now docker.service
+}
+
+join_group() {
+  user="$(id -un)"
+  getent group docker >/dev/null || as_root groupadd docker
+  getent group docker | cut -d: -f4 | tr ',' '\n' | grep -qx "$user" && return 0
+
+  as_root usermod -aG docker "$user"
+  echo "docker: added $user to the docker group. Log out and back in to use docker without sudo." >&2
+}
+
+main() {
+  command -v docker >/dev/null 2>&1 || return 0
+  enable_service
+  join_group
+}
+
+main "$@"
+{{- end }}

@@ -15,6 +15,7 @@ repos:
     - { name: mise, key: "https://mise.jdx.dev/gpg-key.pub", url: "https://mise.jdx.dev/deb", suite: stable, components: main }
     - { name: github-cli, key: "https://cli.github.com/packages/githubcli-archive-keyring.gpg", url: "https://cli.github.com/packages", suite: stable, components: main }
     - { name: eza, key: "https://raw.githubusercontent.com/eza-community/eza/main/deb.asc", url: "http://deb.gierens.de", suite: stable, components: main }
+    - { name: docker, key: "https://download.docker.com/linux/ubuntu/gpg", url: "https://download.docker.com/linux/ubuntu", suite: codename, components: stable }
 
 packages:
   apt: # Debian / Ubuntu
@@ -51,6 +52,12 @@ packages:
       - print-manager
       - kdeconnect
       - kdialog
+      # Docker Engine, from Docker's repo: https://docs.docker.com/engine/install/ubuntu/
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
 
   pacman: # Arch
     base:
@@ -83,7 +90,10 @@ packages:
     personal:
       - firefox
       - bitwarden
-    work: []
+    work:
+      - docker
+      - docker-buildx
+      - docker-compose
 
   aur: # Arch, built with paru
     base:
