@@ -42,7 +42,15 @@ packages:
       - wl-clipboard
       - alsa-utils # amixer, used by yeti-monitor
     personal: []
-    work: []
+    work:
+      # KDE replacements for the removed GNOME apps
+      - okular
+      - gwenview
+      - ark
+      - kde-spectacle
+      - print-manager
+      - kdeconnect
+      - kdialog
 
   pacman: # Arch
     base:
