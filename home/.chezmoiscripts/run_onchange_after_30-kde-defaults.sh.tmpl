@@ -25,7 +25,7 @@ set_default() {
   shift
   has_entry "$entry" || return 0
   for mime in "$@"; do
-    xdg-mime default "$entry" "$mime"
+    kwriteconfig6 --file mimeapps.list --group "Default Applications" --key "$mime" "$entry"
   done
 }
 
@@ -37,7 +37,7 @@ set_terminal() {
 }
 
 set_mime_defaults() {
-  command -v xdg-mime >/dev/null 2>&1 || return 0
+  command -v kwriteconfig6 >/dev/null 2>&1 || return 0
   set_default firefox.desktop \
     x-scheme-handler/http x-scheme-handler/https x-scheme-handler/mailto \
     text/html application/xhtml+xml application/xml text/xml application/pdf
