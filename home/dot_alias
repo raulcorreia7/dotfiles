@@ -1,4 +1,5 @@
-# Shell aliases, sourced by init.sh (uses its dot_has helper). Machine-local ones go in env.local.
+# Shared aliases, sourced by init.sh (uses its dot_has helper). Aliases for one machine only
+# go in ~/.alias.local, which init.sh loads next and chezmoi never touches.
 
 # alias_fallback NAME OTHER: if NAME is missing but OTHER exists, alias NAME to OTHER.
 # Debian and Ubuntu install bat and fd as batcat and fdfind.

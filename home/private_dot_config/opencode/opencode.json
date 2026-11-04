@@ -15,19 +15,132 @@
       },
       "models": {
         "glm-5.3-flash-maya": {
-          "name": "GLM 5.3 Flash (maya)"
+          "name": "GLM 5.3 Flash (maya)",
+          "limit": {
+            "context": 131072,
+            "output": 65536
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "max": {
+              "reasoningEffort": "max"
+            }
+          }
         },
         "qwen3.8-27b-infernix": {
-          "name": "Qwen3.8 27B (infernix)"
+          "name": "Qwen3.8 27B (infernix)",
+          "limit": {
+            "context": 240000,
+            "output": 131072
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            }
+          },
+          "options": {
+            "reasoningEffort": "medium"
+          }
+        },
+        "qwen3.8-27b-infernix-instant": {
+          "name": "Qwen3.8 27B (infernix), no thinking",
+          "limit": {
+            "context": 240000,
+            "output": 131072
+          }
         },
         "qwen3.8-27b-ninfer": {
-          "name": "Qwen3.8 27B (ninfer)"
+          "name": "Qwen3.8 27B (ninfer)",
+          "limit": {
+            "context": 240000,
+            "output": 131072
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            }
+          },
+          "options": {
+            "reasoningEffort": "medium"
+          }
+        },
+        "qwen3.8-27b-ninfer-instant": {
+          "name": "Qwen3.8 27B (ninfer), no thinking",
+          "limit": {
+            "context": 240000,
+            "output": 131072
+          }
         },
         "qwen3.8-flash-next": {
-          "name": "Qwen3.8 Flash Next (basalt)"
+          "name": "Qwen3.8 Flash Next (basalt)",
+          "limit": {
+            "context": 262144,
+            "output": 131072
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            }
+          },
+          "options": {
+            "reasoningEffort": "medium"
+          }
         },
         "qwen3.8-flash-next-abliterated": {
-          "name": "Qwen3.8 Flash Next (basalt)"
+          "name": "Qwen3.8 Flash Next (basalt), abliterated",
+          "limit": {
+            "context": 262144,
+            "output": 131072
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            }
+          },
+          "options": {
+            "reasoningEffort": "medium"
+          }
+        },
+        "qwen3.8-flash-next-instant": {
+          "name": "Qwen3.8 Flash Next (basalt), no thinking",
+          "limit": {
+            "context": 262144,
+            "output": 131072
+          }
         }
       }
     }

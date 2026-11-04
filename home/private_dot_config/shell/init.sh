@@ -55,5 +55,6 @@ fi
 
 [ -n "${ZSH_VERSION:-}" ] && . "$SHELL_DIR/zsh.zsh"
 [ -r "$HOME/.alias" ] && . "$HOME/.alias"
+[ -r "$HOME/.alias.local" ] && . "$HOME/.alias.local"
 . "$SHELL_DIR/tools.sh"
 dot_interactive && . "$SHELL_DIR/tmux.sh"

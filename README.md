@@ -89,4 +89,6 @@ weekly by `chezmoi apply`, or at once by `dotfiles-update`.
   apt lacks it, list it under `packages.mise.apt` too.
 - **Runtime:** add it to the mise config.
 - **Script:** `home/private_dot_local/bin/executable_<name>`.
-- **Machine-local shell setting:** `~/.config/shell/env.local`, which is not managed.
+- **Alias for every machine:** `home/dot_alias`. For one machine only: `~/.alias.local`.
+- **Machine-local shell setting:** `~/.config/shell/env.local`.
+  Both local files are loaded if present and never managed.
