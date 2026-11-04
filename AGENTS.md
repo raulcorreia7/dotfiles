@@ -5,17 +5,17 @@ into `$HOME`. `install.sh` bootstraps. README.md has the layout and commands.
 
 ## Where a change goes
 
-- App config: `home/dot_config/<app>/`; `chezmoi re-add` for edits made on a machine.
+- App config: `home/private_dot_config/<app>/`; `chezmoi re-add` for edits made on a machine.
 - Package: `home/.chezmoidata/packages.yaml`, under the right manager and profile; one
   machine only: `hosts.yaml`. Keep `base` minimal; everything the runtime needs is in `base`.
 - Tools: the OS package manager first. Add upstream's official apt repo under `repos` when it
   beats the distro. Only if a manager has no package: `packages.mise.<manager>`. Runtimes:
   the mise config. One owner per tool, never two.
 - SSH hosts, git identity, any secret: never in the repo. They stay on the machine.
-- Script: `home/dot_local/bin/executable_<name>`; skip profiles in `.chezmoiignore`.
+- Script: `home/private_dot_local/bin/executable_<name>`; skip profiles in `.chezmoiignore`.
 - Third-party code and fonts: `.chezmoiexternal.toml.tmpl` or a `zmodule` in `zimrc`, tracking
   latest. Never copy it in or pin it without a reason.
-- Shell runtime: `home/dot_config/shell/`. Machine-local values: `~/.config/shell/env.local`.
+- Shell runtime: `home/private_dot_config/shell/`. Machine-local values: `~/.config/shell/env.local`.
 
 ## Rules
 

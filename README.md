@@ -33,23 +33,25 @@ After `re-add`, review `git diff` and commit what is shared.
 ## Layout
 
 ```
-install.sh                      bootstrap
-.chezmoiroot                    source state is home/
+install.sh                            bootstrap
+.chezmoiroot                          source state is home/
 home/
-  .chezmoi.toml.tmpl            the questions asked once per machine
-  .chezmoidata/packages.yaml    packages by manager and profile
-  .chezmoidata/hosts.yaml       extra packages per host
-  .chezmoiexternal.toml.tmpl    zimfw, alacritty themes, tpm: fetched, not stored
-  .chezmoiignore                what a profile or OS skips
-  .chezmoitemplates/            shared template snippets
-  .chezmoiscripts/              packages, runtimes, font cache, KDE defaults
-  dot_config/shell/             shell runtime and prompt
-  dot_config/<app>/             app configs
-  private_dot_ssh/              ssh defaults; no hosts
-  dot_local/bin/                our scripts: dotfiles-update, yeti-monitor
+  .chezmoi.toml.tmpl                  the questions asked once per machine
+  .chezmoidata/packages.yaml          packages by manager and profile
+  .chezmoidata/hosts.yaml             extra packages per host
+  .chezmoiexternal.toml.tmpl          zimfw, themes, font, tpm: fetched, not stored
+  .chezmoiignore                      what an OS skips
+  .chezmoitemplates/                  shared template snippets
+  .chezmoiscripts/                    packages, runtimes, font cache, KDE defaults
+  private_dot_config/shell/           shell runtime and prompt
+  private_dot_config/<app>/           app configs
+  private_dot_local/bin/              our scripts: dotfiles-update, yeti-monitor
+  private_dot_ssh/                    ssh defaults; no hosts
+  dot_omp/                            omp config
 ```
 
-Names: `dot_x` is `.x`; `private_`, `executable_`, `modify_` and `.tmpl` set how a file is installed.
+Names: `dot_x` is `.x`; `private_` keeps it owner-only (0700 for directories); `executable_`,
+`modify_` and `.tmpl` set how a file is installed.
 
 ## Machines
 
@@ -74,7 +76,7 @@ Use the OS package manager first (`home/.chezmoidata/packages.yaml`). Where upst
 own apt repository and it beats the distro (gh, eza, mise), that repository is added too. Only
 where a manager has no package does `mise` supply the tool: today that is neovim, gitui and
 difftastic on apt, while Arch and Homebrew install them natively. Runtimes (node, go, python,
-rust, ...) always come from `mise` (`home/dot_config/mise/config.toml.tmpl`).
+rust, ...) always come from `mise` (`home/private_dot_config/mise/config.toml.tmpl`).
 
 Nothing is pinned. zimfw, its modules, the terminal font, the alacritty themes and tmux
 plugins are fetched from upstream's latest (`home/.chezmoiexternal.toml.tmpl`) and refreshed
@@ -86,5 +88,5 @@ weekly by `chezmoi apply`, or at once by `dotfiles-update`.
 - **Tool:** add it to `home/.chezmoidata/packages.yaml`, under each manager that has it. If
   apt lacks it, list it under `packages.mise.apt` too.
 - **Runtime:** add it to the mise config.
-- **Script:** `home/dot_local/bin/executable_<name>`.
+- **Script:** `home/private_dot_local/bin/executable_<name>`.
 - **Machine-local shell setting:** `~/.config/shell/env.local`, which is not managed.

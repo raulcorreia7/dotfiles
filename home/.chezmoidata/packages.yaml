@@ -5,7 +5,7 @@
 # Rule: use the OS package manager. Add the tool's official repository when upstream runs one
 # and it is newer than the distro (`repos`). Only when a manager has no package at all does
 # mise supply it (`mise`). Runtimes (node, go, python, ...) always belong to mise:
-# dot_config/mise/config.toml.tmpl. One owner per tool, never two.
+# private_dot_config/mise/config.toml.tmpl. One owner per tool, never two.
 #
 # Names differ by manager, so the same tool appears once per manager. Keep `base` minimal.
 
