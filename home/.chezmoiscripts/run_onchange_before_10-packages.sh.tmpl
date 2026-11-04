@@ -26,6 +26,13 @@ codename() {
   (. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
 }
 
+# missing PACKAGE...: print the packages dpkg has not installed.
+missing() {
+  for pkg in "$@"; do
+    dpkg-query -W -f '${Status}' "$pkg" 2>/dev/null | grep -q 'install ok installed' || echo "$pkg"
+  done
+}
+
 # add_repo NAME KEY_URL REPO_URL SUITE COMPONENTS: add an apt repository unless it is configured.
 # SUITE `codename` means this release's codename. A key URL without an extension is saved as .asc.
 add_repo() {
@@ -43,27 +50,39 @@ add_repo() {
   curl -fsSL "$2" | as_root tee "$keyring" >/dev/null
   echo "deb [arch=$(dpkg --print-architecture) signed-by=$keyring] $3 $suite $5" |
     as_root tee "/etc/apt/sources.list.d/$1.list" >/dev/null
+  repo_added=1
 }
 
+# Needs root only when a repo or package is missing; upgrades are left to the OS.
 main() {
+  repo_added=
 {{- range .repos.apt }}
   add_repo {{ .name }} {{ .key }} {{ .url }} {{ .suite }} {{ .components }}
 {{- end }}
 
+  # shellcheck disable=SC2046
+  set -- $(missing {{ $apt }})
+  [ -n "$repo_added" ] || [ "$#" -gt 0 ] || return 0
+
   as_root apt-get update -qq
-  as_root apt-get install -y {{ $apt }}
+  [ "$#" -eq 0 ] || as_root apt-get install -y "$@"
 }
 
 {{- else if eq $manager "pacman" -}}
 {{- $pacman := includeTemplate "package-list" (dict "manager" "pacman" "data" .) -}}
 {{- $aur := includeTemplate "package-list" (dict "manager" "aur" "data" .) -}}
+# Installs only what is missing, so a re-run needs no root; upgrades are left to the OS.
 main() {
-  as_root pacman -S --needed --noconfirm {{ $pacman }}
+  # shellcheck disable=SC2046
+  set -- $(pacman -T {{ $pacman }} || true)
+  [ "$#" -eq 0 ] || as_root pacman -S --needed --noconfirm "$@"
 
+  set -- $(pacman -T {{ $aur }} || true)
+  [ "$#" -eq 0 ] && return 0
   if command -v paru >/dev/null 2>&1; then
-    paru -S --needed --noconfirm {{ $aur }}
+    paru -S --needed --noconfirm "$@"
   else
-    echo "paru is not installed: skipping AUR packages ({{ $aur }})" >&2
+    echo "paru is not installed: skipping AUR packages ($*)" >&2
   fi
 }
 
