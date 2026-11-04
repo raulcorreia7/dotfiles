@@ -1,5 +1,9 @@
-{{- /* Packages for one manager, space-separated: base + this profile + this host.
+{{- /* Packages for one manager, space-separated: base + personal (+ work on work machines) + this host.
        Call: includeTemplate "package-list" (dict "manager" "apt" "data" .) */ -}}
 {{- $lists := index .data.packages .manager -}}
 {{- $hostExtras := dig .data.host "packages" .manager (list) .data.hosts -}}
-{{- concat $lists.base (index $lists .data.profile) $hostExtras | join " " -}}
+{{- $profileLists := $lists.personal -}}
+{{- if eq .data.profile "work" -}}
+{{- $profileLists = concat $lists.personal $lists.work -}}
+{{- end -}}
+{{- concat $lists.base $profileLists $hostExtras | join " " -}}

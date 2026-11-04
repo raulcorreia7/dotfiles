@@ -61,8 +61,8 @@ Names: `dot_x` is `.x`; `private_` keeps it owner-only (0700 for directories); `
 | `p14s` | Arch | personal |
 | `rcorreia-milence-laptop` | Ubuntu | work |
 
-Each machine has what its profile has. To add packages for one machine only, put them under
-its name in `home/.chezmoidata/hosts.yaml`.
+Every machine gets the `personal` packages; `work` machines also get the `work` ones. To add
+packages for one machine only, put them under its name in `home/.chezmoidata/hosts.yaml`.
 
 ## SSH
 
