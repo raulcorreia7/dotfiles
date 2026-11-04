@@ -1,89 +1,90 @@
 # dotfiles
 
-Personal dotfiles, kept small and clone-and-run:
+Personal dotfiles, managed with [chezmoi](https://www.chezmoi.io). Files in `home/`
+are copied into `$HOME`; no symlinks.
 
-- `setup` — the one entry script (packages → files → rc)
-- `dotconfigs/` — config files, laid out as they sit in `$HOME`; copied, not linked
-- `packages/` — flat package lists, one file per profile and OS
-- `bin/` — scripts we own, copied into `~/.local/bin`
-- `init.sh` — the one shell runtime file (sourced by the rc block)
-- `zimfw/` — vendored zsh framework used by the runtime
-
-## Quick start
+## Install
 
 ```sh
-git clone https://github.com/raulcorreia7/dotfiles.git ~/projects/dotfiles
-cd ~/projects/dotfiles
-./setup            # asks for a profile, installs packages, copies configs, writes rc
-exec zsh
+git clone https://github.com/raulcorreia7/dotfiles.git   # anywhere
+./dotfiles/install.sh
 ```
 
-Requirements are minimal by design: `git` and a shell. The base package
-lists carry `git` and `zsh`; on macOS install Homebrew first
-(<https://brew.sh> — `setup` stops and prints the one-liner if it is missing).
+This installs chezmoi if needed, asks once for the host name, profile (`personal` or
+`work`) and git identity, installs packages, and copies the files. The answers stay on the
+machine, in `~/.config/chezmoi/chezmoi.toml`; edit that file to change one later.
 
-## What `setup` does
+To see what would change before anything is written, install chezmoi yourself, run
+`chezmoi init --source ./dotfiles`, then `chezmoi diff` (and `chezmoi apply` when happy).
 
-1. resolves its own path — clone it anywhere, nothing assumes `~/.dotfiles`
-2. reads `packages/base-<os>` + `packages/<profile>-<os>` and installs them
-3. copies `dotconfigs/` into `$HOME`: missing files are added, files you changed are kept
-4. copies `bin/base/` + `bin/<profile>/` into `~/.local/bin`
-5. writes a marker block into `~/.zshrc` (and `~/.bashrc` if present)
+## Use
 
-| Command | Effect |
-|---|---|
-| `./setup` | full run: packages → files → rc |
-| `./setup --packages` | packages only |
-| `./setup --files` | files + rc only |
-| `./setup --files --force` | also replace files you changed (backed up to `*.bak`) |
-| `./setup diff` | show where this machine differs from the repo |
-| `./setup save` | copy this machine's edits into the repo, to review and commit |
-| `./setup uninstall` | removes the rc block and old symlinks; copied files stay |
-| `./setup configure` | opt-in desktop/git defaults (XDG dirs, git, KDE) |
+| Task | Command |
+| --- | --- |
+| See how this machine differs from the repo | `chezmoi diff` |
+| Update everything to the latest | `dotfiles-update` |
+| Install repo changes after `git pull` | `chezmoi apply` |
+| Edit a managed file | `chezmoi edit <file>`, then `chezmoi apply` |
+| Take an edit made in `$HOME` back into the repo | `chezmoi re-add` |
+| Open the repo | `chezmoi cd` |
 
-Flags: `-n`/`--dry-run`, `-p`/`--profile <name>`, `-f`/`--force`, `-h`/`--help`.
+After `re-add`, review `git diff` and commit what is shared.
 
 ## Layout
 
 ```
-setup                # entry script: run · uninstall · configure
-init.sh              # shell runtime (env, aliases, tool inits, zimfw)
-packages/            # base-pacman · personal-macos · work-pacman · …
-bin/base/            # scripts on every machine (→ ~/.local/bin)
-bin/<profile>/       # profile-only scripts
-dotconfigs/          # mirrors $HOME: .config/{alacritty,ghostty,mise,nvim,opencode,tmux} · .omp
-zimfw/               # vendored zsh framework (modules + .zimrc)
+install.sh                      bootstrap
+.chezmoiroot                    source state is home/
+home/
+  .chezmoi.toml.tmpl            the questions asked once per machine
+  .chezmoidata/packages.yaml    packages by manager and profile
+  .chezmoidata/hosts.yaml       extra packages per host
+  .chezmoiexternal.toml.tmpl    zimfw, alacritty themes, tpm: fetched, not stored
+  .chezmoiignore                what a profile or OS skips
+  .chezmoitemplates/            shared template snippets
+  .chezmoiscripts/              packages, runtimes, font cache, KDE defaults
+  dot_config/shell/             shell runtime and prompt
+  dot_config/<app>/             app configs
+  private_dot_ssh/              ssh defaults; no hosts
+  dot_local/bin/                our scripts: dotfiles-update, yeti-monitor
 ```
 
-## Profiles
+Names: `dot_x` is `.x`; `private_`, `executable_`, `modify_` and `.tmpl` set how a file is installed.
 
-A profile is a machine class (`personal`, `work`, …). It selects packages and
-bin scripts only — the config tree is shared. Add one by creating
-`packages/<profile>-<os>` files for the OSes that class uses; missing files
-are skipped.
+## Machines
 
-## Maintenance
+| Host | OS | Profile |
+| --- | --- | --- |
+| `talos` | Arch | personal |
+| `p14s` | Arch | personal |
+| `rcorreia-milence-laptop` | Ubuntu | work |
 
-```sh
-git pull && ./setup --files     # take new repo files; your changed files are kept
-./setup diff                    # what differs here
-./setup save                    # bring this machine's edits into the repo
-git diff && git commit          # share what should be shared; git checkout -- the rest
-```
+Each machine has what its profile has. To add packages for one machine only, put them under
+its name in `home/.chezmoidata/hosts.yaml`.
 
-Each machine has its own copies, so one machine can differ (omp models, mise tools) without
-affecting the others. Nothing changes until you run `setup`, `save`, or `--force`.
+## SSH
 
-`setup` is switches-only — no environment knobs. Machine-local shell settings
-(what `init.sh` sources at startup) go in `env.local` at the repo root
-(gitignored).
-Add an app: drop `dotconfigs/.config/<app>/` in place and run `./setup --files`.
+The repo never holds hosts. `~/.ssh/config` gets one line, `Include ~/.ssh/config.d/*`, and
+shared defaults live in `config.d/zz-defaults`. Put each machine's own entries in
+`~/.ssh/config.d/hosts` yourself; chezmoi leaves that file alone.
 
-## Notes
+## Tools
 
-- Only files git knows in `dotconfigs/` are copied, not ignored ones; app state
-  (plugins, alacritty themes) lives in `$HOME`, never in the clone.
-- Coming from the old symlink setup? `./setup --files` replaces links into the
-  repo with copies.
-- Moved the clone? Run `./setup` again — the rc block is rewritten with the
-  new path.
+Use the OS package manager first (`home/.chezmoidata/packages.yaml`). Where upstream runs its
+own apt repository and it beats the distro (gh, eza, mise), that repository is added too. Only
+where a manager has no package does `mise` supply the tool: today that is neovim, gitui and
+difftastic on apt, while Arch and Homebrew install them natively. Runtimes (node, go, python,
+rust, ...) always come from `mise` (`home/dot_config/mise/config.toml.tmpl`).
+
+Nothing is pinned. zimfw, its modules, the terminal font, the alacritty themes and tmux
+plugins are fetched from upstream's latest (`home/.chezmoiexternal.toml.tmpl`) and refreshed
+weekly by `chezmoi apply`, or at once by `dotfiles-update`.
+
+## Changing things
+
+- **App config:** `chezmoi add <file>`.
+- **Tool:** add it to `home/.chezmoidata/packages.yaml`, under each manager that has it. If
+  apt lacks it, list it under `packages.mise.apt` too.
+- **Runtime:** add it to the mise config.
+- **Script:** `home/dot_local/bin/executable_<name>`.
+- **Machine-local shell setting:** `~/.config/shell/env.local`, which is not managed.
