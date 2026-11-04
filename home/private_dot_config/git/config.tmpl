@@ -18,12 +18,13 @@
 [merge]
     conflictstyle = zdiff3
 
-# delta pages diffs and filters `git add -p`; difftastic is behind the dft/dshow/dlog/dst
-# aliases. gitui draws its own diffs, so neither applies to it.
 [core]
     editor = nvim
+{{- if lookPath "delta" }}
     pager = delta
 
+# delta pages diffs and filters `git add -p`. It is set only once installed, so a missing
+# delta can never break git. gitui draws its own diffs.
 [interactive]
     diffFilter = delta --color-only
 
@@ -31,7 +32,9 @@
     side-by-side = true
     line-numbers = true
     navigate = true
+{{- end }}
 
+# difftastic, from mise or the OS: `git dft`, `git dshow`, `git dlog`, `git dst`.
 [alias]
     dft = -c diff.external=difft diff
     dshow = -c diff.external=difft show --ext-diff
