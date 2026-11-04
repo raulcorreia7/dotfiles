@@ -4,13 +4,7 @@
 # packages {{ .packages | toJson | sha256sum }} · {{ .profile }} · {{ .host }}
 set -eu
 
-as_root() {
-  if [ "$(id -u)" = 0 ]; then
-    "$@"
-  else
-    sudo "$@"
-  fi
-}
+{{ template "as-root" }}
 
 {{ if eq $manager "brew" -}}
 {{- $brew := includeTemplate "package-list" (dict "manager" "brew" "data" .) -}}

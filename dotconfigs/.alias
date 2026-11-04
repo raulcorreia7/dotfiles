@@ -1,5 +1,0 @@
-# Shared aliases. setup installs this to ~/.alias and init.sh loads it, then ~/.alias.local.
-# Plain POSIX sh, so bash and zsh both read it. Edit it here and run setup on the other
-# computers; aliases for one machine only go in ~/.alias.local, which setup never touches.
-alias nvcfg='${EDITOR:-nvim} ~/.config/nvim'
-command -v eza >/dev/null 2>&1 && alias ls='eza'

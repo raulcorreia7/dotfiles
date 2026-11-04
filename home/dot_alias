@@ -14,3 +14,4 @@ alias_fallback fd fdfind
 unset -f alias_fallback
 
 dot_has eza && alias ls='eza'
+alias nvcfg='${EDITOR:-nvim} ~/.config/nvim'

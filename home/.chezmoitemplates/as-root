@@ -1,0 +1,11 @@
+{{- /* Shell function for scripts: as_root CMD... runs CMD as root. Uses sudo on a terminal,
+       pkexec (the desktop's password dialog) without one, as when chezmoi runs from a GUI. */ -}}
+as_root() {
+  if [ "$(id -u)" = 0 ]; then
+    "$@"
+  elif [ ! -t 0 ] && command -v pkexec >/dev/null 2>&1; then
+    pkexec "$@"
+  else
+    sudo "$@"
+  fi
+}

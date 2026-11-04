@@ -5,13 +5,7 @@
 # WARNING: the docker group grants root-level access to this machine.
 set -eu
 
-as_root() {
-  if [ "$(id -u)" = 0 ]; then
-    "$@"
-  else
-    sudo "$@"
-  fi
-}
+{{ template "as-root" }}
 
 enable_service() {
   command -v systemctl >/dev/null 2>&1 || return 0
