@@ -16,6 +16,11 @@ sync_repo() {
 }
 
 main() {
+  command -v git >/dev/null 2>&1 || {
+    echo "omp-extensions: git is not installed: skipping" >&2
+    return 0
+  }
+
   sync_repo
   "$SRC/install.sh" >/dev/null
 }
