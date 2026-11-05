@@ -1,5 +1,5 @@
-# Repos and files fetched on `chezmoi apply` and refreshed weekly: third-party code and my own
-# personal repos. Nothing here is vendored in this repo, and nothing is pinned: all of it tracks latest.
+# Third-party files and repos, fetched on `chezmoi apply` and refreshed weekly.
+# Nothing here is vendored in this repo, and nothing is pinned: all of it tracks upstream's latest.
 
 # zsh framework; `zimfw init` (see shell/zsh.zsh) installs the modules listed in zimrc.
 [".local/share/zim/zimfw.zsh"]
@@ -27,9 +27,3 @@
     include = ["*.ttf"]
     refreshPeriod = "168h"
 {{ end -}}
-
-# My omp extensions (private repo: needs `gh auth login` first); run_after_50-omp-extensions installs them.
-[".local/share/omp-extensions"]
-    type = "git-repo"
-    url = "https://github.com/raulcorreia7/omp-extensions.git"
-    refreshPeriod = "168h"

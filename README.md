@@ -12,7 +12,7 @@ git clone https://github.com/raulcorreia7/dotfiles.git   # anywhere
 
 This installs chezmoi if needed, asks once for the host name, profile (`personal` or
 `work`) and git identity, installs packages, and copies the files. Run `gh auth login` before
-it: private repos it fetches, such as omp-extensions, clone over HTTPS with that login. The answers stay on the
+it, or my private omp-extensions are skipped until you do and re-run `chezmoi apply`. The answers stay on the
 machine, in `~/.config/chezmoi/chezmoi.toml`; edit that file to change one later.
 
 To see what would change before anything is written, install chezmoi yourself, run
@@ -48,7 +48,7 @@ home/
   private_dot_config/<app>/           app configs
   private_dot_local/bin/              our scripts: dotfiles-update, yeti-monitor
   private_dot_ssh/                    ssh defaults; no hosts
-  dot_omp/                            omp config; extensions come from my omp-extensions repo (external)
+  dot_omp/                            omp config; extensions come from my omp-extensions repo (run_after script)
 ```
 
 Names: `dot_x` is `.x`; `private_` keeps it owner-only (0700 for directories); `executable_`,
