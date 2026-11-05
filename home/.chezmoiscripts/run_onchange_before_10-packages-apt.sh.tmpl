@@ -1,26 +1,13 @@
-{{- /* Installs the lists in .chezmoidata/packages.yaml. Re-runs when they, the profile or the host change. */ -}}
-{{- $manager := includeTemplate "package-manager" . | trim -}}
+{{- /* Debian / Ubuntu: official repositories, then the packages in .chezmoidata/packages.yaml.
+       Re-runs when those lists, the profile or the host change. */ -}}
+{{- if eq (includeTemplate "package-manager" . | trim) "apt" -}}
+{{- $apt := includeTemplate "package-list" (dict "manager" "apt" "data" .) -}}
 #!/bin/sh
-# packages {{ .packages | toJson | sha256sum }} · {{ .profile }} · {{ .host }}
+# apt {{ dict "repos" .repos.apt "packages" $apt | toJson | sha256sum }}
 set -eu
 
 {{ template "as-root" }}
 
-{{ if eq $manager "brew" -}}
-{{- $brew := includeTemplate "package-list" (dict "manager" "brew" "data" .) -}}
-{{- $cask := includeTemplate "package-list" (dict "manager" "cask" "data" .) -}}
-main() {
-  command -v brew >/dev/null 2>&1 || {
-    echo "Homebrew is required: https://brew.sh" >&2
-    exit 1
-  }
-
-  brew install {{ $brew }}
-  brew install --cask {{ $cask }}
-}
-
-{{- else if eq $manager "apt" -}}
-{{- $apt := includeTemplate "package-list" (dict "manager" "apt" "data" .) -}}
 # codename: print the release codename, the Ubuntu one on derivatives.
 codename() {
   (. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
@@ -68,28 +55,5 @@ main() {
   [ "$#" -eq 0 ] || as_root apt-get install -y "$@"
 }
 
-{{- else if eq $manager "pacman" -}}
-{{- $pacman := includeTemplate "package-list" (dict "manager" "pacman" "data" .) -}}
-{{- $aur := includeTemplate "package-list" (dict "manager" "aur" "data" .) -}}
-# Installs only what is missing, so a re-run needs no root; upgrades are left to the OS.
-main() {
-  # shellcheck disable=SC2046
-  set -- $(pacman -T {{ $pacman }} || true)
-  [ "$#" -eq 0 ] || as_root pacman -S --needed --noconfirm "$@"
-
-  set -- $(pacman -T {{ $aur }} || true)
-  [ "$#" -eq 0 ] && return 0
-  if command -v paru >/dev/null 2>&1; then
-    paru -S --needed --noconfirm "$@"
-  else
-    echo "paru is not installed: skipping AUR packages ($*)" >&2
-  fi
-}
-
-{{- else -}}
-main() {
-  echo "packages: no support for this OS, skipping" >&2
-}
-{{- end }}
-
 main "$@"
+{{- end }}

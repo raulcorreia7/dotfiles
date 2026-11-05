@@ -1,0 +1,28 @@
+{{- /* Arch: repository packages, then AUR packages through paru.
+       Re-runs when the lists in .chezmoidata/packages.yaml, the profile or the host change. */ -}}
+{{- if eq (includeTemplate "package-manager" . | trim) "pacman" -}}
+{{- $pacman := includeTemplate "package-list" (dict "manager" "pacman" "data" .) -}}
+{{- $aur := includeTemplate "package-list" (dict "manager" "aur" "data" .) -}}
+#!/bin/sh
+# pacman {{ dict "pacman" $pacman "aur" $aur | toJson | sha256sum }}
+set -eu
+
+{{ template "as-root" }}
+
+# Installs only what is missing, so a re-run needs no root; upgrades are left to the OS.
+main() {
+  # shellcheck disable=SC2046
+  set -- $(pacman -T {{ $pacman }} || true)
+  [ "$#" -eq 0 ] || as_root pacman -S --needed --noconfirm "$@"
+
+  set -- $(pacman -T {{ $aur }} || true)
+  [ "$#" -eq 0 ] && return 0
+  if command -v paru >/dev/null 2>&1; then
+    paru -S --needed --noconfirm "$@"
+  else
+    echo "paru is not installed: skipping AUR packages ($*)" >&2
+  fi
+}
+
+main "$@"
+{{- end }}

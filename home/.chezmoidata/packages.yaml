@@ -1,6 +1,6 @@
 # Native packages, per package manager and profile. Every machine gets `base` and `personal`;
 # work machines also get `work`. Then each machine adds its own extras from hosts.yaml. Installed by
-# .chezmoiscripts/run_onchange_before_10-packages.sh.tmpl, which re-runs when this file changes.
+# .chezmoiscripts/run_onchange_before_10-packages-<manager>.sh.tmpl, which re-runs when this file changes.
 #
 # Rule: use the OS package manager. Add the tool's official repository when upstream runs one
 # and it is newer than the distro (`repos`). Only when a manager has no package at all does

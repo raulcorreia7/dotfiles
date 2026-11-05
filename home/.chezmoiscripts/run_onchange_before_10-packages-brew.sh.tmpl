@@ -1,0 +1,21 @@
+{{- /* macOS: Homebrew formulae and casks. Re-runs when the lists in .chezmoidata/packages.yaml,
+       the profile or the host change. */ -}}
+{{- if eq (includeTemplate "package-manager" . | trim) "brew" -}}
+{{- $brew := includeTemplate "package-list" (dict "manager" "brew" "data" .) -}}
+{{- $cask := includeTemplate "package-list" (dict "manager" "cask" "data" .) -}}
+#!/bin/sh
+# brew {{ dict "brew" $brew "cask" $cask | toJson | sha256sum }}
+set -eu
+
+main() {
+  command -v brew >/dev/null 2>&1 || {
+    echo "Homebrew is required: https://brew.sh" >&2
+    exit 1
+  }
+
+  brew install {{ $brew }}
+  brew install --cask {{ $cask }}
+}
+
+main "$@"
+{{- end }}
