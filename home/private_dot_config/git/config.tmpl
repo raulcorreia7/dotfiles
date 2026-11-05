@@ -40,3 +40,10 @@
     dshow = -c diff.external=difft show --ext-diff
     dlog = -c diff.external=difft log -p --ext-diff
     dst = -c diff.external=difft stash show --ext-diff -p
+{{- if lookPath "gh" }}
+
+# HTTPS to GitHub authenticates with `gh auth login`; private externals (omp-extensions) need it.
+[credential "https://github.com"]
+    helper =
+    helper = !gh auth git-credential
+{{- end }}

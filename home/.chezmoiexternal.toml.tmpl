@@ -27,3 +27,9 @@
     include = ["*.ttf"]
     refreshPeriod = "168h"
 {{ end -}}
+
+# My omp extensions (private repo: needs `gh auth login` first); run_after_50-omp-extensions installs them.
+[".local/share/omp-extensions"]
+    type = "git-repo"
+    url = "https://github.com/raulcorreia7/omp-extensions.git"
+    refreshPeriod = "168h"

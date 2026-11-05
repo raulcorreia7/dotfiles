@@ -1,0 +1,12 @@
+setupVersion: 2
+statusLine:
+  preset: compact
+composer:
+  tokenRate: true
+display:
+  showTokenUsage: true
+hideThinkingBlock: true
+bashInterceptor:
+  enabled: true
+modelRoles:
+  default: local-inference/qwen-3.8-flash-basalt
