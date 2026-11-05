@@ -44,14 +44,6 @@ packages:
       - alsa-utils # amixer, used by yeti-monitor
     personal: []
     work:
-      # KDE replacements for the removed GNOME apps
-      - okular
-      - gwenview
-      - ark
-      - kde-spectacle
-      - print-manager
-      - kdeconnect
-      - kdialog
       # Docker Engine, from Docker's repo: https://docs.docker.com/engine/install/ubuntu/
       - docker-ce
       - docker-ce-cli

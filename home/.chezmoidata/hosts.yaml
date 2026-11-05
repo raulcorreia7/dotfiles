@@ -1,5 +1,7 @@
 # Per-machine package additions, keyed by host name (asked on `chezmoi init`, default `hostname`).
-# A machine with no entry just gets its profile's packages. Managers: apt, pacman, aur, brew, cask.
+# The profile (personal or work) says what a machine is for; this file says what the machine itself
+# needs (desktop environment, hardware). A machine with no entry just gets its profile's packages.
+# Managers: apt, pacman, aur, brew, cask.
 # SSH hosts are deliberately not here: they stay on each machine, in ~/.ssh/config.d/.
 hosts:
   talos: # desktop, Arch
@@ -10,5 +12,14 @@ hosts:
         - docker-compose
   p14s: # laptop, Arch
     packages: {}
-  rcorreia-milence-laptop: # work laptop, Ubuntu
-    packages: {}
+  rcorreia-milence-laptop: # work laptop, Ubuntu, KDE
+    packages:
+      apt:
+        # KDE replacements for the removed GNOME apps
+        - okular
+        - gwenview
+        - ark
+        - kde-spectacle
+        - print-manager
+        - kdeconnect
+        - kdialog
