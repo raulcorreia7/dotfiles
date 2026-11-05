@@ -20,8 +20,8 @@ _tmux_name() {
 }
 
 # Autostart: each local terminal opens its own session.
-# DOTFILES_TMUX_AUTOSTART=0 turns it off; DOTFILES_TMUX_SESSION picks the name.
-if dot_has tmux && [ "${DOTFILES_TMUX_AUTOSTART:-1}" = 1 ] &&
+# Off by default; DOTFILES_TMUX_AUTOSTART=1 turns it on; DOTFILES_TMUX_SESSION picks the name.
+if dot_has tmux && [ "${DOTFILES_TMUX_AUTOSTART:-0}" = 1 ] &&
   [ -z "${TMUX:-}" ] && [ -z "${SSH_CONNECTION:-}${SSH_TTY:-}" ]; then
   _session="${DOTFILES_TMUX_SESSION:-$(_tmux_name)}"
   tmux has-session -t "$_session" 2>/dev/null && _session="$_session-$$"
