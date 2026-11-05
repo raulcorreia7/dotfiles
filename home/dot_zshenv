@@ -1,0 +1,3 @@
+# Managed by chezmoi. Stops Ubuntu's /etc/zsh/zshrc from running compinit;
+# zimfw's completion module runs it (see ~/.config/shell/zimrc).
+skip_global_compinit=1
