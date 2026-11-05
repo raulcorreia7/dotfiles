@@ -2,7 +2,7 @@
 {{- $host := promptStringOnce . "host" "Host name (key in .chezmoidata/hosts.yaml)" .chezmoi.hostname -}}
 {{- $profile := promptChoiceOnce . "profile" "Machine profile" (list "personal" "work") -}}
 {{- $gitName := promptStringOnce . "gitName" "Git name" "" -}}
-{{- $aiUrl := promptStringOnce . "aiUrl" "Inference endpoint URL, blank for none" "" -}}
+{{- $aiUrl := promptStringOnce . "aiUrl" "Inference endpoint URL (blank for none)" "" -}}
 {{- $gitEmail := promptStringOnce . "gitEmail" "Git email" "" -}}
 
 # Keep using this clone as the source, wherever it lives.
