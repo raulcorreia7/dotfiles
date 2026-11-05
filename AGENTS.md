@@ -13,7 +13,7 @@ into `$HOME`. `install.sh` bootstraps. README.md has the layout and commands.
   the mise config. One owner per tool, never two.
 - SSH hosts, git identity, any secret: never in the repo. They stay on the machine.
 - Script: `home/private_dot_local/bin/executable_<name>`; skip profiles in `.chezmoiignore`.
-- My private repos (omp-extensions): a `run_after` script clones and pulls them with the `gh` login.
+- My own repos that install themselves (omp-extensions): a `run_after` script clones, updates and installs them.
 - Third-party code and fonts: `.chezmoiexternal.toml.tmpl` or a `zmodule` in `zimrc`, tracking
   latest. Never copy it in or pin it without a reason.
 - Shell runtime: `home/private_dot_config/shell/`. Machine-local values: `~/.config/shell/env.local`.
