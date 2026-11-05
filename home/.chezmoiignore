@@ -7,3 +7,9 @@
 {{ if ne .chezmoi.os "linux" -}}
 .local/bin/yeti-monitor
 {{ end -}}
+
+# Inference endpoint config only where one is set (aiUrl, asked on `chezmoi init`).
+{{ if not (get . "aiUrl") -}}
+.omp/agent/local-inference.yml
+.config/opencode/opencode.json
+{{ end -}}

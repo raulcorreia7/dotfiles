@@ -1,8 +1,0 @@
-# Servers for the omp local-inference extension (~/projects/omp-extensions), tried in order at
-# startup; the first that answers is used. Same file on every machine: talos answers on loopback,
-# every other machine reaches the keyed front door (LAN, work or away). The key comes from
-# AI_API_KEY, which ~/.config/shell/init.sh reads from ~/.config/homelab/ai.key.
-servers:
-  - http://127.0.0.1:9000
-  - url: https://ai.lab.raulcorreia.dev
-    apiKeyEnv: AI_API_KEY

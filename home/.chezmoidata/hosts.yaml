@@ -12,7 +12,7 @@ hosts:
         - docker-compose
   p14s: # laptop, Arch
     packages: {}
-  rcorreia-milence-laptop: # work laptop, Ubuntu, KDE
+  work-laptop: # work laptop, Ubuntu, KDE
     packages:
       apt:
         # KDE replacements for the removed GNOME apps

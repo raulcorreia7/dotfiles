@@ -10,7 +10,7 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "Local inference",
       "options": {
-        "baseURL": "https://ai.lab.raulcorreia.dev/v1",
+        "baseURL": "{{ get . "aiUrl" }}/v1",
         "apiKey": "{env:AI_API_KEY}"
       },
       "models": {

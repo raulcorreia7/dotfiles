@@ -8,7 +8,9 @@ display:
 hideThinkingBlock: true
 bashInterceptor:
   enabled: false
+{{ if get . "aiUrl" -}}
 modelRoles:
   default: local-inference/qwen-3.8-flash-basalt
+{{ end -}}
 bash:
   allowCompoundCommands: false
