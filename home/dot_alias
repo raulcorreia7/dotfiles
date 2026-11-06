@@ -15,3 +15,7 @@ unset -f alias_fallback
 
 dot_has eza && alias ls='eza'
 alias nvcfg='${EDITOR:-nvim} ~/.config/nvim'
+
+# Switch the GitHub account gh and git push with. GH_WORK_USER is machine-local (env.local).
+alias ghp='gh auth switch --user raulcorreia7'
+[ -n "${GH_WORK_USER:-}" ] && alias ghw='gh auth switch --user $GH_WORK_USER'

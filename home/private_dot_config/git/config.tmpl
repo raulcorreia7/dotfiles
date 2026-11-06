@@ -1,11 +1,24 @@
 # Shared git defaults. Identity comes from the answers given to `chezmoi init`, kept on the
 # machine and not in the repo. ~/.gitconfig is read after this file and wins on conflict.
+# Under ~/projects/personal/ the identity in ~/.config/git/personal wins; that file stays on the machine.
 {{ if .gitEmail -}}
 [user]
     name = {{ .gitName | quote }}
     email = {{ .gitEmail | quote }}
 
 {{ end -}}
+# GitHub logins come from gh: the active account signs every push. Switch with `ghw` / `ghp`.
+[credential "https://github.com"]
+    helper =
+    helper = !gh auth git-credential
+
+[credential "https://gist.github.com"]
+    helper =
+    helper = !gh auth git-credential
+
+[includeIf "gitdir:~/projects/personal/"]
+    path = ~/.config/git/personal
+
 [init]
     defaultBranch = main
 
