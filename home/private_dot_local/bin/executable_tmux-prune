@@ -1,0 +1,50 @@
+#!/bin/sh
+# tmux-prune: list or kill detached tmux sessions that have been idle for N days.
+# tmux never expires sessions on its own. Attached sessions are never touched.
+set -eu
+
+usage() {
+  cat <<'USAGE'
+Usage: tmux-prune [-d DAYS] [-k]
+
+Lists detached tmux sessions idle for more than DAYS (default 7).
+-k  kill them instead of only listing them.
+USAGE
+}
+
+main() {
+  days=7
+  kill=0
+  while getopts d:kh opt; do
+    case $opt in
+      d) days=$OPTARG ;;
+      k) kill=1 ;;
+      *)
+        usage
+        exit 2
+        ;;
+    esac
+  done
+  case $days in '' | *[!0-9]*)
+    usage >&2
+    exit 2
+    ;;
+  esac
+
+  command -v tmux >/dev/null 2>&1 || exit 0
+  now=$(date +%s)
+  limit=$((days * 86400))
+
+  tmux list-sessions -F '#{session_attached} #{session_activity} #{session_name}' 2>/dev/null |
+    while read -r attached activity name; do
+      [ "$attached" = 0 ] || continue
+      [ $((now - activity)) -gt "$limit" ] || continue
+      if [ "$kill" = 1 ]; then
+        tmux kill-session -t "=$name" && printf 'killed %s\n' "$name"
+      else
+        printf 'stale  %s (idle %sd)\n' "$name" $(((now - activity) / 86400))
+      fi
+    done
+}
+
+main "$@"
