@@ -4,7 +4,15 @@
   "instructions": [
     "~/.agents/AGENTS.md"
   ],
-  "mcp": {},
+  "mcp": {
+{{- if eq .profile "work" }}
+    "atlassian": {
+      "type": "remote",
+      "url": "https://mcp.atlassian.com/v2/mcp",
+      "enabled": true
+    }
+{{- end }}
+  },
   "provider": {
     "local-inference": {
       "npm": "@ai-sdk/openai-compatible",
