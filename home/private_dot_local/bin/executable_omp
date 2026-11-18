@@ -1,0 +1,10 @@
+#!/bin/sh
+# omp: run mise's omp with the homelab model key set. Launchers that skip the shell profile
+# (hc/Herdr terminals, cron) find ~/.local/bin on PATH but not mise or AI_API_KEY, which the
+# local-inference extension needs to reach talos. The key file comes from infra's bin/ai-client.sh.
+key_file="${XDG_CONFIG_HOME:-$HOME/.config}/homelab/ai.key"
+if [ -z "${AI_API_KEY:-}" ] && [ -r "$key_file" ]; then
+  AI_API_KEY="$(cat "$key_file")"
+  export AI_API_KEY
+fi
+exec "${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims/omp" "$@"

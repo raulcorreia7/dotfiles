@@ -2,5 +2,6 @@ providers:
   deepseek:
     baseUrl: https://api.deepseek.com
   # local-inference (llama-swap and every engine behind it) is registered by the local-inference
-  # extension: ~/projects/omp-extensions, installed with its ./install.sh. Its models come from
+  # extension (github.com/raulcorreia7/omp-extensions, installed by
+  # .chezmoiscripts/run_after_50-omp-extensions.sh). Its models come from talos's
   # ~/tools/llama-swap.yaml, so there is nothing to keep in sync here.
