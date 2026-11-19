@@ -62,7 +62,8 @@ Names: `dot_x` is `.x`; `private_` keeps it owner-only (0700 for directories); `
 | `work-laptop` | Ubuntu | work |
 
 Every machine gets the `personal` packages; `work` machines also get the `work` ones. To add
-packages for one machine only, put them under its name in `home/.chezmoidata/hosts.yaml`.
+packages (or an apt repository) for one machine only, put them under its name in
+`home/.chezmoidata/hosts.yaml`.
 
 ## SSH
 

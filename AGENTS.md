@@ -7,7 +7,8 @@ into `$HOME`. `install.sh` bootstraps. README.md has the layout and commands.
 
 - App config: `home/private_dot_config/<app>/`; `chezmoi re-add` for edits made on a machine.
 - Package: `home/.chezmoidata/packages.yaml`, under the right manager and profile; one
-  machine only: `hosts.yaml`. Keep `base` minimal; everything the runtime needs is in `base`.
+  machine only: `hosts.yaml` (packages, and apt repos under `repos.apt`). Keep `base`
+  minimal; everything the runtime needs is in `base`.
 - Tools: the OS package manager first. Add upstream's official apt repo under `repos` when it
   beats the distro. Only if a manager has no package: `packages.mise.<manager>`. Runtimes:
   the mise config. One owner per tool, never two.
@@ -39,7 +40,7 @@ To test without touching your home (scripts excluded, so nothing runs `sudo`):
 
 ```sh
 export HOME=$(mktemp -d)
-chezmoi init --source "$PWD" --promptString "Host name (key in .chezmoidata/hosts.yaml)=talos,Git name=Test,Git email=t@example.com" --promptChoice "Machine profile=personal"
+chezmoi init --source "$PWD" --promptString "Host name (key in .chezmoidata/hosts.yaml)=talos,Git name=Test,Git email=t@example.com,Inference endpoint URL (blank for none)=" --promptChoice "Machine profile=personal"
 chezmoi apply --exclude=scripts && chezmoi verify --exclude=scripts
 ```
 

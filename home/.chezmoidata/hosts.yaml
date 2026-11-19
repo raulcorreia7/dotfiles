@@ -1,7 +1,8 @@
 # Per-machine package additions, keyed by host name (asked on `chezmoi init`, default `hostname`).
 # The profile (personal or work) says what a machine is for; this file says what the machine itself
 # needs (desktop environment, hardware). A machine with no entry just gets its profile's packages.
-# Managers: apt, pacman, aur, brew, cask.
+# Managers: apt, pacman, aur, brew, cask. `repos.apt` adds apt repositories, in the same shape as
+# packages.yaml's `repos.apt`, for this machine only.
 # SSH hosts are deliberately not here: they stay on each machine, in ~/.ssh/config.d/.
 hosts:
   talos: # desktop, Arch
@@ -13,8 +14,19 @@ hosts:
   p14s: # laptop, Arch
     packages: {}
   work-laptop: # work laptop, Ubuntu, KDE
+    repos:
+      apt:
+        # https://www.microsoft.com/edge/business/download; the package keeps this repo afterwards
+        - { name: microsoft-edge, key: "https://packages.microsoft.com/keys/microsoft.asc", url: "https://packages.microsoft.com/repos/edge", suite: stable, components: main }
+        # https://learn.microsoft.com/cli/azure/install-azure-cli-linux; pinned to noble: Microsoft
+        # publishes LTS releases only, so interim releases (questing) have no suite of their own
+        - { name: azure-cli, key: "https://packages.microsoft.com/keys/microsoft.asc", url: "https://packages.microsoft.com/repos/azure-cli", suite: noble, components: main }
     packages:
       apt:
+        - microsoft-edge-stable
+        - azure-cli
+        - onedrive
+        - network-manager-openvpn
         # KDE replacements for the removed GNOME apps
         - okular
         - gwenview
