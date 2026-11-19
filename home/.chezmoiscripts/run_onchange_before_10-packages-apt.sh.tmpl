@@ -2,8 +2,9 @@
        Re-runs when those lists, the profile or the host change. */ -}}
 {{- if eq (includeTemplate "package-manager" . | trim) "apt" -}}
 {{- $apt := includeTemplate "package-list" (dict "manager" "apt" "data" .) -}}
+{{- $repos := concat .repos.apt (dig .host "repos" "apt" (list) .hosts) -}}
 #!/bin/sh
-# apt {{ dict "repos" .repos.apt "packages" $apt | toJson | sha256sum }}
+# apt {{ dict "repos" $repos "packages" $apt | toJson | sha256sum }}
 set -eu
 
 {{ template "as-root" }}
@@ -21,11 +22,11 @@ missing() {
 }
 
 # add_repo NAME KEY_URL REPO_URL SUITE COMPONENTS: add an apt repository unless it is configured.
-# SUITE `codename` means this release's codename. A key URL without an extension is saved as .asc.
+# SUITE `codename` means this release's codename. apt reads binary keys only as .gpg and armored
+# keys only as .asc, so a key URL ending in .gpg is saved as .gpg and any other (.pub, .asc, none) as .asc.
 add_repo() {
-  key_file="${2##*/}"
-  case "$key_file" in
-    *.*) keyring="/etc/apt/keyrings/$1.${key_file##*.}" ;;
+  case "$2" in
+    *.gpg) keyring="/etc/apt/keyrings/$1.gpg" ;;
     *) keyring="/etc/apt/keyrings/$1.asc" ;;
   esac
   suite="$4"
@@ -43,7 +44,7 @@ add_repo() {
 # Needs root only when a repo or package is missing; upgrades are left to the OS.
 main() {
   repo_added=
-{{- range .repos.apt }}
+{{- range $repos }}
   add_repo {{ .name }} {{ .key }} {{ .url }} {{ .suite }} {{ .components }}
 {{- end }}
 
