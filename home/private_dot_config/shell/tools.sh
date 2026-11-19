@@ -11,3 +11,6 @@ if dot_has mise; then
 
   dot_interactive && eval "$(mise activate "$(dot_shell)")"
 fi
+
+# Worktrunk: `wt switch` needs a shell function to change directory.
+dot_interactive && dot_has wt && eval "$(command wt config shell init "$(dot_shell)")"
