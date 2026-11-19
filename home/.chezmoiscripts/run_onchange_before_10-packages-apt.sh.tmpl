@@ -21,7 +21,9 @@ missing() {
   done
 }
 
-# add_repo NAME KEY_URL REPO_URL SUITE COMPONENTS: add an apt repository unless it is configured.
+# add_repo NAME KEY_URL REPO_URL SUITE COMPONENTS: add an apt repository as sources.list.d/NAME.list.
+# Left alone when another file configures the URL (a package, extrepo, by hand); our own file is
+# rewritten when it or its key is out of date, which repairs a broken earlier run.
 # SUITE `codename` means this release's codename. apt reads binary keys only as .gpg and armored
 # keys only as .asc, so a key URL ending in .gpg is saved as .gpg and any other (.pub, .asc, none) as .asc.
 add_repo() {
@@ -31,13 +33,21 @@ add_repo() {
   esac
   suite="$4"
   [ "$suite" = codename ] && suite="$(codename)"
+  list="/etc/apt/sources.list.d/$1.list"
+  line="deb [arch=$(dpkg --print-architecture) signed-by=$keyring] $3 $suite $5"
 
-  grep -rqsF "$3" /etc/apt/sources.list /etc/apt/sources.list.d && return 0
+  grep -rqsF --exclude="$1.list" "$3" /etc/apt/sources.list /etc/apt/sources.list.d && return 0
+  [ -s "$keyring" ] && [ "$(cat "$list" 2>/dev/null)" = "$line" ] && return 0
 
+  key_tmp="$(mktemp)"
+  curl -fsSL "$2" -o "$key_tmp"
   as_root install -dm 755 /etc/apt/keyrings
-  curl -fsSL "$2" | as_root tee "$keyring" >/dev/null
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=$keyring] $3 $suite $5" |
-    as_root tee "/etc/apt/sources.list.d/$1.list" >/dev/null
+  for old in /etc/apt/keyrings/"$1".*; do
+    [ "$old" = "$keyring" ] || as_root rm -f "$old"
+  done
+  as_root install -m 644 "$key_tmp" "$keyring"
+  rm -f "$key_tmp"
+  echo "$line" | as_root tee "$list" >/dev/null
   repo_added=1
 }
 
